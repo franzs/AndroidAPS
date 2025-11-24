@@ -51,6 +51,10 @@ open class TriggerTestBase : TestBaseWithProfile() {
             if (it is TriggerRecurringTime) {
                 it.dateUtil = dateUtil
             }
+            if (it is TriggerLocation) {
+                it.aapsSchedulers = aapsSchedulers
+                it.fabricPrivacy = fabricPrivacy
+            }
             if (it is TriggerBTDevice) {
                 it.context = context
                 it.automationPlugin = automationPlugin

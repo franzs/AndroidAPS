@@ -12,11 +12,7 @@ android {
     namespace = "app.aaps.pump.virtual"
 
     buildFeatures {
-        compose=true
-    }
-
-    composeOptions {
-        kotlinCompilerExtensionVersion="1.5.3"
+        compose = true
     }
 }
 

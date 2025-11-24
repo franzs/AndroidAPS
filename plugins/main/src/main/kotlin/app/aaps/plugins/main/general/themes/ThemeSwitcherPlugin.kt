@@ -14,6 +14,7 @@ import app.aaps.core.interfaces.rx.events.EventPreferenceChange
 import app.aaps.core.interfaces.rx.events.EventThemeSwitch
 import app.aaps.core.keys.StringKey
 import app.aaps.core.keys.interfaces.Preferences
+import app.aaps.core.ui.UiMode
 import app.aaps.plugins.main.R
 import io.reactivex.rxjava3.disposables.CompositeDisposable
 import io.reactivex.rxjava3.kotlin.plusAssign
@@ -51,12 +52,12 @@ class ThemeSwitcherPlugin @Inject constructor(
 
     fun setThemeMode() {
         val mode = try {
-            when (preferences.get(StringKey.GeneralDarkMode)) {
-                rh.gs(R.string.value_dark_theme) -> MODE_NIGHT_YES
-                rh.gs(R.string.value_light_theme) -> MODE_NIGHT_NO
-                else -> MODE_NIGHT_FOLLOW_SYSTEM
+            when (UiMode.fromString(preferences.get(StringKey.GeneralDarkMode))) {
+                UiMode.DARK   -> MODE_NIGHT_YES
+                UiMode.LIGHT  -> MODE_NIGHT_NO
+                UiMode.SYSTEM -> MODE_NIGHT_FOLLOW_SYSTEM
             }
-        } catch (ignored: Exception) {
+        } catch (_: Exception) {
             MODE_NIGHT_FOLLOW_SYSTEM
         }
         AppCompatDelegate.setDefaultNightMode(mode)

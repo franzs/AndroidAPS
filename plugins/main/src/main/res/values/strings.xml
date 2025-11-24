@@ -132,9 +132,7 @@
     <string name="dark_theme">Dark theme</string>
     <string name="light_theme">Light theme</string>
     <string name="follow_system_theme">Use device theme</string>
-    <string name="value_dark_theme" translatable="false">dark</string>
-    <string name="value_light_theme" translatable="false">light</string>
-    <string name="value_system_theme" translatable="false">system</string>
+
 
     <!-- Profile -->
     <string name="localprofile">Profile</string>
