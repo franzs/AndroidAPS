@@ -3,11 +3,11 @@ package app.aaps.plugins.sync.nsclientV3.services
 import android.content.Intent
 import android.os.IBinder
 import app.aaps.core.interfaces.nsclient.StoreDataForDb
-import app.aaps.core.interfaces.rx.events.EventNSClientNewLog
 import app.aaps.core.interfaces.ui.UiInteraction
 import app.aaps.core.keys.BooleanKey
 import app.aaps.core.keys.StringKey
 import app.aaps.plugins.sync.nsShared.NsIncomingDataProcessor
+import app.aaps.plugins.sync.nsShared.mvvm.NSClientLog
 import app.aaps.plugins.sync.nsclient.data.NSDeviceStatusHandler
 import app.aaps.plugins.sync.nsclientV3.NSClientV3Plugin
 import app.aaps.plugins.sync.nsclientV3.keys.NsclientBooleanKey
@@ -107,8 +107,8 @@ class NSClientV3ServiceTest : TestBaseWithProfile() {
         whenever(preferences.get(NsclientBooleanKey.NsPaused)).thenReturn(true)
         whenever(nsClientV3Plugin.isAllowed).thenReturn(true)
 
-        val events = mutableListOf<EventNSClientNewLog>()
-        val subscription = rxBus.toObservable(EventNSClientNewLog::class.java).subscribe { events.add(it) }
+        val events = mutableListOf<NSClientLog>()
+        val subscription = rxBus.toObservable(NSClientLog::class.java).subscribe { events.add(it) }
 
         sut.initializeWebSockets("Test")
 
@@ -124,8 +124,8 @@ class NSClientV3ServiceTest : TestBaseWithProfile() {
         whenever(nsClientV3Plugin.isAllowed).thenReturn(false)
         whenever(nsClientV3Plugin.blockingReason).thenReturn("No network connection")
 
-        val events = mutableListOf<EventNSClientNewLog>()
-        val subscription = rxBus.toObservable(EventNSClientNewLog::class.java).subscribe { events.add(it) }
+        val events = mutableListOf<NSClientLog>()
+        val subscription = rxBus.toObservable(NSClientLog::class.java).subscribe { events.add(it) }
 
         sut.initializeWebSockets("Test")
 
@@ -211,8 +211,8 @@ class NSClientV3ServiceTest : TestBaseWithProfile() {
         whenever(preferences.get(NsclientBooleanKey.NsPaused)).thenReturn(false)
         whenever(nsClientV3Plugin.isAllowed).thenReturn(true)
 
-        val events = mutableListOf<EventNSClientNewLog>()
-        val subscription = rxBus.toObservable(EventNSClientNewLog::class.java).subscribe { events.add(it) }
+        val events = mutableListOf<NSClientLog>()
+        val subscription = rxBus.toObservable(NSClientLog::class.java).subscribe { events.add(it) }
 
         sut.initializeWebSockets("TestReason")
 

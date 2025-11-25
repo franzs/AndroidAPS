@@ -11,12 +11,11 @@ import app.aaps.core.interfaces.insulin.Insulin
 import app.aaps.core.interfaces.logging.AAPSLogger
 import app.aaps.core.interfaces.logging.LTag
 import app.aaps.core.interfaces.notifications.Notification
+import app.aaps.core.interfaces.nsclient.NSClientMvvmRepository
 import app.aaps.core.interfaces.plugin.ActivePlugin
 import app.aaps.core.interfaces.pump.PumpSync
 import app.aaps.core.interfaces.pump.defs.fillFor
 import app.aaps.core.interfaces.resources.ResourceHelper
-import app.aaps.core.interfaces.rx.bus.RxBus
-import app.aaps.core.interfaces.rx.events.EventNSClientNewLog
 import app.aaps.core.interfaces.smoothing.Smoothing
 import app.aaps.core.interfaces.ui.UiInteraction
 import app.aaps.core.keys.StringKey
@@ -37,9 +36,9 @@ class RunningConfigurationImpl @Inject constructor(
     private val aapsLogger: AAPSLogger,
     private val config: Config,
     private val rh: ResourceHelper,
-    private val rxBus: RxBus,
     private val pumpSync: PumpSync,
-    private val uiInteraction: UiInteraction
+    private val uiInteraction: UiInteraction,
+    private val nsClientMvvmRepository: NSClientMvvmRepository
 ) : RunningConfiguration {
 
     private var counter = 0
@@ -83,7 +82,7 @@ class RunningConfigurationImpl @Inject constructor(
         assert(config.AAPSCLIENT)
 
         configuration.version?.let {
-            rxBus.send(EventNSClientNewLog("◄ VERSION", "Received AAPS version  $it"))
+            nsClientMvvmRepository.addLog("◄ VERSION", "Received AAPS version  $it")
             if (config.VERSION_NAME.startsWith(it).not())
                 uiInteraction.addNotification(Notification.NSCLIENT_VERSION_DOES_NOT_MATCH, rh.gs(R.string.nsclient_version_does_not_match), Notification.NORMAL)
         }

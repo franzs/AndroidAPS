@@ -12,13 +12,13 @@ import app.aaps.core.interfaces.configuration.Config
 import app.aaps.core.interfaces.logging.AAPSLogger
 import app.aaps.core.interfaces.logging.LTag
 import app.aaps.core.interfaces.notifications.Notification
+import app.aaps.core.interfaces.nsclient.NSClientMvvmRepository
 import app.aaps.core.interfaces.nsclient.StoreDataForDb
 import app.aaps.core.interfaces.plugin.ActivePlugin
 import app.aaps.core.interfaces.profile.ProfileSource
 import app.aaps.core.interfaces.profile.ProfileStore
 import app.aaps.core.interfaces.rx.bus.RxBus
 import app.aaps.core.interfaces.rx.events.EventDismissNotification
-import app.aaps.core.interfaces.rx.events.EventNSClientNewLog
 import app.aaps.core.interfaces.source.NSClientSource
 import app.aaps.core.interfaces.ui.UiInteraction
 import app.aaps.core.interfaces.utils.DateUtil
@@ -71,7 +71,8 @@ class NsIncomingDataProcessor @Inject constructor(
     private val config: Config,
     private val profileStoreProvider: Provider<ProfileStore>,
     private val profileSource: ProfileSource,
-    private val uiInteraction: UiInteraction
+    private val uiInteraction: UiInteraction,
+    private val nsClientMvvmRepository: NSClientMvvmRepository
 ) {
 
     private fun toGv(jsonObject: JSONObject): GV? {
@@ -235,7 +236,7 @@ class NsIncomingDataProcessor @Inject constructor(
             return latestDateInReceivedData > 0
         } catch (error: Exception) {
             aapsLogger.error("Error: ", error)
-            rxBus.send(EventNSClientNewLog("◄ ERROR", error.localizedMessage))
+            nsClientMvvmRepository.addLog("◄ ERROR", error.localizedMessage)
         }
         return false
     }
@@ -276,7 +277,7 @@ class NsIncomingDataProcessor @Inject constructor(
             storeDataForDb.addToFoods(foods)
         } catch (error: Exception) {
             aapsLogger.error("Error: ", error)
-            rxBus.send(EventNSClientNewLog("◄ ERROR", error.localizedMessage))
+            nsClientMvvmRepository.addLog("◄ ERROR", error.localizedMessage)
         }
     }
 

@@ -11,11 +11,11 @@ import app.aaps.core.interfaces.logging.AAPSLogger
 import app.aaps.core.interfaces.logging.LTag
 import app.aaps.core.interfaces.notifications.Notification
 import app.aaps.core.interfaces.nsclient.NSAlarm
+import app.aaps.core.interfaces.nsclient.NSClientMvvmRepository
 import app.aaps.core.interfaces.nsclient.StoreDataForDb
 import app.aaps.core.interfaces.resources.ResourceHelper
 import app.aaps.core.interfaces.rx.bus.RxBus
 import app.aaps.core.interfaces.rx.events.EventDismissNotification
-import app.aaps.core.interfaces.rx.events.EventNSClientNewLog
 import app.aaps.core.interfaces.ui.UiInteraction
 import app.aaps.core.interfaces.utils.fabric.FabricPrivacy
 import app.aaps.core.keys.BooleanKey
@@ -28,7 +28,6 @@ import app.aaps.core.nssdk.mapper.toNSSgvV3
 import app.aaps.core.nssdk.mapper.toNSTreatment
 import app.aaps.plugins.sync.nsShared.NSAlarmObject
 import app.aaps.plugins.sync.nsShared.NsIncomingDataProcessor
-import app.aaps.plugins.sync.nsShared.events.EventNSClientUpdateGuiStatus
 import app.aaps.plugins.sync.nsclient.data.NSDeviceStatusHandler
 import app.aaps.plugins.sync.nsclientV3.NSClientV3Plugin
 import app.aaps.plugins.sync.nsclientV3.keys.NsclientBooleanKey
@@ -57,6 +56,7 @@ class NSClientV3Service : DaggerService() {
     @Inject lateinit var storeDataForDb: StoreDataForDb
     @Inject lateinit var uiInteraction: UiInteraction
     @Inject lateinit var nsDeviceStatusHandler: NSDeviceStatusHandler
+    @Inject lateinit var nsClientMvvmRepository: NSClientMvvmRepository
 
     private val disposable = CompositeDisposable()
 
@@ -118,16 +118,16 @@ class NSClientV3Service : DaggerService() {
         val urlStorage = preferences.get(StringKey.NsClientUrl).lowercase().replace(Regex("/$"), "") + "/storage"
         val urlAlarm = preferences.get(StringKey.NsClientUrl).lowercase().replace(Regex("/$"), "") + "/alarm"
         if (!nsClientV3Plugin.isAllowed) {
-            rxBus.send(EventNSClientNewLog("● WS", nsClientV3Plugin.blockingReason))
+            nsClientMvvmRepository.addLog("● WS", nsClientV3Plugin.blockingReason)
         } else if (preferences.get(NsclientBooleanKey.NsPaused)) {
-            rxBus.send(EventNSClientNewLog("● WS", "paused"))
+            nsClientMvvmRepository.addLog("● WS", "paused")
         } else {
             try {
                 // java io.client doesn't support multiplexing. create 2 sockets
                 storageSocket = IO.socket(urlStorage).also { socket ->
                     socket.on(Socket.EVENT_CONNECT, onConnectStorage)
                     socket.on(Socket.EVENT_DISCONNECT, onDisconnectStorage)
-                    rxBus.send(EventNSClientNewLog("► WS", "do connect storage $reason"))
+                    nsClientMvvmRepository.addLog("► WS", "do connect storage $reason")
                     socket.connect()
                     socket.on("create", onDataCreateUpdate)
                     socket.on("update", onDataCreateUpdate)
@@ -139,7 +139,7 @@ class NSClientV3Service : DaggerService() {
                     alarmSocket = IO.socket(urlAlarm).also { socket ->
                         socket.on(Socket.EVENT_CONNECT, onConnectAlarms)
                         socket.on(Socket.EVENT_DISCONNECT, onDisconnectAlarm)
-                        rxBus.send(EventNSClientNewLog("► WS", "do connect alarm $reason"))
+                        nsClientMvvmRepository.addLog("► WS", "do connect alarm $reason")
                         socket.connect()
                         socket.on("announcement", onAnnouncement)
                         socket.on("alarm", onAlarm)
@@ -147,36 +147,35 @@ class NSClientV3Service : DaggerService() {
                         socket.on("clear_alarm", onClearAlarm)
                     }
             } catch (_: URISyntaxException) {
-                rxBus.send(EventNSClientNewLog("● WS", "Wrong URL syntax"))
+                nsClientMvvmRepository.addLog("● WS", "Wrong URL syntax")
             } catch (_: RuntimeException) {
-                rxBus.send(EventNSClientNewLog("● WS", "RuntimeException"))
+                nsClientMvvmRepository.addLog("● WS", "RuntimeException")
             }
         }
     }
 
     private val onConnectStorage = Emitter.Listener {
         val socketId = storageSocket?.id() ?: "NULL"
-        rxBus.send(EventNSClientNewLog("◄ WS", "connected storage ID: $socketId"))
+        nsClientMvvmRepository.addLog("◄ WS", "connected storage ID: $socketId")
         if (storageSocket != null) {
             val authMessage = JSONObject().also {
                 it.put("accessToken", preferences.get(StringKey.NsClientAccessToken))
                 it.put("collections", JSONArray(arrayOf("devicestatus", "entries", "profile", "treatments", "foods", "settings")))
             }
-            rxBus.send(EventNSClientNewLog("► WS", "requesting auth for storage"))
+            nsClientMvvmRepository.addLog("► WS", "requesting auth for storage")
             storageSocket?.emit("subscribe", authMessage, Ack { args ->
                 val response = args[0] as JSONObject
                 wsConnected = if (response.optBoolean("success")) {
-                    rxBus.send(EventNSClientNewLog("◄ WS", "Subscribed for: ${response.optString("collections")}"))
-                    // during disconnection updated data is not received
+                    nsClientMvvmRepository.addLog("◄ WS", "Subscribed for: ${response.optString("collections")}")                    // during disconnection updated data is not received
                     // thus run non WS load to get missing data
                     nsClientV3Plugin.initialLoadFinished = false
                     nsClientV3Plugin.executeLoop("WS_CONNECT", forceNew = true)
                     true
                 } else {
-                    rxBus.send(EventNSClientNewLog("◄ WS", "Auth failed"))
+                    nsClientMvvmRepository.addLog("◄ WS", "Auth failed")
                     false
                 }
-                rxBus.send(EventNSClientUpdateGuiStatus())
+                nsClientMvvmRepository.updateStatus(nsClientV3Plugin.status)
             })
         }
     }
@@ -184,31 +183,31 @@ class NSClientV3Service : DaggerService() {
     private val onConnectAlarms = Emitter.Listener {
         val socket = alarmSocket
         val socketId = socket?.id() ?: "NULL"
-        rxBus.send(EventNSClientNewLog("◄ WS", "connected alarms ID: $socketId"))
+        nsClientMvvmRepository.addLog("◄ WS", "connected alarms ID: $socketId")
         if (socket != null) {
             val authMessage = JSONObject().also {
                 it.put("accessToken", preferences.get(StringKey.NsClientAccessToken))
             }
-            rxBus.send(EventNSClientNewLog("► WS", "requesting auth for alarms"))
+            nsClientMvvmRepository.addLog("► WS", "requesting auth for alarms")
             socket.emit("subscribe", authMessage, Ack { args ->
                 val response = args[0] as JSONObject
-                if (response.optBoolean("success")) rxBus.send(EventNSClientNewLog("◄ WS", response.optString("message")))
-                else rxBus.send(EventNSClientNewLog("◄ WS", "Auth failed"))
+                if (response.optBoolean("success")) nsClientMvvmRepository.addLog("◄ WS", response.optString("message"))
+                else nsClientMvvmRepository.addLog("◄ WS", "Auth failed")
             })
         }
     }
 
     private val onDisconnectStorage = Emitter.Listener { args ->
         aapsLogger.debug(LTag.NSCLIENT, "disconnect storage reason: ${args[0]}")
-        rxBus.send(EventNSClientNewLog("◄ WS", "disconnect storage event"))
+        nsClientMvvmRepository.addLog("◄ WS", "disconnect storage event")
         wsConnected = false
         nsClientV3Plugin.initialLoadFinished = false
-        rxBus.send(EventNSClientUpdateGuiStatus())
+        nsClientMvvmRepository.updateStatus(nsClientV3Plugin.status)
     }
 
     private val onDisconnectAlarm = Emitter.Listener { args ->
         aapsLogger.debug(LTag.NSCLIENT, "disconnect alarm reason: ${args[0]}")
-        rxBus.send(EventNSClientNewLog("◄ WS", "disconnect alarm event"))
+        nsClientMvvmRepository.addLog("◄ WS", "disconnect alarm event")
     }
 
     private val onDataCreateUpdate = Emitter.Listener { args ->
@@ -217,7 +216,7 @@ class NSClientV3Service : DaggerService() {
         val collection = response.getString("colName")
         val docJson = response.getJSONObject("doc")
         val docString = response.getString("doc")
-        rxBus.send(EventNSClientNewLog("◄ WS CREATE/UPDATE", "$collection <i>$docString</i>"))
+        nsClientMvvmRepository.addLog("◄ WS CREATE/UPDATE", "$collection <i>$docString</i>")
         val srvModified = docJson.getLong("srvModified")
         nsClientV3Plugin.lastLoadedSrvModified.set(collection, srvModified)
         nsClientV3Plugin.storeLastLoadedSrvModified()
@@ -251,7 +250,7 @@ class NSClientV3Service : DaggerService() {
         aapsLogger.debug(LTag.NSCLIENT, "onDataDelete: $response")
         val collection = response.optString("colName") ?: return@Listener
         val identifier = response.optString("identifier") ?: return@Listener
-        rxBus.send(EventNSClientNewLog("◄ WS DELETE", "$collection $identifier"))
+        nsClientMvvmRepository.addLog("◄ WS DELETE", "$collection $identifier")
         if (collection == "treatments") {
             storeDataForDb.addToDeleteTreatment(identifier)
             storeDataForDb.updateDeletedTreatmentsInDb()
@@ -276,7 +275,7 @@ class NSClientV3Service : DaggerService() {
         }
          */
         val data = args[0] as JSONObject
-        rxBus.send(EventNSClientNewLog("◄ ANNOUNCEMENT", data.optString("message")))
+        nsClientMvvmRepository.addLog("◄ ANNOUNCEMENT", data.optString("message"))
         aapsLogger.debug(LTag.NSCLIENT, data.toString())
         if (preferences.get(BooleanKey.NsClientNotificationsFromAnnouncements))
             uiInteraction.addNotificationWithAction(NSAlarmObject(data))
@@ -297,7 +296,7 @@ class NSClientV3Service : DaggerService() {
         }
          */
         val data = args[0] as JSONObject
-        rxBus.send(EventNSClientNewLog("◄ ALARM", data.optString("message")))
+        nsClientMvvmRepository.addLog("◄ ALARM", data.optString("message"))
         aapsLogger.debug(LTag.NSCLIENT, data.toString())
         if (preferences.get(BooleanKey.NsClientNotificationsFromAlarms)) {
             val snoozedTo = preferences.get(LongComposedKey.NotificationSnoozedTo, data.optString("level"))
@@ -308,7 +307,7 @@ class NSClientV3Service : DaggerService() {
 
     private val onUrgentAlarm = Emitter.Listener { args: Array<Any> ->
         val data = args[0] as JSONObject
-        rxBus.send(EventNSClientNewLog("◄ URGENT ALARM", data.optString("message")))
+        nsClientMvvmRepository.addLog("◄ URGENT ALARM", data.optString("message"))
         aapsLogger.debug(LTag.NSCLIENT, data.toString())
         if (preferences.get(BooleanKey.NsClientNotificationsFromAlarms)) {
             val snoozedTo = preferences.get(LongComposedKey.NotificationSnoozedTo, data.optString("level"))
@@ -328,7 +327,7 @@ class NSClientV3Service : DaggerService() {
         }
          */
         val data = args[0] as JSONObject
-        rxBus.send(EventNSClientNewLog("◄ CLEARALARM", data.optString("title")))
+        nsClientMvvmRepository.addLog("◄ CLEARALARM", data.optString("title"))
         aapsLogger.debug(LTag.NSCLIENT, data.toString())
         rxBus.send(EventDismissNotification(Notification.NS_ALARM))
         rxBus.send(EventDismissNotification(Notification.NS_URGENT_ALARM))
@@ -336,6 +335,6 @@ class NSClientV3Service : DaggerService() {
 
     fun handleClearAlarm(originalAlarm: NSAlarm, silenceTimeInMilliseconds: Long) {
         alarmSocket?.emit("ack", originalAlarm.level, originalAlarm.group, silenceTimeInMilliseconds)
-        rxBus.send(EventNSClientNewLog("► ALARMACK ", "${originalAlarm.level} ${originalAlarm.group} $silenceTimeInMilliseconds"))
+        nsClientMvvmRepository.addLog("► ALARMACK ", "${originalAlarm.level} ${originalAlarm.group} $silenceTimeInMilliseconds")
     }
 }

@@ -4,9 +4,9 @@ import android.content.Context
 import androidx.work.ListenableWorker.Result.Success
 import androidx.work.testing.TestListenableWorkerBuilder
 import app.aaps.core.interfaces.plugin.ActivePlugin
-import app.aaps.core.interfaces.rx.events.EventNSClientNewLog
 import app.aaps.core.interfaces.sync.NsClient
 import app.aaps.core.interfaces.utils.fabric.FabricPrivacy
+import app.aaps.plugins.sync.nsShared.mvvm.NSClientLog
 import app.aaps.plugins.sync.nsclientV3.DataSyncSelectorV3
 import app.aaps.plugins.sync.nsclientV3.NSClientV3Plugin
 import app.aaps.plugins.sync.nsclientV3.services.NSClientV3Service
@@ -14,7 +14,6 @@ import app.aaps.shared.tests.TestBase
 import com.google.common.truth.Truth.assertThat
 import dagger.android.AndroidInjector
 import dagger.android.HasAndroidInjector
-import io.reactivex.rxjava3.core.Flowable
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.BeforeEach
@@ -127,8 +126,8 @@ internal class DataSyncWorkerTest : TestBase() {
         whenever(nsClientV3Plugin.doingFullSync).thenReturn(true)
         whenever(nsClient.hasWritePermission).thenReturn(true)
 
-        val events = mutableListOf<EventNSClientNewLog>()
-        val subscription = rxBus.toObservable(EventNSClientNewLog::class.java).subscribe { events.add(it) }
+        val events = mutableListOf<NSClientLog>()
+        val subscription = rxBus.toObservable(NSClientLog::class.java).subscribe { events.add(it) }
 
         val result = sut.doWorkAndLog()
 
@@ -143,8 +142,8 @@ internal class DataSyncWorkerTest : TestBase() {
         sut = TestListenableWorkerBuilder<DataSyncWorker>(context).build()
         whenever(nsClient.hasWritePermission).thenReturn(true)
 
-        val events = mutableListOf<EventNSClientNewLog>()
-        val subscription = rxBus.toObservable(EventNSClientNewLog::class.java).subscribe { events.add(it) }
+        val events = mutableListOf<NSClientLog>()
+        val subscription = rxBus.toObservable(NSClientLog::class.java).subscribe { events.add(it) }
 
         sut.doWorkAndLog()
 

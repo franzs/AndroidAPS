@@ -3,10 +3,9 @@ package app.aaps.plugins.sync.nsclient
 import app.aaps.core.interfaces.db.PersistenceLayer
 import app.aaps.core.interfaces.logging.AAPSLogger
 import app.aaps.core.interfaces.logging.LTag
+import app.aaps.core.interfaces.nsclient.NSClientMvvmRepository
 import app.aaps.core.interfaces.plugin.ActivePlugin
 import app.aaps.core.interfaces.profile.ProfileFunction
-import app.aaps.core.interfaces.rx.bus.RxBus
-import app.aaps.core.interfaces.rx.events.EventNSClientNewLog
 import app.aaps.core.interfaces.source.NSClientSource
 import app.aaps.core.interfaces.sync.DataSyncSelector
 import app.aaps.core.interfaces.utils.DateUtil
@@ -15,8 +14,6 @@ import app.aaps.core.keys.LongNonKey
 import app.aaps.core.keys.interfaces.Preferences
 import app.aaps.core.utils.JsonHelper
 import app.aaps.core.utils.waitMillis
-import app.aaps.plugins.sync.nsShared.events.EventNSClientUpdateGuiQueue
-import app.aaps.plugins.sync.nsShared.events.EventNSClientUpdateGuiStatus
 import app.aaps.plugins.sync.nsShared.extensions.onlyNsIdAdded
 import app.aaps.plugins.sync.nsclientV3.keys.NsclientBooleanKey
 import app.aaps.plugins.sync.nsclientV3.keys.NsclientLongKey
@@ -35,7 +32,7 @@ class DataSyncSelectorV1 @Inject constructor(
     private val profileFunction: ProfileFunction,
     private val activePlugin: ActivePlugin,
     private val persistenceLayer: PersistenceLayer,
-    private val rxBus: RxBus
+    private val nsClientMvvmRepository: NSClientMvvmRepository
 ) : DataSyncSelector {
 
     private var scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
@@ -85,12 +82,11 @@ class DataSyncSelectorV1 @Inject constructor(
     override suspend fun doUpload() {
         synchronized(sync) {
             if (running) {
-                rxBus.send(EventNSClientNewLog("● RUN", "Already running"))
+                nsClientMvvmRepository.addLog("● RUN", "Already running")
                 return
             }
             running = true
         }
-        rxBus.send(EventNSClientUpdateGuiStatus())
         if (preferences.get(BooleanKey.NsClientUploadData) && !isPaused) {
             queueCounter.bolusesRemaining = (persistenceLayer.getLastBolusId() ?: 0L) - preferences.get(NsclientLongKey.BolusLastSyncedId)
             queueCounter.carbsRemaining = (persistenceLayer.getLastCarbsId() ?: 0L) - preferences.get(NsclientLongKey.CarbsLastSyncedId)
@@ -105,7 +101,7 @@ class DataSyncSelectorV1 @Inject constructor(
             queueCounter.pssRemaining = (persistenceLayer.getLastProfileSwitchId() ?: 0L) - preferences.get(NsclientLongKey.ProfileSwitchLastSyncedId)
             queueCounter.epssRemaining = (persistenceLayer.getLastEffectiveProfileSwitchId() ?: 0L) - preferences.get(NsclientLongKey.EffectiveProfileSwitchLastSyncedId)
             queueCounter.rmsRemaining = (persistenceLayer.getLastRunningModeId() ?: 0L) - preferences.get(NsclientLongKey.RunningModeLastSyncedId)
-            rxBus.send(EventNSClientUpdateGuiQueue())
+            nsClientMvvmRepository.updateQueueSize(queueCounter.size())
             val boluses = scope.async { processChangedBoluses() }
             val carbs = scope.async { processChangedCarbs() }
             val bcs = scope.async { processChangedBolusCalculatorResults() }
@@ -136,7 +132,6 @@ class DataSyncSelectorV1 @Inject constructor(
             rms.await()
             ps.await()
         }
-        rxBus.send(EventNSClientUpdateGuiStatus())
         running = false
     }
 
@@ -177,7 +172,7 @@ class DataSyncSelectorV1 @Inject constructor(
                 startId = 0
             }
             queueCounter.bolusesRemaining = lastDbId - startId
-            rxBus.send(EventNSClientUpdateGuiQueue())
+            nsClientMvvmRepository.updateQueueSize(queueCounter.size())
             persistenceLayer.getNextSyncElementBolus(startId).blockingGet()?.let { bolus ->
                 aapsLogger.info(LTag.NSCLIENT, "Loading Bolus data Start: $startId ${bolus.first} forID: ${bolus.second.id} ")
                 val dataPair = DataSyncSelector.PairBolus(bolus.first, bolus.second.id)
@@ -225,7 +220,7 @@ class DataSyncSelectorV1 @Inject constructor(
                 startId = 0
             }
             queueCounter.carbsRemaining = lastDbId - startId
-            rxBus.send(EventNSClientUpdateGuiQueue())
+            nsClientMvvmRepository.updateQueueSize(queueCounter.size())
             persistenceLayer.getNextSyncElementCarbs(startId).blockingGet()?.let { carb ->
                 aapsLogger.info(LTag.NSCLIENT, "Loading Carbs data Start: $startId ${carb.first} forID: ${carb.second.id} ")
                 val dataPair = DataSyncSelector.PairCarbs(carb.first, carb.second.id)
@@ -273,7 +268,7 @@ class DataSyncSelectorV1 @Inject constructor(
                 startId = 0
             }
             queueCounter.bcrRemaining = lastDbId - startId
-            rxBus.send(EventNSClientUpdateGuiQueue())
+            nsClientMvvmRepository.updateQueueSize(queueCounter.size())
             persistenceLayer.getNextSyncElementBolusCalculatorResult(startId).blockingGet()?.let { bolusCalculatorResult ->
                 aapsLogger.info(LTag.NSCLIENT, "Loading BolusCalculatorResult data Start: $startId ${bolusCalculatorResult.first} forID: ${bolusCalculatorResult.second.id} ")
                 val dataPair = DataSyncSelector.PairBolusCalculatorResult(bolusCalculatorResult.first, bolusCalculatorResult.second.id)
@@ -321,7 +316,7 @@ class DataSyncSelectorV1 @Inject constructor(
                 startId = 0
             }
             queueCounter.ttsRemaining = lastDbId - startId
-            rxBus.send(EventNSClientUpdateGuiQueue())
+            nsClientMvvmRepository.updateQueueSize(queueCounter.size())
             persistenceLayer.getNextSyncElementTemporaryTarget(startId).blockingGet()?.let { tt ->
                 aapsLogger.info(LTag.NSCLIENT, "Loading TemporaryTarget data Start: $startId ${tt.first} forID: ${tt.second.id} ")
                 val dataPair = DataSyncSelector.PairTemporaryTarget(tt.first, tt.second.id)
@@ -369,7 +364,7 @@ class DataSyncSelectorV1 @Inject constructor(
                 startId = 0
             }
             queueCounter.foodsRemaining = lastDbId - startId
-            rxBus.send(EventNSClientUpdateGuiQueue())
+            nsClientMvvmRepository.updateQueueSize(queueCounter.size())
             persistenceLayer.getNextSyncElementFood(startId).blockingGet()?.let { food ->
                 aapsLogger.info(LTag.NSCLIENT, "Loading Food data Start: $startId ${food.first} forID: ${food.second.id} ")
                 val dataPair = DataSyncSelector.PairFood(food.first, food.second.id)
@@ -417,7 +412,7 @@ class DataSyncSelectorV1 @Inject constructor(
                 startId = 0
             }
             queueCounter.gvsRemaining = lastDbId - startId
-            rxBus.send(EventNSClientUpdateGuiQueue())
+            nsClientMvvmRepository.updateQueueSize(queueCounter.size())
             persistenceLayer.getNextSyncElementGlucoseValue(startId).blockingGet()?.let { gv ->
                 aapsLogger.info(LTag.NSCLIENT, "Loading GlucoseValue data Start: $startId ${gv.first} forID: ${gv.second.id} ")
                 val dataPair = DataSyncSelector.PairGlucoseValue(gv.first, gv.second.id)
@@ -467,7 +462,7 @@ class DataSyncSelectorV1 @Inject constructor(
                 startId = 0
             }
             queueCounter.tesRemaining = lastDbId - startId
-            rxBus.send(EventNSClientUpdateGuiQueue())
+            nsClientMvvmRepository.updateQueueSize(queueCounter.size())
             persistenceLayer.getNextSyncElementTherapyEvent(startId).blockingGet()?.let { te ->
                 aapsLogger.info(LTag.NSCLIENT, "Loading TherapyEvents data Start: $startId ${te.first} forID: ${te.second.id} ")
                 val dataPair = DataSyncSelector.PairTherapyEvent(te.first, te.second.id)
@@ -515,7 +510,7 @@ class DataSyncSelectorV1 @Inject constructor(
                 startId = 0
             }
             queueCounter.dssRemaining = lastDbId - startId
-            rxBus.send(EventNSClientUpdateGuiQueue())
+            nsClientMvvmRepository.updateQueueSize(queueCounter.size())
             persistenceLayer.getNextSyncElementDeviceStatus(startId).blockingGet()?.let { deviceStatus ->
                 aapsLogger.info(LTag.NSCLIENT, "Loading DeviceStatus data Start: $startId $deviceStatus")
                 val dataPair = DataSyncSelector.PairDeviceStatus(deviceStatus, lastDbId)
@@ -546,7 +541,7 @@ class DataSyncSelectorV1 @Inject constructor(
                 startId = 0
             }
             queueCounter.tbrsRemaining = lastDbId - startId
-            rxBus.send(EventNSClientUpdateGuiQueue())
+            nsClientMvvmRepository.updateQueueSize(queueCounter.size())
             persistenceLayer.getNextSyncElementTemporaryBasal(startId).blockingGet()?.let { tb ->
                 aapsLogger.info(LTag.NSCLIENT, "Loading TemporaryBasal data Start: $startId ${tb.first} forID: ${tb.second.id} ")
                 val dataPair = DataSyncSelector.PairTemporaryBasal(tb.first, tb.second.id)
@@ -597,7 +592,7 @@ class DataSyncSelectorV1 @Inject constructor(
                 startId = 0
             }
             queueCounter.ebsRemaining = lastDbId - startId
-            rxBus.send(EventNSClientUpdateGuiQueue())
+            nsClientMvvmRepository.updateQueueSize(queueCounter.size())
             persistenceLayer.getNextSyncElementExtendedBolus(startId).blockingGet()?.let { eb ->
                 aapsLogger.info(LTag.NSCLIENT, "Loading ExtendedBolus data Start: $startId ${eb.first} forID: ${eb.second.id} ")
                 val dataPair = DataSyncSelector.PairExtendedBolus(eb.first, eb.second.id)
@@ -648,7 +643,7 @@ class DataSyncSelectorV1 @Inject constructor(
                 startId = 0
             }
             queueCounter.pssRemaining = lastDbId - startId
-            rxBus.send(EventNSClientUpdateGuiQueue())
+            nsClientMvvmRepository.updateQueueSize(queueCounter.size())
             persistenceLayer.getNextSyncElementProfileSwitch(startId).blockingGet()?.let { ps ->
                 aapsLogger.info(LTag.NSCLIENT, "Loading ProfileSwitch data Start: $startId ${ps.first} forID: ${ps.second.id} ")
                 val dataPair = DataSyncSelector.PairProfileSwitch(ps.first, ps.second.id)
@@ -696,7 +691,7 @@ class DataSyncSelectorV1 @Inject constructor(
                 startId = 0
             }
             queueCounter.epssRemaining = lastDbId - startId
-            rxBus.send(EventNSClientUpdateGuiQueue())
+            nsClientMvvmRepository.updateQueueSize(queueCounter.size())
             persistenceLayer.getNextSyncElementEffectiveProfileSwitch(startId).blockingGet()?.let { ps ->
                 aapsLogger.info(LTag.NSCLIENT, "Loading EffectiveProfileSwitch data Start: $startId ${ps.first} forID: ${ps.second.id} ")
                 val dataPair = DataSyncSelector.PairEffectiveProfileSwitch(ps.first, ps.second.id)
@@ -744,7 +739,7 @@ class DataSyncSelectorV1 @Inject constructor(
                 startId = 0
             }
             queueCounter.rmsRemaining = lastDbId - startId
-            rxBus.send(EventNSClientUpdateGuiQueue())
+            nsClientMvvmRepository.updateQueueSize(queueCounter.size())
             persistenceLayer.getNextSyncElementRunningMode(startId).blockingGet()?.let { rm ->
                 aapsLogger.info(LTag.NSCLIENT, "Loading RunningMode data Start: $startId ${rm.first} forID: ${rm.second.id} ")
                 val dataPair = DataSyncSelector.PairRunningMode(rm.first, rm.second.id)

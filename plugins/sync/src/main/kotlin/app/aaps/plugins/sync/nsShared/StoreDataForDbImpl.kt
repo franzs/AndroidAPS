@@ -22,10 +22,9 @@ import app.aaps.core.interfaces.configuration.Config
 import app.aaps.core.interfaces.db.PersistenceLayer
 import app.aaps.core.interfaces.logging.AAPSLogger
 import app.aaps.core.interfaces.logging.LTag
+import app.aaps.core.interfaces.nsclient.NSClientMvvmRepository
 import app.aaps.core.interfaces.nsclient.StoreDataForDb
 import app.aaps.core.interfaces.pump.VirtualPump
-import app.aaps.core.interfaces.rx.bus.RxBus
-import app.aaps.core.interfaces.rx.events.EventNSClientNewLog
 import app.aaps.core.interfaces.source.NSClientSource
 import app.aaps.core.keys.BooleanKey
 import app.aaps.core.keys.interfaces.Preferences
@@ -38,12 +37,12 @@ import javax.inject.Singleton
 @Singleton
 class StoreDataForDbImpl @Inject constructor(
     private val aapsLogger: AAPSLogger,
-    private val rxBus: RxBus,
     private val persistenceLayer: PersistenceLayer,
     private val preferences: Preferences,
     private val config: Config,
     private val nsClientSource: NSClientSource,
-    private val virtualPump: VirtualPump
+    private val virtualPump: VirtualPump,
+    private val nsClientMvvmRepository: NSClientMvvmRepository
 ) : StoreDataForDb {
 
     private val glucoseValues: MutableList<GV> = mutableListOf()
@@ -125,7 +124,7 @@ class StoreDataForDbImpl @Inject constructor(
                 glucoseValues.clear()
             }
         }
-        rxBus.send(EventNSClientNewLog("● DONE PROCESSING BG", ""))
+        nsClientMvvmRepository.addLog("● DONE PROCESSING BG", "")
     }
 
     override fun storeFoodsToDb() {
@@ -143,7 +142,7 @@ class StoreDataForDbImpl @Inject constructor(
         }
 
         SystemClock.sleep(pause)
-        rxBus.send(EventNSClientNewLog("● DONE PROCESSING FOOD", ""))
+        nsClientMvvmRepository.addLog("● DONE PROCESSING FOOD", "")
     }
 
     override fun storeTreatmentsToDb(fullSync: Boolean) {
@@ -313,7 +312,7 @@ class StoreDataForDbImpl @Inject constructor(
             }
         }
 
-        rxBus.send(EventNSClientNewLog("● DONE PROCESSING TR", ""))
+        nsClientMvvmRepository.addLog("● DONE PROCESSING TR", "")
     }
 
     private val eventWorker = Executors.newSingleThreadScheduledExecutor()
@@ -453,7 +452,7 @@ class StoreDataForDbImpl @Inject constructor(
         sendLog("RunningMode", RM::class.java.simpleName)
         sendLog("ExtendedBolus", EB::class.java.simpleName)
         sendLog("DeviceStatus", DS::class.java.simpleName)
-        rxBus.send(EventNSClientNewLog("● DONE NSIDs", ""))
+        nsClientMvvmRepository.addLog("● DONE NSIDs", "")
     }
 
     override fun updateDeletedTreatmentsInDb() {
@@ -577,27 +576,27 @@ class StoreDataForDbImpl @Inject constructor(
 
     private fun sendLog(item: String, clazz: String) {
         inserted[clazz]?.let {
-            if (it > 0) rxBus.send(EventNSClientNewLog("◄ INSERT", "$item $it"))
+            if (it > 0) nsClientMvvmRepository.addLog("◄ INSERT", "$item $it")
         }
         inserted.removeClass(clazz)
         updated[clazz]?.let {
-            if (it > 0) rxBus.send(EventNSClientNewLog("◄ UPDATE", "$item $it"))
+            if (it > 0) nsClientMvvmRepository.addLog("◄ UPDATE", "$item $it")
         }
         updated.removeClass(clazz)
         invalidated[clazz]?.let {
-            if (it > 0) rxBus.send(EventNSClientNewLog("◄ INVALIDATE", "$item $it"))
+            if (it > 0) nsClientMvvmRepository.addLog("◄ INVALIDATE", "$item $it")
         }
         invalidated.removeClass(clazz)
         nsIdUpdated[clazz]?.let {
-            if (it > 0) rxBus.send(EventNSClientNewLog("◄ NS_ID", "$item $it"))
+            if (it > 0) nsClientMvvmRepository.addLog("◄ NS_ID", "$item $it")
         }
         nsIdUpdated.removeClass(clazz)
         durationUpdated[clazz]?.let {
-            if (it > 0) rxBus.send(EventNSClientNewLog("◄ DURATION", "$item $it"))
+            if (it > 0) nsClientMvvmRepository.addLog("◄ DURATION", "$item $it")
         }
         durationUpdated.removeClass(clazz)
         ended[clazz]?.let {
-            if (it > 0) rxBus.send(EventNSClientNewLog("◄ CUT", "$item $it"))
+            if (it > 0) nsClientMvvmRepository.addLog("◄ CUT", "$item $it")
         }
         ended.removeClass(clazz)
     }

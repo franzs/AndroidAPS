@@ -9,7 +9,6 @@ import app.aaps.core.interfaces.db.PersistenceLayer
 import app.aaps.core.interfaces.logging.L
 import app.aaps.core.interfaces.nsclient.StoreDataForDb
 import app.aaps.core.interfaces.receivers.ReceiverStatusStore
-import app.aaps.core.interfaces.rx.events.EventNSClientNewLog
 import app.aaps.core.interfaces.source.NSClientSource
 import app.aaps.core.nssdk.interfaces.NSAndroidClient
 import app.aaps.core.nssdk.localmodel.ApiPermission
@@ -19,6 +18,7 @@ import app.aaps.core.nssdk.localmodel.Storage
 import app.aaps.core.nssdk.remotemodel.LastModified
 import app.aaps.core.utils.receivers.DataWorkerStorage
 import app.aaps.plugins.sync.nsShared.events.EventNSClientUpdateGuiStatus
+import app.aaps.plugins.sync.nsShared.mvvm.NSClientLog
 import app.aaps.plugins.sync.nsclient.ReceiverDelegate
 import app.aaps.plugins.sync.nsclientV3.DataSyncSelectorV3
 import app.aaps.plugins.sync.nsclientV3.NSClientV3Plugin
@@ -223,8 +223,8 @@ internal class LoadStatusWorkerTest : TestBaseWithProfile() {
         whenever(nsAndroidClient.getStatus())
             .thenThrow(RuntimeException(errorMessage))
 
-        val events = mutableListOf<EventNSClientNewLog>()
-        val subscription = rxBus.toObservable(EventNSClientNewLog::class.java).subscribe { events.add(it) }
+        val events = mutableListOf<NSClientLog>()
+        val subscription = rxBus.toObservable(NSClientLog::class.java).subscribe { events.add(it) }
 
         val result = sut.doWorkAndLog()
 

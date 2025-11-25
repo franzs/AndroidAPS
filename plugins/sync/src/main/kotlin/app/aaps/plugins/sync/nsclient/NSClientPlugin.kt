@@ -8,11 +8,11 @@ import android.os.IBinder
 import androidx.preference.PreferenceCategory
 import androidx.preference.PreferenceManager
 import androidx.preference.PreferenceScreen
-import app.aaps.core.data.configuration.Constants
 import app.aaps.core.data.plugin.PluginType
 import app.aaps.core.interfaces.logging.AAPSLogger
 import app.aaps.core.interfaces.logging.LTag
 import app.aaps.core.interfaces.nsclient.NSAlarm
+import app.aaps.core.interfaces.nsclient.NSClientMvvmRepository
 import app.aaps.core.interfaces.nsclient.NSSettingsStatus
 import app.aaps.core.interfaces.plugin.PluginBase
 import app.aaps.core.interfaces.plugin.PluginDescription
@@ -22,9 +22,7 @@ import app.aaps.core.interfaces.resources.ResourceHelper
 import app.aaps.core.interfaces.rx.AapsSchedulers
 import app.aaps.core.interfaces.rx.bus.RxBus
 import app.aaps.core.interfaces.rx.events.EventAppExit
-import app.aaps.core.interfaces.rx.events.EventNSClientNewLog
 import app.aaps.core.interfaces.rx.events.EventPreferenceChange
-import app.aaps.core.interfaces.rx.events.EventSWSyncStatus
 import app.aaps.core.interfaces.sync.DataSyncSelector
 import app.aaps.core.interfaces.sync.NsClient
 import app.aaps.core.interfaces.sync.Sync
@@ -43,9 +41,6 @@ import app.aaps.core.validators.preferences.AdaptiveStringPreference
 import app.aaps.core.validators.preferences.AdaptiveSwitchPreference
 import app.aaps.plugins.sync.R
 import app.aaps.plugins.sync.nsShared.NSClientFragment
-import app.aaps.plugins.sync.nsShared.events.EventNSClientStatus
-import app.aaps.plugins.sync.nsShared.events.EventNSClientUpdateGuiData
-import app.aaps.plugins.sync.nsShared.events.EventNSClientUpdateGuiStatus
 import app.aaps.plugins.sync.nsclient.data.AlarmAck
 import app.aaps.plugins.sync.nsclient.extensions.toJson
 import app.aaps.plugins.sync.nsclient.services.NSClientService
@@ -69,7 +64,8 @@ class NSClientPlugin @Inject constructor(
     private val dateUtil: DateUtil,
     private val profileUtil: ProfileUtil,
     private val nsSettingsStatus: NSSettingsStatus,
-    private val decimalFormatter: DecimalFormatter
+    private val decimalFormatter: DecimalFormatter,
+    private val nsClientMvvmRepository: NSClientMvvmRepository
 ) : NsClient, Sync, PluginBase(
     PluginDescription()
         .mainType(PluginType.SYNC)
@@ -83,7 +79,6 @@ class NSClientPlugin @Inject constructor(
 ) {
 
     private val disposable = CompositeDisposable()
-    override val listLog: MutableList<EventNSClientNewLog> = ArrayList()
     override val dataSyncSelector: DataSyncSelector get() = dataSyncSelectorV1
     override var status = ""
     var nsClientService: NSClientService? = null
@@ -97,25 +92,9 @@ class NSClientPlugin @Inject constructor(
         super.onStart()
         receiverDelegate.grabReceiversState()
         disposable += rxBus
-            .toObservable(EventNSClientStatus::class.java)
-            .observeOn(aapsSchedulers.io)
-            .subscribe({ event ->
-                           status = event.getStatus(context)
-                           rxBus.send(EventNSClientUpdateGuiStatus())
-                           // Pass to setup wizard
-                           rxBus.send(EventSWSyncStatus(event.getStatus(context)))
-                       }, fabricPrivacy::logException)
-        disposable += rxBus
             .toObservable(EventAppExit::class.java)
             .observeOn(aapsSchedulers.io)
             .subscribe({ if (nsClientService != null) context.unbindService(mConnection) }, fabricPrivacy::logException)
-        disposable += rxBus
-            .toObservable(EventNSClientNewLog::class.java)
-            .observeOn(aapsSchedulers.io)
-            .subscribe({ event: EventNSClientNewLog ->
-                           addToLog(event)
-                           aapsLogger.debug(LTag.NSCLIENT, event.action + " " + event.logText)
-                       }, fabricPrivacy::logException)
     }
 
     override fun onStop() {
@@ -142,17 +121,6 @@ class NSClientPlugin @Inject constructor(
     }
 
     override fun detectedNsVersion(): String = nsSettingsStatus.getVersion()
-
-    private fun addToLog(ev: EventNSClientNewLog) {
-        synchronized(listLog) {
-            listLog.add(0, ev)
-            // remove the first line if log is too large
-            if (listLog.size >= Constants.MAX_LOG_LINES) {
-                listLog.removeAt(listLog.size - 1)
-            }
-            rxBus.send(EventNSClientUpdateGuiData())
-        }
-    }
 
     override fun resend(reason: String) {
         nsClientService?.resend(reason)

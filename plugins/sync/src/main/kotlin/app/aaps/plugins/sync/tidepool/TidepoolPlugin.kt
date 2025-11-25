@@ -15,7 +15,6 @@ import app.aaps.core.interfaces.plugin.PluginDescription
 import app.aaps.core.interfaces.resources.ResourceHelper
 import app.aaps.core.interfaces.rx.AapsSchedulers
 import app.aaps.core.interfaces.rx.bus.RxBus
-import app.aaps.core.interfaces.rx.events.EventNSClientNewLog
 import app.aaps.core.interfaces.rx.events.EventNewBG
 import app.aaps.core.interfaces.rx.events.EventPreferenceChange
 import app.aaps.core.interfaces.rx.events.EventSWSyncStatus
@@ -89,7 +88,7 @@ class TidepoolPlugin @Inject constructor(
             .toObservable(EventConnectivityOptionChanged::class.java)
             .observeOn(aapsSchedulers.io)
             .subscribe({ ev ->
-                           rxBus.send(EventNSClientNewLog("● CONNECTIVITY", ev.blockingReason))
+                           rxBus.send(EventTidepoolStatus("● CONNECTIVITY ${ev.blockingReason}"))
                            tidepoolUploader.resetInstance()
                            if (isAllowed) doUpload(EventConnectivityOptionChanged::class.simpleName)
                        }, fabricPrivacy::logException)
