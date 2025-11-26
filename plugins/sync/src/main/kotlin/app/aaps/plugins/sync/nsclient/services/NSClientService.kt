@@ -592,7 +592,7 @@ class NSClientService : DaggerService() {
         }
     }
 
-    fun dbUpdate(collection: String, @Suppress("LocalVariableName") _id: String?, data: JSONObject?, originalObject: Any, progress: String) {
+    fun dbUpdate(collection: String, @Suppress("LocalVariableName") _id: String?, data: JSONObject, originalObject: Any, progress: String) {
         try {
             if (_id == null) return
             if (!isConnected || !hasWriteAuth) return
@@ -601,7 +601,7 @@ class NSClientService : DaggerService() {
             message.put("_id", _id)
             message.put("data", data)
             socket?.emit("dbUpdate", message, NSUpdateAck("dbUpdate", _id, aapsLogger, this, dateUtil, dataWorkerStorage, originalObject))
-            nsClientMvvmRepository.addLog("► UPDATE $collection", "Sent ${originalObject.javaClass.simpleName} $_id $data$progress")
+            nsClientMvvmRepository.addLog("► UPDATE $collection", "Sent ${originalObject.javaClass.simpleName} $_id $progress", data)
         } catch (e: JSONException) {
             aapsLogger.error("Unhandled exception", e)
         }
@@ -614,7 +614,7 @@ class NSClientService : DaggerService() {
             message.put("collection", collection)
             message.put("data", data)
             socket?.emit("dbAdd", message, NSAddAck(aapsLogger, rxBus, this, dateUtil, dataWorkerStorage, originalObject))
-            nsClientMvvmRepository.addLog("► ADD $collection", "Sent " + originalObject.javaClass.simpleName + " " + data + " " + progress)
+            nsClientMvvmRepository.addLog("► ADD $collection", "Sent " + originalObject.javaClass.simpleName + " " + progress, data)
         } catch (e: JSONException) {
             aapsLogger.error("Unhandled exception", e)
         }

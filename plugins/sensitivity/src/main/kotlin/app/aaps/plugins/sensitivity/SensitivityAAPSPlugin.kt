@@ -27,7 +27,7 @@ import app.aaps.core.validators.preferences.AdaptiveDoublePreference
 import app.aaps.core.validators.preferences.AdaptiveIntPreference
 import app.aaps.plugins.sensitivity.extensions.isPSEvent5minBack
 import app.aaps.plugins.sensitivity.extensions.isTherapyEventEvent5minBack
-import org.json.JSONObject
+import kotlinx.serialization.json.JsonObject
 import java.util.Arrays
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -146,14 +146,14 @@ class SensitivityAAPSPlugin @Inject constructor(
     override val id: SensitivityType
         get() = SensitivityType.SENSITIVITY_AAPS
 
-    override fun configuration(): JSONObject =
-        JSONObject()
+    override fun configuration(): JsonObject =
+        JsonObject(emptyMap())
             .put(IntKey.AutosensPeriod, preferences)
             .put(DoubleKey.AbsorptionMaxTime, preferences)
             .put(DoubleKey.AutosensMin, preferences)
             .put(DoubleKey.AutosensMin, preferences)
 
-    override fun applyConfiguration(configuration: JSONObject) {
+    override fun applyConfiguration(configuration: JsonObject) {
         configuration
             .store(IntKey.AutosensPeriod, preferences)
             .store(DoubleKey.AutosensMin, preferences)

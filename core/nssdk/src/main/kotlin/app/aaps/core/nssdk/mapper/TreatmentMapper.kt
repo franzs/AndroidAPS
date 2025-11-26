@@ -15,7 +15,6 @@ import app.aaps.core.nssdk.localmodel.treatment.NSTherapyEvent
 import app.aaps.core.nssdk.localmodel.treatment.NSTreatment
 import app.aaps.core.nssdk.remotemodel.RemoteTreatment
 import com.google.gson.Gson
-import org.json.JSONObject
 import java.util.concurrent.TimeUnit
 
 /**
@@ -220,7 +219,7 @@ internal fun RemoteTreatment.toTreatment(): NSTreatment? {
                 endId = this.endId,
                 pumpType = this.pumpType,
                 pumpSerial = this.pumpSerial,
-                profileJson = JSONObject(this.profileJson),
+                profileJson = this.profileJson,
                 originalProfileName = this.originalProfileName,
                 originalCustomizedName = this.originalCustomizedName,
                 originalTimeshift = this.originalTimeshift,
@@ -252,7 +251,7 @@ internal fun RemoteTreatment.toTreatment(): NSTreatment? {
                 endId = this.endId,
                 pumpType = this.pumpType,
                 pumpSerial = this.pumpSerial,
-                profileJson = this.profileJson?.let { JSONObject(this.profileJson) },
+                profileJson = this.profileJson,
                 profile = this.profile,
                 originalProfileName = this.originalProfileName,
                 originalDuration = this.originalDuration,
@@ -500,7 +499,7 @@ internal fun NSTreatment.toRemoteTreatment(): RemoteTreatment? =
             endId = endId,
             pumpType = pumpType,
             pumpSerial = pumpSerial,
-            profileJson = profileJson.toString(),
+            profileJson = profileJson,
             originalProfileName = originalProfileName,
             originalCustomizedName = originalCustomizedName,
             originalTimeshift = originalTimeshift,
@@ -636,6 +635,4 @@ internal fun NSTreatment.toRemoteTreatment(): RemoteTreatment? =
                 pumpType = pumpType,
                 pumpSerial = pumpSerial
             )
-
-        else                        -> null
     }

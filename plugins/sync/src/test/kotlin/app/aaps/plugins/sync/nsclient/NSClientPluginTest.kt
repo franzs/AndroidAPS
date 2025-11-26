@@ -1,5 +1,6 @@
 package app.aaps.plugins.sync.nsclient
 
+import app.aaps.core.interfaces.nsclient.NSClientMvvmRepository
 import app.aaps.core.interfaces.nsclient.NSSettingsStatus
 import app.aaps.shared.tests.TestBaseWithProfile
 import com.google.common.truth.Truth.assertThat
@@ -12,13 +13,14 @@ class NSClientPluginTest : TestBaseWithProfile() {
     @Mock lateinit var receiverDelegate: ReceiverDelegate
     @Mock lateinit var dataSyncSelectorV1: DataSyncSelectorV1
     @Mock lateinit var nsSettingsStatus: NSSettingsStatus
+    @Mock lateinit var nsClientMvvmRepository: NSClientMvvmRepository
 
     private lateinit var nsClientPlugin: NSClientPlugin
 
     @BeforeEach fun prepare() {
         nsClientPlugin = NSClientPlugin(
             aapsLogger, aapsSchedulers, rxBus, rh, context, fabricPrivacy, preferences, receiverDelegate, dataSyncSelectorV1,
-            dateUtil, profileUtil, nsSettingsStatus, decimalFormatter
+            dateUtil, profileUtil, nsSettingsStatus, decimalFormatter, nsClientMvvmRepository
         )
     }
 

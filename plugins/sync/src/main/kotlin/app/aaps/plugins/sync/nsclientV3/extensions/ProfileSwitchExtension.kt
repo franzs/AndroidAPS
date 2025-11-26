@@ -12,11 +12,12 @@ import app.aaps.core.nssdk.localmodel.treatment.NSProfileSwitch
 import app.aaps.core.objects.extensions.getCustomizedName
 import app.aaps.core.objects.extensions.pureProfileFromJson
 import app.aaps.core.objects.profile.ProfileSealed
+import org.json.JSONObject
 import java.security.InvalidParameterException
 
 fun NSProfileSwitch.toProfileSwitch(activePlugin: ActivePlugin, dateUtil: DateUtil): PS? {
     val pureProfile =
-        profileJson?.let { pureProfileFromJson(it, dateUtil) ?: return null }
+        profileJson?.let { pureProfileFromJson(JSONObject(it), dateUtil) ?: return null }
             ?: activePlugin.activeProfileSource.profile?.getSpecificProfile(profile) ?: return null
 
     val profileSealed = ProfileSealed.Pure(value = pureProfile, activePlugin = null)
@@ -57,7 +58,7 @@ fun PS.toNSProfileSwitch(dateUtil: DateUtil, decimalFormatter: DecimalFormatter)
         profile = unmodifiedCustomizedName,
         originalProfileName = profileName,
         originalDuration = duration,
-        profileJson = ProfileSealed.PS(value = notCustomized, activePlugin = null).toPureNsJson(dateUtil),
+        profileJson = ProfileSealed.PS(value = notCustomized, activePlugin = null).toPureNsJson(dateUtil).toString(),
         identifier = ids.nightscoutId,
         pumpId = ids.pumpId,
         pumpType = ids.pumpType?.name,

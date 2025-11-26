@@ -20,6 +20,7 @@ import app.aaps.core.data.model.TrendArrow
 import app.aaps.core.data.time.T
 import app.aaps.core.data.ue.Sources
 import app.aaps.core.interfaces.db.PersistenceLayer
+import app.aaps.core.interfaces.nsclient.NSClientMvvmRepository
 import app.aaps.core.interfaces.pump.VirtualPump
 import app.aaps.core.interfaces.source.NSClientSource
 import app.aaps.core.keys.BooleanKey
@@ -46,6 +47,7 @@ class StoreDataForDbImplTest : TestBaseWithProfile() {
     @Mock private lateinit var persistenceLayer: PersistenceLayer
     @Mock private lateinit var nsClientSource: NSClientSource
     @Mock private lateinit var virtualPump: VirtualPump
+    @Mock private lateinit var nsClientMvvmRepository: NSClientMvvmRepository
 
     private lateinit var storeDataForDb: StoreDataForDbImpl
 
@@ -150,12 +152,12 @@ class StoreDataForDbImplTest : TestBaseWithProfile() {
 
         storeDataForDb = StoreDataForDbImpl(
             aapsLogger = aapsLogger,
-            rxBus = rxBus,
             persistenceLayer = persistenceLayer,
             preferences = preferences,
             config = config,
             nsClientSource = nsClientSource,
-            virtualPump = virtualPump
+            virtualPump = virtualPump,
+            nsClientMvvmRepository = nsClientMvvmRepository
         )
     }
 

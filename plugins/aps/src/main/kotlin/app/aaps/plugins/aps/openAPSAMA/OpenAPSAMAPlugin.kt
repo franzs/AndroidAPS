@@ -54,7 +54,7 @@ import app.aaps.plugins.aps.R
 import app.aaps.plugins.aps.events.EventOpenAPSUpdateGui
 import app.aaps.plugins.aps.events.EventResetOpenAPSGui
 import app.aaps.plugins.aps.openAPSSMB.GlucoseStatusCalculatorSMB
-import org.json.JSONObject
+import kotlinx.serialization.json.JsonObject
 import javax.inject.Inject
 import javax.inject.Provider
 import javax.inject.Singleton
@@ -308,8 +308,8 @@ class OpenAPSAMAPlugin @Inject constructor(
     }
 
     // Needed only for dynamic ISF so far
-    override fun configuration(): JSONObject = JSONObject()
-    override fun applyConfiguration(configuration: JSONObject) {}
+    override fun configuration(): JsonObject = JsonObject(emptyMap())
+    override fun applyConfiguration(configuration: JsonObject) {}
 
     override fun addPreferenceScreen(preferenceManager: PreferenceManager, parent: PreferenceScreen, context: Context, requiredKey: String?) {
         if (requiredKey != null && requiredKey != "absorption_ama_advanced") return

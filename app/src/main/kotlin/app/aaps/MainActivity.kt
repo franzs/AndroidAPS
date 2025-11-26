@@ -233,13 +233,7 @@ class MainActivity : DaggerAppCompatActivityWithResult() {
 
                     R.id.nav_plugin_preferences -> {
                         val plugin = (binding.mainPager.adapter as TabPageAdapter).getPluginAt(binding.mainPager.currentItem)
-                        protectionCheck.queryProtection(this@MainActivity, ProtectionCheck.Protection.PREFERENCES, {
-                            startActivity(
-                                Intent(this@MainActivity, PreferencesActivity::class.java)
-                                    .setAction("info.nightscout.androidaps.MainActivity")
-                                    .putExtra(UiInteraction.PLUGIN_NAME, plugin.javaClass.simpleName)
-                            )
-                        })
+                        uiInteraction.runPreferencesForPlugin(this@MainActivity, plugin.javaClass.simpleName)
                         true
                     }
                     /*

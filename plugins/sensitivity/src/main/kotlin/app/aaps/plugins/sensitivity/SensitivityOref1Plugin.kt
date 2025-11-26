@@ -27,7 +27,7 @@ import app.aaps.core.utils.Percentile
 import app.aaps.core.validators.preferences.AdaptiveDoublePreference
 import app.aaps.plugins.sensitivity.extensions.isPSEvent5minBack
 import app.aaps.plugins.sensitivity.extensions.isTherapyEventEvent5minBack
-import org.json.JSONObject
+import kotlinx.serialization.json.JsonObject
 import java.util.Arrays
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -210,14 +210,14 @@ class SensitivityOref1Plugin @Inject constructor(
     override val isMinCarbsAbsorptionDynamic: Boolean = false
     override val isOref1: Boolean = true
 
-    override fun configuration(): JSONObject =
-        JSONObject()
+    override fun configuration(): JsonObject =
+        JsonObject(emptyMap())
             .put(DoubleKey.ApsSmbMin5MinCarbsImpact, preferences)
             .put(DoubleKey.AbsorptionCutOff, preferences)
             .put(DoubleKey.AutosensMin, preferences)
             .put(DoubleKey.AutosensMax, preferences)
 
-    override fun applyConfiguration(configuration: JSONObject) {
+    override fun applyConfiguration(configuration: JsonObject) {
         configuration
             .store(DoubleKey.ApsSmbMin5MinCarbsImpact, preferences)
             .store(DoubleKey.AbsorptionCutOff, preferences)

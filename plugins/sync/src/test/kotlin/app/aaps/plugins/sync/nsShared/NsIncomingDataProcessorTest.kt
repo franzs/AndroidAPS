@@ -2,6 +2,7 @@ package app.aaps.plugins.sync.nsShared
 
 import app.aaps.core.data.model.TrendArrow
 import app.aaps.core.data.time.T
+import app.aaps.core.interfaces.nsclient.NSClientMvvmRepository
 import app.aaps.core.interfaces.nsclient.StoreDataForDb
 import app.aaps.core.interfaces.profile.ProfileSource
 import app.aaps.core.interfaces.source.NSClientSource
@@ -47,6 +48,7 @@ class NsIncomingDataProcessorTest : TestBaseWithProfile() {
     @Mock lateinit var storeDataForDb: StoreDataForDb
     @Mock lateinit var profileSource: ProfileSource
     @Mock lateinit var uiInteraction: UiInteraction
+    @Mock lateinit var nsClientMvvmRepository: NSClientMvvmRepository
 
     @BeforeEach
     fun setUp() {
@@ -69,7 +71,8 @@ class NsIncomingDataProcessorTest : TestBaseWithProfile() {
             config = config,
             profileStoreProvider = profileStoreProvider,
             profileSource = profileSource,
-            uiInteraction = uiInteraction
+            uiInteraction = uiInteraction,
+            nsClientMvvmRepository = nsClientMvvmRepository
         )
     }
 
@@ -464,7 +467,7 @@ class NsIncomingDataProcessorTest : TestBaseWithProfile() {
                 endId = null,
                 pumpType = null,
                 pumpSerial = null,
-                profileJson = validProfile.toPureNsJson(dateUtil)
+                profileJson = validProfile.toPureNsJson(dateUtil).toString()
             )
         )
 
@@ -496,7 +499,7 @@ class NsIncomingDataProcessorTest : TestBaseWithProfile() {
                 endId = null,
                 pumpType = null,
                 pumpSerial = null,
-                profileJson = validProfile.toPureNsJson(dateUtil)
+                profileJson = validProfile.toPureNsJson(dateUtil).toString()
             )
         )
 
@@ -526,7 +529,7 @@ class NsIncomingDataProcessorTest : TestBaseWithProfile() {
                 endId = null,
                 pumpType = null,
                 pumpSerial = null,
-                profileJson = JSONObject()
+                profileJson = JSONObject().toString()
             )
         )
 
@@ -556,7 +559,7 @@ class NsIncomingDataProcessorTest : TestBaseWithProfile() {
                 endId = null,
                 pumpType = null,
                 pumpSerial = null,
-                profileJson = validProfile.toPureNsJson(dateUtil)
+                profileJson = validProfile.toPureNsJson(dateUtil).toString()
             )
         )
 
@@ -588,7 +591,7 @@ class NsIncomingDataProcessorTest : TestBaseWithProfile() {
                 endId = null,
                 pumpType = null,
                 pumpSerial = null,
-                profileJson = validProfile.toPureNsJson(dateUtil)
+                profileJson = validProfile.toPureNsJson(dateUtil).toString()
             )
         )
 
@@ -618,7 +621,7 @@ class NsIncomingDataProcessorTest : TestBaseWithProfile() {
                 endId = null,
                 pumpType = null,
                 pumpSerial = null,
-                profileJson = JSONObject()
+                profileJson = JSONObject().toString()
             )
         )
 

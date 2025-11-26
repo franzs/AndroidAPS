@@ -48,6 +48,9 @@
     <string name="aps_mode_title">APS Mode</string>
     <string name="extended_bolus">Extended bolus</string>
     <string name="paused">Paused</string>
+    <string name="running">Running</string>
+    <string name="open_menu">Open menu</string>
+    <string name="close_menu">Close menu</string>
     <string name="tdd_total">TDD Total</string>
     <string name="tdd_old_data">Old data</string>
     <string name="goingtodeliver">Going to deliver %1$.2f U</string>

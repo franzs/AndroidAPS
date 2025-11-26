@@ -31,8 +31,6 @@ import app.aaps.pump.common.data.PumpStatus
 import app.aaps.pump.common.defs.PumpDriverState
 import app.aaps.pump.common.sync.PumpSyncEntriesCreator
 import app.aaps.pump.common.sync.PumpSyncStorage
-import com.google.gson.Gson
-import com.google.gson.GsonBuilder
 import io.reactivex.rxjava3.disposables.CompositeDisposable
 import javax.inject.Provider
 
@@ -73,8 +71,6 @@ abstract class PumpPluginAbstract protected constructor(
             field = value
             pumpDescription.fillFor(value)
         }
-
-    protected var gson: Gson = GsonBuilder().excludeFieldsWithoutExposeAnnotation().create()
 
     abstract fun initPumpStatusData()
 

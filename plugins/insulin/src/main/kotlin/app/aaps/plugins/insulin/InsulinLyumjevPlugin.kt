@@ -8,7 +8,8 @@ import app.aaps.core.interfaces.resources.ResourceHelper
 import app.aaps.core.interfaces.rx.bus.RxBus
 import app.aaps.core.interfaces.ui.UiInteraction
 import app.aaps.core.interfaces.utils.HardLimits
-import org.json.JSONObject
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -26,8 +27,8 @@ class InsulinLyumjevPlugin @Inject constructor(
     override val id get(): Insulin.InsulinType = Insulin.InsulinType.OREF_LYUMJEV
     override val friendlyName get(): String = rh.gs(R.string.lyumjev)
 
-    override fun configuration(): JSONObject = JSONObject()
-    override fun applyConfiguration(configuration: JSONObject) {}
+    override fun configuration(): JsonObject = Json.decodeFromString<JsonObject>("{}")
+    override fun applyConfiguration(configuration: JsonObject) {}
 
     override fun commentStandardText(): String = rh.gs(R.string.lyumjev)
 

@@ -20,6 +20,8 @@ android {
 dependencies {
 
     api(libs.net.danlew.android.joda)
+    api(libs.kotlinx.serialization.core)
+    api(libs.kotlinx.serialization.json)
 
     //Firebase
     api(platform(libs.com.google.firebase.bom))

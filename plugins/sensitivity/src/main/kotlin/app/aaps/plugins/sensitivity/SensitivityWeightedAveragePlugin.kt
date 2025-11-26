@@ -25,7 +25,7 @@ import app.aaps.core.objects.extensions.store
 import app.aaps.core.utils.MidnightUtils
 import app.aaps.plugins.sensitivity.extensions.isPSEvent5minBack
 import app.aaps.plugins.sensitivity.extensions.isTherapyEventEvent5minBack
-import org.json.JSONObject
+import kotlinx.serialization.json.JsonObject
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.math.roundToInt
@@ -165,14 +165,14 @@ class SensitivityWeightedAveragePlugin @Inject constructor(
     override val id: SensitivityType
         get() = SensitivityType.SENSITIVITY_WEIGHTED
 
-    override fun configuration(): JSONObject =
-        JSONObject()
+    override fun configuration(): JsonObject =
+        JsonObject(emptyMap())
             .put(DoubleKey.AutosensMin, preferences)
             .put(DoubleKey.AutosensMax, preferences)
             .put(DoubleKey.AbsorptionMaxTime, preferences)
             .put(IntKey.AutosensPeriod, preferences)
 
-    override fun applyConfiguration(configuration: JSONObject) {
+    override fun applyConfiguration(configuration: JsonObject) {
         configuration
             .store(DoubleKey.AutosensMin, preferences)
             .store(DoubleKey.AutosensMax, preferences)

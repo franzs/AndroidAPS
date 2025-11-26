@@ -93,11 +93,10 @@ import app.aaps.plugins.sync.nsclientV3.workers.LoadLastModificationWorker
 import app.aaps.plugins.sync.nsclientV3.workers.LoadProfileStoreWorker
 import app.aaps.plugins.sync.nsclientV3.workers.LoadStatusWorker
 import app.aaps.plugins.sync.nsclientV3.workers.LoadTreatmentsWorker
-import com.google.gson.Gson
-import com.google.gson.GsonBuilder
 import io.reactivex.rxjava3.disposables.CompositeDisposable
 import io.reactivex.rxjava3.kotlin.plusAssign
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.encodeToJsonElement
 import java.security.InvalidParameterException
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -425,8 +424,6 @@ class NSClientV3Plugin @Inject constructor(
 
     enum class Operation { CREATE, UPDATE }
 
-    private val gson: Gson = GsonBuilder().create()
-
     private fun slowDown() {
         if (preferences.get(BooleanKey.NsClientSlowSync)) SystemClock.sleep(250)
         else SystemClock.sleep(10)
@@ -435,7 +432,7 @@ class NSClientV3Plugin @Inject constructor(
     private suspend fun dbOperationProfileStore(collection: String = "profile", dataPair: DataSyncSelector.DataPair, progress: String): Boolean {
         val data = (dataPair as DataSyncSelector.PairProfileStore).value
         try {
-            nsClientMvvmRepository.addLog("► ADD $collection", "Sent ${dataPair.javaClass.simpleName} <i>$data</i> $progress")
+            nsClientMvvmRepository.addLog("► ADD $collection", "Sent ${dataPair.javaClass.simpleName} $progress", data)
             nsAndroidClient?.createProfileStore(data)?.let { result ->
                 when (result.response) {
                     200  -> nsClientMvvmRepository.addLog("◄ UPDATED", "OK ProfileStore")
@@ -460,7 +457,7 @@ class NSClientV3Plugin @Inject constructor(
     private suspend fun dbOperationDeviceStatus(collection: String = "devicestatus", dataPair: DataSyncSelector.PairDeviceStatus, progress: String): Boolean {
         try {
             val data = dataPair.value.toNSDeviceStatus()
-            nsClientMvvmRepository.addLog("► ADD $collection", "Sent ${dataPair.javaClass.simpleName} <i>${gson.toJson(data)}</i> $progress")
+            nsClientMvvmRepository.addLog("► ADD $collection", "Sent ${dataPair.javaClass.simpleName} $progress", Json {}.encodeToJsonElement(data))
             nsAndroidClient?.createDeviceStatus(data)?.let { result ->
                 when (result.response) {
                     200  -> nsClientMvvmRepository.addLog("◄ UPDATED", "OK ${dataPair.value.javaClass.simpleName}")
@@ -497,14 +494,15 @@ class NSClientV3Plugin @Inject constructor(
             val id = dataPair.value.ids.nightscoutId
             nsClientMvvmRepository.addLog(
                 when (operation) {
-                        Operation.CREATE -> "► ADD $collection"
-                        Operation.UPDATE -> "► UPDATE $collection"
-                    },
-                    when (operation) {
-                        Operation.CREATE -> "Sent ${dataPair.javaClass.simpleName} <i>${gson.toJson(data)}</i> $progress"
-                        Operation.UPDATE -> "Sent ${dataPair.javaClass.simpleName} $id <i>${gson.toJson(data)}</i> $progress"
-                    }
-                )
+                    Operation.CREATE -> "► ADD $collection"
+                    Operation.UPDATE -> "► UPDATE $collection"
+                },
+                when (operation) {
+                    Operation.CREATE -> "Sent ${dataPair.javaClass.simpleName} $progress"
+                    Operation.UPDATE -> "Sent ${dataPair.javaClass.simpleName} $id $progress"
+                },
+                Json {}.encodeToJsonElement(data)
+            )
             call?.let { it(data) }?.let { result ->
                 when (result.response) {
                     200  -> nsClientMvvmRepository.addLog("◄ UPDATED", "OK ${dataPair.value.javaClass.simpleName}")
@@ -540,15 +538,16 @@ class NSClientV3Plugin @Inject constructor(
             val data = dataPair.value.toNSFood()
             val id = dataPair.value.ids.nightscoutId
             nsClientMvvmRepository.addLog(
-                    when (operation) {
-                        Operation.CREATE -> "► ADD $collection"
-                        Operation.UPDATE -> "► UPDATE $collection"
-                    },
-                    when (operation) {
-                        Operation.CREATE -> "Sent ${dataPair.javaClass.simpleName} <i>${gson.toJson(data)}</i> $progress"
-                        Operation.UPDATE -> "Sent ${dataPair.javaClass.simpleName} $id <i>${gson.toJson(data)}</i> $progress"
-                    }
-                )
+                when (operation) {
+                    Operation.CREATE -> "► ADD $collection"
+                    Operation.UPDATE -> "► UPDATE $collection"
+                },
+                when (operation) {
+                    Operation.CREATE -> "Sent ${dataPair.javaClass.simpleName} $progress"
+                    Operation.UPDATE -> "Sent ${dataPair.javaClass.simpleName} $id $progress"
+                },
+                Json {}.encodeToJsonElement(data)
+            )
             call?.let { it(data) }?.let { result ->
                 when (result.response) {
                     200  -> nsClientMvvmRepository.addLog("◄ UPDATED", "OK ${dataPair.value.javaClass.simpleName}")
@@ -557,7 +556,7 @@ class NSClientV3Plugin @Inject constructor(
                     404  -> nsClientMvvmRepository.addLog("◄ NOT_FOUND", "${dataPair.value.javaClass.simpleName} ${result.errorResponse}")
 
                     else -> {
-                        nsClientMvvmRepository.addLog("◄ ERROR", "${result.errorResponse} ")
+                        nsClientMvvmRepository.addLog("◄ ERROR", "${result.errorResponse}")
                         return config.ignoreNightscoutV3Errors()
                     }
                 }
@@ -605,15 +604,16 @@ class NSClientV3Plugin @Inject constructor(
             try {
                 val id = if (dataPair.value is HasIDs) (dataPair.value as HasIDs).ids.nightscoutId else ""
                 nsClientMvvmRepository.addLog(
-                        when (operation) {
-                            Operation.CREATE -> "► ADD $collection"
-                            Operation.UPDATE -> "► UPDATE $collection"
-                        },
-                        when (operation) {
-                            Operation.CREATE -> "Sent ${dataPair.javaClass.simpleName} <i>${gson.toJson(data)}</i> $progress"
-                            Operation.UPDATE -> "Sent ${dataPair.javaClass.simpleName} $id <i>${gson.toJson(data)}</i> $progress"
-                        }
-                    )
+                    when (operation) {
+                        Operation.CREATE -> "► ADD $collection"
+                        Operation.UPDATE -> "► UPDATE $collection"
+                    },
+                    when (operation) {
+                        Operation.CREATE -> "Sent ${dataPair.javaClass.simpleName} $progress"
+                        Operation.UPDATE -> "Sent ${dataPair.javaClass.simpleName} $id $progress"
+                    },
+                    Json.encodeToJsonElement(data)
+                )
                 call?.let { it(data) }?.let { result ->
                     when (result.response) {
                         200  -> nsClientMvvmRepository.addLog("◄ UPDATED", "OK ${dataPair.value.javaClass.simpleName}")

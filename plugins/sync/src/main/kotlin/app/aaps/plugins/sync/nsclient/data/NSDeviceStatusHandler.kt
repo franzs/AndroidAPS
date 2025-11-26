@@ -14,7 +14,8 @@ import app.aaps.core.keys.interfaces.Preferences
 import app.aaps.core.nssdk.interfaces.RunningConfiguration
 import app.aaps.core.nssdk.localmodel.devicestatus.NSDeviceStatus
 import app.aaps.core.utils.HtmlHelper
-import app.aaps.core.utils.JsonHelper
+import app.aaps.core.utils.JsonHelper.safeGetString
+import app.aaps.core.utils.JsonHelper.safeGetStringAllowNull
 import io.reactivex.rxjava3.disposables.CompositeDisposable
 import io.reactivex.rxjava3.kotlin.plusAssign
 import javax.inject.Inject
@@ -140,21 +141,16 @@ class NSDeviceStatusHandler @Inject constructor(
             }
             pump.extended?.let {
                 val extended = StringBuilder()
-                val keys: Iterator<*> = it.keys()
-                while (keys.hasNext()) {
-                    val key = keys.next() as String
-                    val value = it.getString(key)
-                    extended.append("<b>").append(key).append(":</b> ").append(value).append("<br>")
-                }
+                it.keys.forEach { key -> extended.append("<b>").append(key).append(":</b> ").append(it[key]).append("<br>") }
                 deviceStatusPumpData.extended = HtmlHelper.fromHtml(extended.toString())
-                deviceStatusPumpData.activeProfileName = JsonHelper.safeGetStringAllowNull(it, "ActiveProfile", null)
+                deviceStatusPumpData.activeProfileName = it.safeGetStringAllowNull("ActiveProfile", null)
             }
         }
     }
 
     private fun updateOpenApsData(nsDeviceStatus: NSDeviceStatus) {
         nsDeviceStatus.openaps?.suggested?.let {
-            JsonHelper.safeGetString(it, "timestamp")?.let { timestamp ->
+            it.safeGetString("timestamp")?.let { timestamp ->
                 val clock = dateUtil.fromISODateString(timestamp)
                 // check if this is new data
                 if (clock > processedDeviceStatusData.openAPSData.clockSuggested) {
@@ -171,7 +167,7 @@ class NSDeviceStatusHandler @Inject constructor(
             }
         }
         nsDeviceStatus.openaps?.enacted?.let {
-            JsonHelper.safeGetString(it, "timestamp")?.let { timestamp ->
+            it.safeGetString("timestamp")?.let { timestamp ->
                 val clock = dateUtil.fromISODateString(timestamp)
                 // check if this is new data
                 if (clock > processedDeviceStatusData.openAPSData.clockEnacted) {

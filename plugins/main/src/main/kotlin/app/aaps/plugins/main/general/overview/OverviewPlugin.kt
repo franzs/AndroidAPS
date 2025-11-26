@@ -4,7 +4,6 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.graphics.Typeface
 import android.os.Build
 import android.widget.TextView
 import androidx.preference.PreferenceCategory
@@ -58,7 +57,7 @@ import app.aaps.plugins.main.general.overview.notifications.receivers.DismissNot
 import app.aaps.shared.impl.rx.bus.RxBusImpl
 import io.reactivex.rxjava3.disposables.CompositeDisposable
 import io.reactivex.rxjava3.kotlin.plusAssign
-import org.json.JSONObject
+import kotlinx.serialization.json.JsonObject
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -142,8 +141,8 @@ class OverviewPlugin @Inject constructor(
         super.onStop()
     }
 
-    override fun configuration(): JSONObject =
-        JSONObject()
+    override fun configuration(): JsonObject =
+        JsonObject(emptyMap())
             .put(StringKey.GeneralUnits, preferences)
             .put(StringNonKey.QuickWizard, preferences)
             .put(IntKey.OverviewEatingSoonDuration, preferences)
@@ -169,9 +168,9 @@ class OverviewPlugin @Inject constructor(
             .put(IntKey.OverviewBattWarning, preferences)
             .put(IntKey.OverviewBattCritical, preferences)
             .put(IntKey.OverviewBolusPercentage, preferences)
-            .put(BooleanNonKey.AutosensUsedOnMainPhone.key, constraintsChecker.isAutosensModeEnabled().value())
+            .put(BooleanNonKey.AutosensUsedOnMainPhone, constraintsChecker.isAutosensModeEnabled().value())
 
-    override fun applyConfiguration(configuration: JSONObject) {
+    override fun applyConfiguration(configuration: JsonObject) {
         val previousUnits = preferences.getIfExists(StringKey.GeneralUnits) ?: "old"
         configuration
             .store(StringKey.GeneralUnits, preferences)
@@ -304,11 +303,12 @@ class OverviewPlugin @Inject constructor(
                 addPreference(AdaptiveIntPreference(ctx = context, intKey = IntKey.OverviewBageWarning, title = R.string.statuslights_bage_warning))
                 addPreference(AdaptiveIntPreference(ctx = context, intKey = IntKey.OverviewBageCritical, title = R.string.statuslights_bage_critical))
                 addPreference(
-                    AdaptiveClickPreference(ctx = context, stringKey = StringKey.OverviewCopySettingsFromNs, title = R.string.statuslights_copy_ns,
-                                            onPreferenceClickListener = {
-                                                nsSettingStatus.copyStatusLightsNsSettings(context)
-                                                true
-                                            })
+                    AdaptiveClickPreference(
+                        ctx = context, stringKey = StringKey.OverviewCopySettingsFromNs, title = R.string.statuslights_copy_ns,
+                        onPreferenceClickListener = {
+                            nsSettingStatus.copyStatusLightsNsSettings(context)
+                            true
+                        })
                 )
             })
             addPreference(AdaptiveIntPreference(ctx = context, intKey = IntKey.OverviewBolusPercentage, dialogMessage = R.string.deliverpartofboluswizard, title = app.aaps.core.ui.R.string.partialboluswizard))

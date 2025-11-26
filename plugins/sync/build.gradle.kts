@@ -1,5 +1,6 @@
 plugins {
     alias(libs.plugins.android.library)
+    alias(libs.plugins.compose.compiler)
     alias(libs.plugins.ksp)
     id("kotlin-android")
     id("android-module-dependencies")
@@ -9,6 +10,9 @@ plugins {
 
 android {
     namespace = "app.aaps.plugins.sync"
+    buildFeatures {
+        compose = true
+    }
 }
 
 dependencies {
@@ -21,6 +25,12 @@ dependencies {
     implementation(project(":core:utils"))
     implementation(project(":core:validators"))
     implementation(project(":shared:impl"))
+
+    // Compose
+    implementation(platform(libs.androidx.compose.bom))
+    implementation(libs.androidx.compose.material3)
+    implementation(libs.androidx.compose.material.icons.extended)
+    implementation(libs.androidx.lifecycle.runtime.compose)
 
 
     testImplementation(libs.kotlinx.coroutines.test)

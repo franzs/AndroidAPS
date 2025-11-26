@@ -1,8 +1,11 @@
 package app.aaps.core.nssdk.localmodel.treatment
 
 import app.aaps.core.nssdk.localmodel.entry.NsUnits
-import org.json.JSONObject
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
+@Serializable
+@SerialName("NSProfileSwitch")
 data class NSProfileSwitch(
     override var date: Long?,
     override val device: String? = null,
@@ -21,7 +24,7 @@ data class NSProfileSwitch(
     override val pumpType: String?,
     override val pumpSerial: String?,
     override var app: String? = null,
-    val profileJson: JSONObject?,
+    val profileJson: String?,
     val profile: String,
     val originalProfileName: String?,
     val timeShift: Long?,

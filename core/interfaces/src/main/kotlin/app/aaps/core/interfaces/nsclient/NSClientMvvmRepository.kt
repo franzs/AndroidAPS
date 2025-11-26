@@ -1,7 +1,10 @@
 package app.aaps.core.interfaces.nsclient
 
-import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
+import org.json.JSONObject
 
 /**
  * Interface for NSClient MVVM repository
@@ -24,9 +27,9 @@ interface NSClientMvvmRepository {
     val urlUpdate: StateFlow<String>
 
     /**
-     * Log event flow - emits new log entries as they occur
+     * Log list state flow - always has current log history
      */
-    val newLogItem: SharedFlow<Pair<String, String?>>
+    val logList: StateFlow<List<NSClientLog>>
 
     /**
      * Update queue size in NSClient fragment
@@ -44,7 +47,28 @@ interface NSClientMvvmRepository {
     fun updateUrl(url: String)
 
     /**
-     * Send new log entry to NSClient fragment
+     * Add new log entry to NSClient fragment
      */
-    fun addLog(action: String, logText: String?)
+    fun addLog(action: String, logText: String?, json: JsonElement?)
+
+    /**
+     * Add new log entry to NSClient fragment
+     */
+    fun addLog(action: String, logText: String?) {
+        addLog(action, logText, null as JsonElement?)
+    }
+
+    /**
+     * Add new log entry to NSClient fragment
+     */
+    @Deprecated("Migrate to kotlin's JsonObject")
+    fun addLog(action: String, logText: String?, json: JSONObject) {
+        val jsonObject = json.let { Json.parseToJsonElement(it.toString()) as JsonObject }
+        addLog(action, logText, jsonObject)
+    }
+
+    /**
+     * Clear all log entries
+     */
+    fun clearLog()
 }

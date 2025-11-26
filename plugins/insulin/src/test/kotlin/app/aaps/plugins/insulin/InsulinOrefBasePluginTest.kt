@@ -12,7 +12,7 @@ import app.aaps.core.interfaces.ui.UiInteraction
 import app.aaps.core.interfaces.utils.HardLimits
 import app.aaps.shared.tests.TestBase
 import com.google.common.truth.Truth.assertThat
-import org.json.JSONObject
+import kotlinx.serialization.json.JsonObject
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.Mock
@@ -46,8 +46,8 @@ class InsulinOrefBasePluginTest : TestBase() {
         override fun commentStandardText(): String = ""
         override val id get(): Insulin.InsulinType = Insulin.InsulinType.UNKNOWN
         override val friendlyName get(): String = ""
-        override fun configuration(): JSONObject = JSONObject()
-        override fun applyConfiguration(configuration: JSONObject) {}
+        override fun configuration(): JsonObject = JsonObject(emptyMap())
+        override fun applyConfiguration(configuration: JsonObject) {}
     }
 
     private lateinit var sut: InsulinBaseTest

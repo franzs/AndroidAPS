@@ -7,6 +7,7 @@ import androidx.work.WorkManager
 import androidx.work.testing.TestListenableWorkerBuilder
 import app.aaps.core.interfaces.db.PersistenceLayer
 import app.aaps.core.interfaces.logging.L
+import app.aaps.core.interfaces.nsclient.NSClientMvvmRepository
 import app.aaps.core.interfaces.nsclient.StoreDataForDb
 import app.aaps.core.interfaces.receivers.ReceiverStatusStore
 import app.aaps.core.interfaces.source.NSClientSource
@@ -39,6 +40,7 @@ internal class LoadLastModificationWorkerTest : TestBaseWithProfile() {
     @Mock lateinit var storeDataForDb: StoreDataForDb
     @Mock lateinit var l: L
     @Mock lateinit var nsClientSource: NSClientSource
+    @Mock lateinit var nsClientMvvmRepository: NSClientMvvmRepository
 
     private lateinit var nsClientV3Plugin: NSClientV3Plugin
     private lateinit var receiverDelegate: ReceiverDelegate
@@ -50,8 +52,8 @@ internal class LoadLastModificationWorkerTest : TestBaseWithProfile() {
             if (it is LoadLastModificationWorker) {
                 it.aapsLogger = aapsLogger
                 it.fabricPrivacy = fabricPrivacy
-                it.rxBus = rxBus
                 it.nsClientV3Plugin = nsClientV3Plugin
+                it.nsClientMvvmRepository = nsClientMvvmRepository
             }
         }
     }
@@ -63,7 +65,7 @@ internal class LoadLastModificationWorkerTest : TestBaseWithProfile() {
         nsClientV3Plugin = NSClientV3Plugin(
             aapsLogger, rh, preferences, aapsSchedulers, rxBus, context, fabricPrivacy,
             receiverDelegate, config, dateUtil, dataSyncSelectorV3, persistenceLayer,
-            nsClientSource, storeDataForDb, decimalFormatter, l
+            nsClientSource, storeDataForDb, decimalFormatter, l, nsClientMvvmRepository
         )
         nsClientV3Plugin.newestDataOnServer = null
     }

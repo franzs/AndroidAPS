@@ -18,7 +18,6 @@ dependencies {
     implementation(project(":core:ui"))
 
     api(libs.com.thoughtworks.xstream)
-    api(libs.com.google.code.gson)
     implementation(project(":core:keys"))
 
     ksp(libs.com.google.dagger.compiler)

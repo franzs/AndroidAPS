@@ -42,8 +42,8 @@ import app.aaps.plugins.aps.events.EventResetOpenAPSGui
 import app.aaps.plugins.aps.openAPSSMB.GlucoseStatusCalculatorSMB
 import app.aaps.plugins.aps.utils.ScriptReader
 import dagger.android.HasAndroidInjector
+import kotlinx.serialization.json.JsonObject
 import org.json.JSONException
-import org.json.JSONObject
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.math.floor
@@ -291,7 +291,7 @@ class TestOpenAPSAMAPlugin @Inject constructor(
         return value
     }
 
-    override fun configuration(): JSONObject = JSONObject()
-    override fun applyConfiguration(configuration: JSONObject) {
+    override fun configuration(): JsonObject = JsonObject(emptyMap())
+    override fun applyConfiguration(configuration: JsonObject) {
     }
 }

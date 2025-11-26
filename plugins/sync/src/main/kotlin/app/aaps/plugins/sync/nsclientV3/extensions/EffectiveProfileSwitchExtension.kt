@@ -9,10 +9,11 @@ import app.aaps.core.nssdk.localmodel.treatment.EventType
 import app.aaps.core.nssdk.localmodel.treatment.NSEffectiveProfileSwitch
 import app.aaps.core.objects.extensions.pureProfileFromJson
 import app.aaps.core.objects.profile.ProfileSealed
+import org.json.JSONObject
 import java.security.InvalidParameterException
 
 fun NSEffectiveProfileSwitch.toEffectiveProfileSwitch(dateUtil: DateUtil): EPS? {
-    val pureProfile = pureProfileFromJson(profileJson, dateUtil) ?: return null
+    val pureProfile = pureProfileFromJson(JSONObject(profileJson), dateUtil) ?: return null
     val profileSealed = ProfileSealed.Pure(value = pureProfile, activePlugin = null)
 
     return EPS(
@@ -41,7 +42,7 @@ fun EPS.toNSEffectiveProfileSwitch(dateUtil: DateUtil): NSEffectiveProfileSwitch
         isValid = isValid,
         date = timestamp,
         utcOffset = T.msecs(utcOffset).mins(),
-        profileJson = ProfileSealed.EPS(value = this, activePlugin = null).toPureNsJson(dateUtil),
+        profileJson = ProfileSealed.EPS(value = this, activePlugin = null).toPureNsJson(dateUtil).toString(),
         originalProfileName = originalProfileName,
         originalCustomizedName = originalCustomizedName,
         originalTimeshift = originalTimeshift,

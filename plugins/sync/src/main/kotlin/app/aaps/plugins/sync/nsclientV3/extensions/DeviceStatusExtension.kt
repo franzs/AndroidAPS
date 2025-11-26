@@ -2,25 +2,14 @@ package app.aaps.plugins.sync.nsclientV3.extensions
 
 import app.aaps.core.data.model.DS
 import app.aaps.core.nssdk.localmodel.devicestatus.NSDeviceStatus
-
-import com.google.gson.GsonBuilder
-import com.google.gson.JsonDeserializer
-import org.json.JSONObject
+import kotlinx.serialization.json.Json
 
 fun DS.toNSDeviceStatus(): NSDeviceStatus {
-    val deserializer: JsonDeserializer<JSONObject?> =
-        JsonDeserializer<JSONObject?> { json, _, _ ->
-            JSONObject(json.asJsonObject.toString())
-        }
-    val gson = GsonBuilder().also {
-        it.registerTypeAdapter(JSONObject::class.java, deserializer)
-    }.create()
-
-    val pump = gson.fromJson(pump, NSDeviceStatus.Pump::class.java)
+    val pump: NSDeviceStatus.Pump? = pump?.let { Json { ignoreUnknownKeys = true; encodeDefaults = true }.decodeFromString(it) }
     val openAps = NSDeviceStatus.OpenAps(
-        suggested = suggested?.let { JSONObject(it) },
-        enacted = enacted?.let { JSONObject(it) },
-        iob = iob?.let { JSONObject(it) },
+        suggested = suggested?.let { Json.decodeFromString(it) },
+        enacted = enacted?.let { Json.decodeFromString(it) },
+        iob = iob?.let { Json.decodeFromString(it) },
     )
     return NSDeviceStatus(
         date = timestamp,
@@ -29,7 +18,7 @@ fun DS.toNSDeviceStatus(): NSDeviceStatus {
         openaps = openAps,
         uploaderBattery = if (uploaderBattery != 0) uploaderBattery else null,
         isCharging = isCharging,
-        configuration = gson.fromJson(configuration, NSDeviceStatus.Configuration::class.java),
+        configuration = configuration?.let { Json.decodeFromString(it) },
         uploader = null
     )
 }

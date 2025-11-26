@@ -5,6 +5,7 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.annotation.RawRes
 import androidx.annotation.StringRes
+import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.FragmentManager
 import app.aaps.MainActivity
 import app.aaps.activities.HistoryBrowseActivity
@@ -12,6 +13,7 @@ import app.aaps.activities.MyPreferenceFragment
 import app.aaps.activities.PreferencesActivity
 import app.aaps.core.interfaces.notifications.Notification
 import app.aaps.core.interfaces.nsclient.NSAlarm
+import app.aaps.core.interfaces.protection.ProtectionCheck
 import app.aaps.core.interfaces.rx.bus.RxBus
 import app.aaps.core.interfaces.rx.events.EventDismissNotification
 import app.aaps.core.interfaces.rx.events.EventNewNotification
@@ -42,6 +44,7 @@ import app.aaps.ui.dialogs.WizardDialog
 import app.aaps.ui.services.AlarmSoundService
 import app.aaps.ui.services.AlarmSoundServiceHelper
 import app.aaps.ui.widget.Widget
+import dagger.Lazy
 import dagger.Reusable
 import javax.inject.Inject
 import javax.inject.Provider
@@ -51,7 +54,8 @@ class UiInteractionImpl @Inject constructor(
     private val context: Context,
     private val rxBus: RxBus,
     private val alarmSoundServiceHelper: AlarmSoundServiceHelper,
-    private val notificationWithActionProvider: Provider<NotificationWithAction>
+    private val notificationWithActionProvider: Provider<NotificationWithAction>,
+    private val protectionCheck: Lazy<ProtectionCheck>
 ) : UiInteraction {
 
     override val mainActivity: Class<*> = MainActivity::class.java
@@ -170,6 +174,17 @@ class UiInteractionImpl @Inject constructor(
                 }
             }
             .show(fragmentManager, "CareDialog")
+    }
+
+    override fun runPreferencesForPlugin(activity: FragmentActivity, pluginSimpleName: String?) {
+        pluginSimpleName ?: return
+        protectionCheck.get().queryProtection(activity, ProtectionCheck.Protection.PREFERENCES, {
+            activity.startActivity(
+                Intent(activity, PreferencesActivity::class.java)
+                    .setAction("info.nightscout.androidaps.MainActivity")
+                    .putExtra(UiInteraction.PLUGIN_NAME, pluginSimpleName)
+            )
+        })
     }
 
     override fun runBolusProgressDialog(fragmentManager: FragmentManager) {
