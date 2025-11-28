@@ -15,7 +15,6 @@ import app.aaps.core.interfaces.rx.events.EventQueueChanged
 import app.aaps.core.interfaces.ui.UiInteraction
 import app.aaps.core.interfaces.utils.fabric.FabricPrivacy
 import app.aaps.core.ui.activities.TranslatedDaggerAppCompatActivity
-import app.aaps.core.ui.dialogs.OKDialog
 import app.aaps.core.ui.extensions.toVisibility
 import app.aaps.pump.common.events.EventRileyLinkDeviceStatusChange
 import app.aaps.pump.common.hw.rileylink.dialog.RileyLinkStatusActivity
@@ -93,9 +92,10 @@ class ErosPodManagementActivity : TranslatedDaggerAppCompatActivity() {
         }
 
         binding.buttonDiscardPod.setOnClickListener {
-            OKDialog.showConfirmation(
-                this,
-                rh.gs(app.aaps.pump.omnipod.common.R.string.omnipod_common_pod_management_discard_pod_confirmation), Thread {
+            uiInteraction.showOkCancelDialog(
+                context = this,
+                message = rh.gs(app.aaps.pump.omnipod.common.R.string.omnipod_common_pod_management_discard_pod_confirmation),
+                ok = {
                     aapsOmnipodManager.discardPodState()
                 })
         }
@@ -259,13 +259,10 @@ class ErosPodManagementActivity : TranslatedDaggerAppCompatActivity() {
     }
 
     private fun displayNotConfiguredDialog() {
-        context.let {
-            app.aaps.core.ui.UIRunnable {
-                OKDialog.show(
-                    it, rh.gs(app.aaps.pump.omnipod.common.R.string.omnipod_common_warning),
-                    rh.gs(R.string.omnipod_eros_error_operation_not_possible_no_configuration)
-                )
-            }.run()
-        }
+        uiInteraction.showOkDialog(
+            context = this,
+            title = rh.gs(app.aaps.pump.omnipod.common.R.string.omnipod_common_warning),
+            message = rh.gs(R.string.omnipod_eros_error_operation_not_possible_no_configuration)
+        )
     }
 }

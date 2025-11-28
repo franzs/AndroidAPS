@@ -13,7 +13,6 @@ import app.aaps.core.keys.BooleanNonKey
 import app.aaps.core.keys.interfaces.Preferences
 import app.aaps.core.nssdk.interfaces.RunningConfiguration
 import app.aaps.core.nssdk.localmodel.devicestatus.NSDeviceStatus
-import app.aaps.core.utils.HtmlHelper
 import app.aaps.core.utils.JsonHelper.safeGetString
 import app.aaps.core.utils.JsonHelper.safeGetStringAllowNull
 import io.reactivex.rxjava3.disposables.CompositeDisposable
@@ -142,7 +141,7 @@ class NSDeviceStatusHandler @Inject constructor(
             pump.extended?.let {
                 val extended = StringBuilder()
                 it.keys.forEach { key -> extended.append("<b>").append(key).append(":</b> ").append(it[key]).append("<br>") }
-                deviceStatusPumpData.extended = HtmlHelper.fromHtml(extended.toString())
+                deviceStatusPumpData.extended = extended.toString()
                 deviceStatusPumpData.activeProfileName = it.safeGetStringAllowNull("ActiveProfile", null)
             }
         }

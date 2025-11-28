@@ -46,7 +46,6 @@ import app.aaps.core.interfaces.ui.UiInteraction
 import app.aaps.core.interfaces.utils.DateUtil
 import app.aaps.core.keys.interfaces.Preferences
 import app.aaps.core.objects.constraints.ConstraintObject
-import app.aaps.core.ui.dialogs.OKDialog
 import app.aaps.core.ui.toast.ToastUtils
 import app.aaps.core.validators.preferences.AdaptiveIntPreference
 import app.aaps.core.validators.preferences.AdaptiveIntentPreference
@@ -2298,7 +2297,11 @@ class ComboV2Plugin @Inject constructor(
                     ctx = context, intentKey = ComboIntentKey.UnpairPump, title = R.string.combov2_unpair_pump_title, summary = R.string.combov2_unpair_pump_summary
                 ).apply {
                     onPreferenceClickListener = Preference.OnPreferenceClickListener { preference ->
-                        OKDialog.showConfirmation(preference.context, "Confirm pump unpairing", "Do you really want to unpair the pump?", ok = { unpair() })
+                        uiInteraction.showOkCancelDialog(
+                            context = preference.context,
+                            title = "Confirm pump unpairing",
+                            message = "Do you really want to unpair the pump?",
+                            ok = { unpair() })
                         false
                     }
                 }

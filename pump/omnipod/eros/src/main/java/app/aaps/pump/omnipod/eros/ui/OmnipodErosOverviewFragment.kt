@@ -26,7 +26,7 @@ import app.aaps.core.interfaces.utils.DateUtil
 import app.aaps.core.interfaces.utils.fabric.FabricPrivacy
 import app.aaps.core.keys.IntKey
 import app.aaps.core.keys.interfaces.Preferences
-import app.aaps.core.ui.dialogs.OKDialog
+import app.aaps.core.ui.extensions.runOnUiThread
 import app.aaps.pump.common.events.EventRileyLinkDeviceStatusChange
 import app.aaps.pump.common.hw.rileylink.defs.RileyLinkServiceState
 import app.aaps.pump.common.hw.rileylink.defs.RileyLinkTargetDevice
@@ -602,14 +602,11 @@ class OmnipodErosOverviewFragment : DaggerFragment() {
     }
 
     private fun displayNotConfiguredDialog() {
-        context?.let {
-            app.aaps.core.ui.UIRunnable {
-                OKDialog.show(
-                    it, rh.gs(app.aaps.pump.omnipod.common.R.string.omnipod_common_warning),
-                    rh.gs(R.string.omnipod_eros_error_operation_not_possible_no_configuration)
-                )
-            }.run()
-        }
+        uiInteraction.showOkDialog(
+            context = requireActivity(),
+            title = app.aaps.pump.omnipod.common.R.string.omnipod_common_warning,
+            message = R.string.omnipod_eros_error_operation_not_possible_no_configuration
+        )
     }
 
     private fun displayErrorDialog(title: String, message: String, withSound: Boolean) {
@@ -617,10 +614,12 @@ class OmnipodErosOverviewFragment : DaggerFragment() {
     }
 
     private fun displayOkDialog(title: String, message: String) {
-        context?.let {
-            app.aaps.core.ui.UIRunnable {
-                OKDialog.show(it, title, message)
-            }.run()
+        runOnUiThread {
+            uiInteraction.showOkDialog(
+                context = requireActivity(),
+                title = title,
+                message = message
+            )
         }
     }
 

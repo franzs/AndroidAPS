@@ -7,7 +7,7 @@ import app.aaps.core.interfaces.logging.AAPSLogger
 import app.aaps.core.interfaces.protection.ProtectionCheck
 import app.aaps.core.interfaces.resources.ResourceHelper
 import app.aaps.core.interfaces.rx.AapsSchedulers
-import app.aaps.core.ui.dialogs.OKDialog
+import app.aaps.core.interfaces.ui.UiInteraction
 import app.aaps.pump.medtrum.MedtrumPump
 import app.aaps.pump.medtrum.R
 import app.aaps.pump.medtrum.code.EventType
@@ -25,6 +25,7 @@ class MedtrumOverviewFragment : MedtrumBaseFragment<FragmentMedtrumOverviewBindi
     @Inject lateinit var medtrumPump: MedtrumPump
     @Inject lateinit var protectionCheck: ProtectionCheck
     @Inject lateinit var rh: ResourceHelper
+    @Inject lateinit var uiInteraction: UiInteraction
 
     private var disposable: CompositeDisposable = CompositeDisposable()
 
@@ -67,11 +68,19 @@ class MedtrumOverviewFragment : MedtrumBaseFragment<FragmentMedtrumOverviewBindi
                         }
 
                         EventType.PROFILE_NOT_SET      -> {
-                            OKDialog.show(requireActivity(), rh.gs(app.aaps.core.ui.R.string.message), rh.gs(R.string.no_profile_selected))
+                            uiInteraction.showOkDialog(
+                                context = requireActivity(),
+                                title = rh.gs(app.aaps.core.ui.R.string.message),
+                                message = rh.gs(R.string.no_profile_selected)
+                            )
                         }
 
                         EventType.SERIAL_NOT_SET       -> {
-                            OKDialog.show(requireActivity(), rh.gs(app.aaps.core.ui.R.string.message), rh.gs(R.string.no_sn_in_settings))
+                            uiInteraction.showOkDialog(
+                                context = requireActivity(),
+                                title = rh.gs(app.aaps.core.ui.R.string.message),
+                                message = rh.gs(R.string.no_sn_in_settings)
+                            )
                         }
                     }
                 }

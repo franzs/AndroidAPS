@@ -28,7 +28,6 @@ import app.aaps.core.interfaces.utils.fabric.FabricPrivacy
 import app.aaps.core.keys.IntKey
 import app.aaps.core.keys.interfaces.Preferences
 import app.aaps.core.ui.UIRunnable
-import app.aaps.core.ui.dialogs.OKDialog
 import app.aaps.pump.omnipod.common.databinding.OmnipodCommonOverviewButtonsBinding
 import app.aaps.pump.omnipod.common.databinding.OmnipodCommonOverviewPodInfoBinding
 import app.aaps.pump.omnipod.common.queue.command.CommandHandleTimeChange
@@ -693,11 +692,13 @@ class OmnipodDashOverviewFragment : DaggerFragment() {
     }
 
     private fun displayOkDialog(title: String, message: String) {
-        context?.let {
-            UIRunnable {
-                OKDialog.show(it, title, message)
-            }.run()
-        }
+        UIRunnable {
+            uiInteraction.showOkDialog(
+                context = requireActivity(),
+                title = title,
+                message = message
+            )
+        }.run()
     }
 
     private fun readableDuration(duration: Duration): String {

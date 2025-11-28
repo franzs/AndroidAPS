@@ -20,8 +20,8 @@ import app.aaps.core.interfaces.resources.ResourceHelper
 import app.aaps.core.interfaces.rx.AapsSchedulers
 import app.aaps.core.interfaces.rx.bus.RxBus
 import app.aaps.core.interfaces.sync.DataSyncSelectorXdrip
+import app.aaps.core.interfaces.ui.UiInteraction
 import app.aaps.core.interfaces.utils.fabric.FabricPrivacy
-import app.aaps.core.ui.dialogs.OKDialog
 import app.aaps.plugins.sync.R
 import app.aaps.plugins.sync.databinding.XdripFragmentBinding
 import app.aaps.plugins.sync.xdrip.events.EventXdripUpdateGUI
@@ -40,6 +40,7 @@ class XdripFragment : DaggerFragment(), MenuProvider, PluginFragment {
     @Inject lateinit var aapsLogger: AAPSLogger
     @Inject lateinit var xdripPlugin: XdripPlugin
     @Inject lateinit var config: Config
+    @Inject lateinit var uiInteraction: UiInteraction
 
     companion object {
 
@@ -78,12 +79,10 @@ class XdripFragment : DaggerFragment(), MenuProvider, PluginFragment {
             }
 
             ID_MENU_FULL_SYNC -> {
-                context?.let { context ->
-                    OKDialog.showConfirmation(
-                        context, rh.gs(R.string.xdrip), rh.gs(R.string.full_xdrip_sync_comment),
-                        Runnable { handler.post { dataSyncSelector.resetToNextFullSync() } }
-                    )
-                }
+                uiInteraction.showOkCancelDialog(
+                    context = requireActivity(), title = R.string.xdrip, message = R.string.full_xdrip_sync_comment,
+                    ok = { handler.post { dataSyncSelector.resetToNextFullSync() } }
+                )
                 true
             }
 

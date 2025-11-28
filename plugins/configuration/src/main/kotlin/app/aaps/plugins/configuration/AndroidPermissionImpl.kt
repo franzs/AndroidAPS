@@ -19,7 +19,6 @@ import app.aaps.core.interfaces.plugin.ActivePlugin
 import app.aaps.core.interfaces.pump.VirtualPump
 import app.aaps.core.interfaces.resources.ResourceHelper
 import app.aaps.core.interfaces.ui.UiInteraction
-import app.aaps.core.ui.dialogs.OKDialog
 import app.aaps.core.ui.toast.ToastUtils
 import app.aaps.plugins.configuration.activities.DaggerAppCompatActivityWithResult
 import javax.inject.Inject
@@ -65,7 +64,7 @@ class AndroidPermissionImpl @Inject constructor(
                     }
             } catch (_: ActivityNotFoundException) {
                 permissionBatteryOptimizationFailed = true
-                OKDialog.show(activity, rh.gs(R.string.permission), rh.gs(R.string.alert_dialog_permission_battery_optimization_failed)) { activity.recreate() }
+                uiInteraction.showOkDialog(context = activity, title = R.string.permission, message = R.string.alert_dialog_permission_battery_optimization_failed, onFinish = { activity.recreate() })
             }
         }
     }

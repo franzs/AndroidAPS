@@ -53,9 +53,6 @@ import app.aaps.core.keys.StringKey
 import app.aaps.core.keys.interfaces.Preferences
 import app.aaps.core.objects.extensions.asSettingsExport
 import app.aaps.core.objects.workflow.LoggingWorker
-import app.aaps.core.ui.dialogs.OKDialog
-import app.aaps.core.ui.dialogs.TwoMessagesAlertDialog
-import app.aaps.core.ui.dialogs.WarningDialog
 import app.aaps.core.ui.toast.ToastUtils
 import app.aaps.core.utils.receivers.DataWorkerStorage
 import app.aaps.plugins.configuration.R
@@ -189,9 +186,12 @@ class ImportExportPrefsImpl @Inject constructor(
 
     private fun assureMasterPasswordSet(activity: FragmentActivity, @StringRes wrongPwdTitle: Int): Boolean {
         if (preferences.getIfExists(StringKey.ProtectionMasterPassword).isNullOrEmpty()) {
-            WarningDialog.showWarning(
-                activity, rh.gs(wrongPwdTitle), rh.gs(R.string.master_password_missing, rh.gs(R.string.protection)), R.string.nav_preferences,
-                { activity.startActivity(Intent(activity, uiInteraction.preferencesActivity).putExtra(UiInteraction.PREFERENCE, UiInteraction.Preferences.PROTECTION)) }
+            uiInteraction.showError(
+                context = activity,
+                title = rh.gs(wrongPwdTitle),
+                message = rh.gs(R.string.master_password_missing, rh.gs(R.string.protection)),
+                positiveButton = R.string.nav_preferences,
+                ok = { activity.startActivity(Intent(activity, uiInteraction.preferencesActivity).putExtra(UiInteraction.PREFERENCE, UiInteraction.Preferences.PROTECTION)) }
             )
             exportPasswordDataStore.clearPasswordDataStore(context)
             return false
@@ -219,26 +219,28 @@ class ImportExportPrefsImpl @Inject constructor(
         exportPasswordDataStore.clearPasswordDataStore((context))
 
         // Ask for entering password and store when successfully entered
-        TwoMessagesAlertDialog.showAlert(
-            activity, rh.gs(app.aaps.core.ui.R.string.nav_export),
-            rh.gs(R.string.export_to) + " " + fileToExport.name + "?",
-            rh.gs(R.string.password_preferences_encrypt_prompt), {
+        uiInteraction.showOkCancelDialog(
+            context = activity, title = rh.gs(app.aaps.core.ui.R.string.nav_export),
+            message = rh.gs(R.string.export_to) + " " + fileToExport.name + "?",
+            secondMessage = rh.gs(R.string.password_preferences_encrypt_prompt), ok = {
                 askForMasterPassIfNeeded(activity, R.string.preferences_export_canceled)
                 { password ->
                     then(exportPasswordDataStore.putPasswordToDataStore(context, password))
                 }
-            }, null, R.drawable.ic_header_export
+            },
+            icon = R.drawable.ic_header_export
         )
     }
 
     private fun askToConfirmImport(activity: FragmentActivity, fileToImport: PrefsFile, then: ((password: String) -> Unit)) {
         if (!assureMasterPasswordSet(activity, R.string.import_setting)) return
-        TwoMessagesAlertDialog.showAlert(
-            activity, rh.gs(R.string.import_setting),
-            rh.gs(R.string.import_from) + " " + fileToImport.name + "?",
-            rh.gs(app.aaps.core.ui.R.string.password_preferences_decrypt_prompt), {
+        uiInteraction.showOkCancelDialog(
+            context = activity, title = rh.gs(R.string.import_setting),
+            message = rh.gs(R.string.import_from) + " " + fileToImport.name + "?",
+            secondMessage = rh.gs(app.aaps.core.ui.R.string.password_preferences_decrypt_prompt), ok = {
                 askForMasterPass(activity, R.string.preferences_import_canceled, then)
-            }, null, R.drawable.ic_header_import
+            },
+            icon = R.drawable.ic_header_import
         )
     }
 
@@ -436,12 +438,16 @@ class ImportExportPrefsImpl @Inject constructor(
     private fun restartAppAfterImport(context: Context) {
         rxBus.send(EventDiaconnG8PumpLogReset())
         preferences.put(BooleanKey.GeneralSetupWizardProcessed, true)
-        OKDialog.show(context, rh.gs(R.string.setting_imported), rh.gs(R.string.restartingapp)) {
-            if (context is AppCompatActivity) {
-                context.finish()
-            }
-            configBuilder.exitApp("Import", Sources.Maintenance, false)
-        }
+        uiInteraction.showOkDialog(
+            context = context,
+            title = rh.gs(R.string.setting_imported),
+            message = rh.gs(R.string.restartingapp),
+            onFinish = {
+                if (context is AppCompatActivity) {
+                    context.finish()
+                }
+                configBuilder.exitApp("Import", Sources.Maintenance, false)
+            })
     }
 
     override fun exportUserEntriesCsv(activity: FragmentActivity) {

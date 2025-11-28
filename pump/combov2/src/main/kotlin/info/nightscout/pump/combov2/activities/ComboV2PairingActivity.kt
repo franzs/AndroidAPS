@@ -18,8 +18,8 @@ import androidx.lifecycle.repeatOnLifecycle
 import app.aaps.core.interfaces.logging.AAPSLogger
 import app.aaps.core.interfaces.logging.LTag
 import app.aaps.core.interfaces.resources.ResourceHelper
+import app.aaps.core.interfaces.ui.UiInteraction
 import app.aaps.core.ui.activities.TranslatedDaggerAppCompatActivity
-import app.aaps.core.ui.dialogs.OKDialog
 import app.aaps.core.ui.toast.ToastUtils
 import info.nightscout.comboctl.base.BasicProgressStage
 import info.nightscout.comboctl.base.PAIRING_PIN_SIZE
@@ -39,7 +39,8 @@ import javax.inject.Inject
 private class BluetoothPermissionChecks(
     private val activity: ComponentActivity,
     private val permissions: List<String>,
-    private val aapsLogger: AAPSLogger
+    private val aapsLogger: AAPSLogger,
+    private val uiInteraction: UiInteraction
 ) {
 
     private val activityResultLauncher: ActivityResultLauncher<Array<String>>
@@ -79,6 +80,7 @@ class ComboV2PairingActivity : TranslatedDaggerAppCompatActivity() {
     @Inject lateinit var aapsLogger: AAPSLogger
     @Inject lateinit var rh: ResourceHelper
     @Inject lateinit var combov2Plugin: ComboV2Plugin
+    @Inject lateinit var uiInteraction: UiInteraction
 
     private var uiInitialized = false
     private var unregisterActivityLauncher = {}
@@ -140,7 +142,8 @@ class ComboV2PairingActivity : TranslatedDaggerAppCompatActivity() {
                         Manifest.permission.BLUETOOTH_SCAN,
                         Manifest.permission.BLUETOOTH_CONNECT
                     ),
-                    aapsLogger
+                    aapsLogger,
+                    uiInteraction
                 )
             }
 
@@ -371,9 +374,13 @@ class ComboV2PairingActivity : TranslatedDaggerAppCompatActivity() {
         }
 
         binding.combov2CancelPairing.setOnClickListener {
-            OKDialog.showConfirmation(this, "Confirm pairing cancellation", "Do you really want to cancel pairing?", ok = Runnable {
-                combov2Plugin.cancelPairing()
-            })
+            uiInteraction.showOkCancelDialog(
+                context = this,
+                title = "Confirm pairing cancellation",
+                message = "Do you really want to cancel pairing?",
+                ok = {
+                    combov2Plugin.cancelPairing()
+                })
         }
 
         combov2Plugin.getPairingProgressFlow()

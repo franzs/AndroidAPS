@@ -35,7 +35,6 @@ import app.aaps.core.interfaces.utils.Translator
 import app.aaps.core.interfaces.utils.fabric.FabricPrivacy
 import app.aaps.core.keys.BooleanNonKey
 import app.aaps.core.keys.interfaces.Preferences
-import app.aaps.core.ui.dialogs.OKDialog
 import app.aaps.core.ui.extensions.runOnUiThread
 import app.aaps.core.ui.extensions.toVisibility
 import app.aaps.core.ui.toast.ToastUtils
@@ -222,11 +221,11 @@ class LoopDialog : DaggerDialogFragment() {
             R.id.overview_disconnect_2h  -> description = rh.gs(R.string.disconnectpumpfor2h)
             R.id.overview_disconnect_3h  -> description = rh.gs(R.string.disconnectpumpfor3h)
         }
-        activity?.let { activity ->
-            OKDialog.showConfirmation(activity, rh.gs(app.aaps.core.ui.R.string.confirm), description, Runnable {
-                onClick(v)
-            })
-        }
+        uiInteraction.showOkCancelDialog(
+            context = requireActivity(),
+            message = description,
+            ok = { onClick(v) }
+        )
         return true
     }
 

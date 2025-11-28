@@ -32,7 +32,6 @@ import app.aaps.core.interfaces.utils.HardLimits
 import app.aaps.core.interfaces.utils.SafeParse
 import app.aaps.core.interfaces.utils.fabric.FabricPrivacy
 import app.aaps.core.objects.profile.ProfileSealed
-import app.aaps.core.ui.dialogs.OKDialog
 import app.aaps.core.ui.extensions.toVisibility
 import app.aaps.plugins.main.R
 import app.aaps.plugins.main.databinding.ProfileFragmentBinding
@@ -257,16 +256,14 @@ class ProfileFragment : DaggerFragment() {
 
         binding.profileList.onItemClickListener = AdapterView.OnItemClickListener { _, _, position, _ ->
             if (profilePlugin.isEdited) {
-                activity?.let { activity ->
-                    OKDialog.showConfirmation(
-                        activity, rh.gs(R.string.do_you_want_switch_profile),
-                        {
-                            profilePlugin.currentProfileIndex = position
-                            profilePlugin.isEdited = false
-                            build()
-                        }, null
-                    )
-                }
+                uiInteraction.showOkCancelDialog(
+                    context = requireActivity(), message = rh.gs(R.string.do_you_want_switch_profile),
+                    ok = {
+                        profilePlugin.currentProfileIndex = position
+                        profilePlugin.isEdited = false
+                        build()
+                    }, cancel = null
+                )
             } else {
                 profilePlugin.currentProfileIndex = position
                 build()
@@ -282,7 +279,7 @@ class ProfileFragment : DaggerFragment() {
 
         binding.profileAdd.setOnClickListener {
             if (profilePlugin.isEdited) {
-                activity?.let { OKDialog.show(it, "", rh.gs(R.string.save_or_reset_changes_first)) }
+                uiInteraction.showOkDialog(context = requireActivity(), title = "", message = rh.gs(R.string.save_or_reset_changes_first))
             } else {
                 uel.log(Action.NEW_PROFILE, Sources.LocalProfile)
                 profilePlugin.addNewProfile()
@@ -292,7 +289,7 @@ class ProfileFragment : DaggerFragment() {
 
         binding.profileClone.setOnClickListener {
             if (profilePlugin.isEdited) {
-                activity?.let { OKDialog.show(it, "", rh.gs(R.string.save_or_reset_changes_first)) }
+                uiInteraction.showOkDialog(context = requireActivity(), title = "", message = rh.gs(R.string.save_or_reset_changes_first))
             } else {
                 uel.log(
                     action = Action.CLONE_PROFILE, source = Sources.LocalProfile,
@@ -304,16 +301,14 @@ class ProfileFragment : DaggerFragment() {
         }
 
         binding.profileRemove.setOnClickListener {
-            activity?.let { activity ->
-                OKDialog.showConfirmation(activity, rh.gs(R.string.delete_current_profile, profilePlugin.currentProfile()?.name), {
-                    uel.log(
-                        action = Action.PROFILE_REMOVED, source = Sources.LocalProfile,
-                        value = ValueWithUnit.SimpleString(profilePlugin.currentProfile()?.name ?: "")
-                    )
-                    profilePlugin.removeCurrentProfile()
-                    build()
-                }, null)
-            }
+            uiInteraction.showOkCancelDialog(context = requireActivity(), message = rh.gs(R.string.delete_current_profile, profilePlugin.currentProfile()?.name), ok = {
+                uel.log(
+                    action = Action.PROFILE_REMOVED, source = Sources.LocalProfile,
+                    value = ValueWithUnit.SimpleString(profilePlugin.currentProfile()?.name ?: "")
+                )
+                profilePlugin.removeCurrentProfile()
+                build()
+            }, cancel = null)
         }
 
         // this is probably not possible because it leads to invalid profile
@@ -324,7 +319,7 @@ class ProfileFragment : DaggerFragment() {
 
         binding.profileswitch.setOnClickListener {
             if (loop.runningMode == RM.Mode.DISCONNECTED_PUMP) {
-                activity?.let { activity -> OKDialog.show(activity, rh.gs(R.string.not_available_full), rh.gs(R.string.smscommunicator_pump_disconnected)) }
+                uiInteraction.showOkDialog(context = requireActivity(), title = R.string.not_available_full, message = R.string.smscommunicator_pump_disconnected)
             } else {
                 uiInteraction.runProfileSwitchDialog(childFragmentManager, profilePlugin.currentProfile()?.name)
             }

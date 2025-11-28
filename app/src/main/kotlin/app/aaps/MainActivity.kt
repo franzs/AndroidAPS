@@ -55,7 +55,6 @@ import app.aaps.core.keys.BooleanKey
 import app.aaps.core.keys.StringKey
 import app.aaps.core.objects.crypto.CryptoUtil
 import app.aaps.core.ui.UIRunnable
-import app.aaps.core.ui.dialogs.OKDialog
 import app.aaps.core.ui.locale.LocaleHelper
 import app.aaps.core.ui.toast.ToastUtils
 import app.aaps.core.utils.isRunningRealPumpTest
@@ -291,7 +290,7 @@ class MainActivity : DaggerAppCompatActivityWithResult() {
                 text = rh.gs(R.string.identification_not_set),
                 level = Notification.INFO,
                 buttonText = R.string.set,
-                action = Runnable {
+                action = {
                     preferences.put(BooleanKey.GeneralSimpleMode, false)
                     startActivity(
                         Intent(this@MainActivity, PreferencesActivity::class.java)
@@ -344,8 +343,8 @@ class MainActivity : DaggerAppCompatActivityWithResult() {
         if (!isProtectionCheckActive) {
             isProtectionCheckActive = true
             protectionCheck.queryProtection(this, ProtectionCheck.Protection.APPLICATION, UIRunnable { isProtectionCheckActive = false },
-                                            UIRunnable { OKDialog.show(this, "", rh.gs(R.string.authorizationfailed), true) { isProtectionCheckActive = false; finish() } },
-                                            UIRunnable { OKDialog.show(this, "", rh.gs(R.string.authorizationfailed), true) { isProtectionCheckActive = false; finish() } }
+                                            UIRunnable { uiInteraction.showOkDialog(context = this, title = "", message = rh.gs(R.string.authorizationfailed), onFinish = { isProtectionCheckActive = false; finish() }) },
+                                            UIRunnable { uiInteraction.showOkDialog(context = this, title = "", message = rh.gs(R.string.authorizationfailed), onFinish = { isProtectionCheckActive = false; finish() }) }
             )
         }
     }

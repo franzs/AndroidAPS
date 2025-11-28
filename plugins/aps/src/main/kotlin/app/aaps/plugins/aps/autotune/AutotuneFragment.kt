@@ -43,7 +43,6 @@ import app.aaps.core.keys.BooleanKey
 import app.aaps.core.keys.IntKey
 import app.aaps.core.keys.interfaces.Preferences
 import app.aaps.core.objects.profile.ProfileSealed
-import app.aaps.core.ui.dialogs.OKDialog
 import app.aaps.core.ui.elements.WeekDay
 import app.aaps.core.ui.extensions.runOnUiThread
 import app.aaps.core.ui.extensions.toVisibility
@@ -158,11 +157,11 @@ class AutotuneFragment : DaggerFragment() {
             val localName = rh.gs(R.string.autotune_tunedprofile_name) + " " + dateUtil.dateAndTimeString(autotunePlugin.lastRun)
             val circadian = preferences.get(BooleanKey.AutotuneCircadianIcIsf)
             autotunePlugin.tunedProfile?.let { tunedProfile ->
-                OKDialog.showConfirmation(
-                    requireContext(),
-                    rh.gs(R.string.autotune_copy_localprofile_button),
-                    rh.gs(R.string.autotune_copy_local_profile_message) + "\n" + localName,
-                    {
+                uiInteraction.showOkCancelDialog(
+                    context = requireContext(),
+                    title = rh.gs(R.string.autotune_copy_localprofile_button),
+                    message = rh.gs(R.string.autotune_copy_local_profile_message) + "\n" + localName,
+                    ok = {
                         val profilePlugin = activePlugin.activeProfileSource
                         profilePlugin.addProfile(profilePlugin.copyFrom(tunedProfile.getProfile(circadian), localName))
                         rxBus.send(EventLocalProfileChanged())
@@ -178,11 +177,11 @@ class AutotuneFragment : DaggerFragment() {
 
         binding.autotuneUpdateProfile.setOnClickListener {
             val localName = autotunePlugin.pumpProfile.profileName
-            OKDialog.showConfirmation(
-                requireContext(),
-                rh.gs(R.string.autotune_update_input_profile_button),
-                rh.gs(R.string.autotune_update_local_profile_message, localName),
-                {
+            uiInteraction.showOkCancelDialog(
+                context = requireContext(),
+                title = rh.gs(R.string.autotune_update_input_profile_button),
+                message = rh.gs(R.string.autotune_update_local_profile_message, localName),
+                ok = {
                     autotunePlugin.tunedProfile?.profileName = localName
                     autotunePlugin.updateProfile(autotunePlugin.tunedProfile)
                     autotunePlugin.updateButtonVisibility = View.GONE
@@ -199,11 +198,11 @@ class AutotuneFragment : DaggerFragment() {
 
         binding.autotuneRevertProfile.setOnClickListener {
             val localName = autotunePlugin.pumpProfile.profileName
-            OKDialog.showConfirmation(
-                requireContext(),
-                rh.gs(R.string.autotune_revert_input_profile_button),
-                rh.gs(R.string.autotune_revert_local_profile_message, localName),
-                {
+            uiInteraction.showOkCancelDialog(
+                context = requireContext(),
+                title = rh.gs(R.string.autotune_revert_input_profile_button),
+                message = rh.gs(R.string.autotune_revert_local_profile_message, localName),
+                ok = {
                     autotunePlugin.tunedProfile?.profileName = ""
                     autotunePlugin.updateProfile(autotunePlugin.pumpProfile)
                     autotunePlugin.updateButtonVisibility = View.VISIBLE
@@ -259,14 +258,14 @@ class AutotuneFragment : DaggerFragment() {
             autotunePlugin.updateProfile(tunedProfile)
             val circadian = preferences.get(BooleanKey.AutotuneCircadianIcIsf)
             if (loop.runningMode == RM.Mode.DISCONNECTED_PUMP) {
-                activity?.let { it1 -> OKDialog.show(it1, rh.gs(R.string.not_available_full), rh.gs(R.string.pump_disconnected)) }
+                uiInteraction.showOkDialog(context = requireActivity(), title = R.string.not_available_full, message = R.string.pump_disconnected)
             } else {
                 tunedProfile?.let { tunedP ->
                     tunedP.profileStore(circadian)?.let {
-                        OKDialog.showConfirmation(
-                            requireContext(),
-                            rh.gs(app.aaps.core.ui.R.string.activate_profile) + ": " + tunedP.profileName + "?",
-                            {
+                        uiInteraction.showOkCancelDialog(
+                            context = requireContext(),
+                            message = rh.gs(app.aaps.core.ui.R.string.activate_profile) + ": " + tunedP.profileName + "?",
+                            ok = {
                                 uel.log(
                                     action = Action.STORE_PROFILE,
                                     source = Sources.Autotune,

@@ -27,6 +27,7 @@ import app.aaps.core.interfaces.resources.ResourceHelper
 import app.aaps.core.interfaces.rx.AapsSchedulers
 import app.aaps.core.interfaces.rx.bus.RxBus
 import app.aaps.core.interfaces.rx.events.EventTempTargetChange
+import app.aaps.core.interfaces.ui.UiInteraction
 import app.aaps.core.interfaces.utils.DateUtil
 import app.aaps.core.interfaces.utils.DecimalFormatter
 import app.aaps.core.interfaces.utils.Translator
@@ -35,7 +36,6 @@ import app.aaps.core.objects.extensions.friendlyDescription
 import app.aaps.core.objects.extensions.highValueToUnitsToString
 import app.aaps.core.objects.extensions.lowValueToUnitsToString
 import app.aaps.core.objects.ui.ActionModeHelper
-import app.aaps.core.ui.dialogs.OKDialog
 import app.aaps.core.ui.extensions.toVisibility
 import app.aaps.core.ui.toast.ToastUtils
 import app.aaps.ui.R
@@ -61,6 +61,7 @@ class TreatmentsTempTargetFragment : DaggerFragment(), MenuProvider {
     @Inject lateinit var aapsSchedulers: AapsSchedulers
     @Inject lateinit var persistenceLayer: PersistenceLayer
     @Inject lateinit var decimalFormatter: DecimalFormatter
+    @Inject lateinit var uiInteraction: UiInteraction
 
     private var _binding: TreatmentsTemptargetFragmentBinding? = null
 
@@ -222,23 +223,26 @@ class TreatmentsTempTargetFragment : DaggerFragment(), MenuProvider {
     }
 
     private fun removeSelected(selectedItems: SparseArray<TT>) {
-        activity?.let { activity ->
-            OKDialog.showConfirmation(activity, rh.gs(app.aaps.core.ui.R.string.removerecord), getConfirmationText(selectedItems), Runnable {
+        uiInteraction.showOkCancelDialog(
+            context = requireActivity(),
+            title = rh.gs(app.aaps.core.ui.R.string.removerecord),
+            message = getConfirmationText(selectedItems),
+            ok = {
                 selectedItems.forEach { _, tempTarget ->
                     disposable += persistenceLayer.invalidateTemporaryTarget(
                         id = tempTarget.id,
                         action = Action.TT_REMOVED, source = Sources.Treatments, note = null,
-                        listValues = listOf(
+                        listValues = listOfNotNull(
                             ValueWithUnit.Timestamp(tempTarget.timestamp),
                             ValueWithUnit.TETTReason(tempTarget.reason),
                             ValueWithUnit.Mgdl(tempTarget.lowTarget),
                             ValueWithUnit.Mgdl(tempTarget.highTarget).takeIf { tempTarget.lowTarget != tempTarget.highTarget },
                             ValueWithUnit.Minute(TimeUnit.MILLISECONDS.toMinutes(tempTarget.duration).toInt())
-                        ).filterNotNull()
+                        )
                     ).subscribe()
                 }
                 actionHelper.finish()
-            })
-        }
+            }
+        )
     }
 }

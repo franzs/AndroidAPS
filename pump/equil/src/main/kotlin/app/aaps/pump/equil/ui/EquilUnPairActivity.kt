@@ -7,9 +7,9 @@ import app.aaps.core.interfaces.queue.Callback
 import app.aaps.core.interfaces.queue.CommandQueue
 import app.aaps.core.interfaces.resources.ResourceHelper
 import app.aaps.core.interfaces.rx.bus.RxBus
+import app.aaps.core.interfaces.ui.UiInteraction
 import app.aaps.core.keys.interfaces.Preferences
 import app.aaps.core.ui.activities.TranslatedDaggerAppCompatActivity
-import app.aaps.core.ui.dialogs.OKDialog
 import app.aaps.pump.equil.EquilPumpPlugin
 import app.aaps.pump.equil.R
 import app.aaps.pump.equil.databinding.EquilUnpairActivityBinding
@@ -29,6 +29,7 @@ class EquilUnPairActivity : TranslatedDaggerAppCompatActivity() {
     @Inject lateinit var equilPumpPlugin: EquilPumpPlugin
     @Inject lateinit var rxBus: RxBus
     @Inject lateinit var equilManager: EquilManager
+    @Inject lateinit var uiInteraction: UiInteraction
 
     private lateinit var binding: EquilUnpairActivityBinding
 
@@ -44,9 +45,11 @@ class EquilUnPairActivity : TranslatedDaggerAppCompatActivity() {
         binding.tvHint2.text = String.format(rh.gs(R.string.equil_unpair), name)
         binding.btnFinish.setOnClickListener {
             val name = equilManager.equilState?.serialNumber ?: throw IllegalStateException()
-            OKDialog.showConfirmation(
-                this, rh.gs(app.aaps.core.ui.R.string.confirmation), rh.gs(R.string.equil_unpair_alert, name),
-                { unpair(name) }
+            uiInteraction.showOkCancelDialog(
+                context = this,
+                title = rh.gs(app.aaps.core.ui.R.string.confirmation),
+                message = rh.gs(R.string.equil_unpair_alert, name),
+                ok = { unpair(name) }
             )
         }
     }
@@ -59,13 +62,17 @@ class EquilUnPairActivity : TranslatedDaggerAppCompatActivity() {
                 val title = if (!result.success) rh.gs(R.string.equil_error) else rh.gs(R.string.equil_success)
                 val message = if (!result.success) rh.gs(R.string.equil_removed_anyway) else rh.gs(R.string.equil_device_unpaired)
                 runOnUiThread {
-                    OKDialog.show(this@EquilUnPairActivity, title, message, true) {
-                        equilManager.setSerialNumber("")
-                        equilManager.setAddress("")
-                        rxBus.send(EventEquilUnPairChanged())
-                        equilPumpPlugin.clearData()
-                        finish()
-                    }
+                    uiInteraction.showOkDialog(
+                        context = this@EquilUnPairActivity,
+                        title = title,
+                        message = message,
+                        onFinish = {
+                            equilManager.setSerialNumber("")
+                            equilManager.setAddress("")
+                            rxBus.send(EventEquilUnPairChanged())
+                            equilPumpPlugin.clearData()
+                            finish()
+                        })
                 }
             }
         })

@@ -6,7 +6,7 @@ import androidx.lifecycle.ViewModelProvider
 import app.aaps.core.interfaces.logging.AAPSLogger
 import app.aaps.core.interfaces.logging.LTag
 import app.aaps.core.interfaces.resources.ResourceHelper
-import app.aaps.core.ui.dialogs.OKDialog
+import app.aaps.core.interfaces.ui.UiInteraction
 import app.aaps.core.ui.toast.ToastUtils
 import app.aaps.pump.medtrum.R
 import app.aaps.pump.medtrum.code.PatchStep
@@ -18,6 +18,7 @@ class MedtrumAttachPatchFragment : MedtrumBaseFragment<FragmentMedtrumAttachPatc
 
     @Inject lateinit var aapsLogger: AAPSLogger
     @Inject lateinit var rh: ResourceHelper
+    @Inject lateinit var uiInteraction: UiInteraction
 
     companion object {
 
@@ -45,11 +46,11 @@ class MedtrumAttachPatchFragment : MedtrumBaseFragment<FragmentMedtrumAttachPatc
                 }
             }
             btnNegative.setOnClickListener {
-                OKDialog.showConfirmation(requireActivity(), rh.gs(R.string.cancel_sure)) {
+                uiInteraction.showOkCancelDialog(context = requireActivity(), message = rh.gs(R.string.cancel_sure), ok = {
                     viewModel?.apply {
                         moveStep(PatchStep.CANCEL)
                     }
-                }
+                })
             }
         }
     }

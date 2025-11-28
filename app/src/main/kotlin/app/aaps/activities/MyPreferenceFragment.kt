@@ -41,7 +41,6 @@ import app.aaps.core.keys.interfaces.PreferenceKey
 import app.aaps.core.keys.interfaces.Preferences
 import app.aaps.core.keys.interfaces.StringPreferenceKey
 import app.aaps.core.ui.UiMode
-import app.aaps.core.ui.dialogs.OKDialog
 import app.aaps.core.utils.extensions.safeGetSerializable
 import app.aaps.core.validators.DefaultEditTextValidator
 import app.aaps.core.validators.EditTextValidator
@@ -78,6 +77,7 @@ class MyPreferenceFragment : PreferenceFragmentCompat(), OnSharedPreferenceChang
     @Inject lateinit var maintenancePlugin: MaintenancePlugin
     @Inject lateinit var skinProvider: SkinProvider
     @Inject lateinit var overview: Overview
+    @Inject lateinit var uiInteraction: UiInteraction
 
     companion object {
 
@@ -181,9 +181,7 @@ class MyPreferenceFragment : PreferenceFragmentCompat(), OnSharedPreferenceChang
             return
         }
         if (key == BooleanKey.ApsUseAutosens.key && preferences.get(BooleanKey.ApsUseAutosens)) {
-            activity?.let {
-                OKDialog.show(it, rh.gs(app.aaps.plugins.configuration.R.string.configbuilder_sensitivity), rh.gs(R.string.sensitivity_warning))
-            }
+            uiInteraction.showOkDialog(context = requireActivity(), title = app.aaps.plugins.configuration.R.string.configbuilder_sensitivity, message = R.string.sensitivity_warning)
         }
         // Preference change can be triggered inside AAPS on [NonPreferenceKey] too
         // check if it's [PreferenceKey]
@@ -214,11 +212,9 @@ class MyPreferenceFragment : PreferenceFragmentCompat(), OnSharedPreferenceChang
             preferences.get(StringKey.ProtectionMasterPassword) == "" &&
             preferences.get(key as IntKey) == BIOMETRIC.ordinal
         ) {
-            activity?.let {
-                val title = rh.gs(app.aaps.core.ui.R.string.unsecure_fallback_biometric)
-                val message = rh.gs(app.aaps.plugins.configuration.R.string.master_password_missing, rh.gs(app.aaps.plugins.configuration.R.string.protection))
-                OKDialog.show(it, title = title, message = message)
-            }
+            val title = rh.gs(app.aaps.core.ui.R.string.unsecure_fallback_biometric)
+            val message = rh.gs(app.aaps.plugins.configuration.R.string.master_password_missing, rh.gs(app.aaps.plugins.configuration.R.string.protection))
+            uiInteraction.showOkDialog(context = requireActivity(), title = title, message = message)
         }
 
         // Master password erased with activated Biometric protection
@@ -226,11 +222,7 @@ class MyPreferenceFragment : PreferenceFragmentCompat(), OnSharedPreferenceChang
             preferences.get(IntKey.ProtectionTypeApplication) == BIOMETRIC.ordinal ||
             preferences.get(IntKey.ProtectionTypeBolus) == BIOMETRIC.ordinal
         if (StringKey.ProtectionMasterPassword == key && preferences.get(key as StringKey) == "" && isBiometricActivated) {
-            activity?.let {
-                val title = rh.gs(app.aaps.core.ui.R.string.unsecure_fallback_biometric)
-                val message = rh.gs(app.aaps.core.ui.R.string.unsecure_fallback_descriotion_biometric)
-                OKDialog.show(it, title = title, message = message)
-            }
+            uiInteraction.showOkDialog(context = requireActivity(), title = app.aaps.core.ui.R.string.unsecure_fallback_biometric, message = app.aaps.core.ui.R.string.unsecure_fallback_descriotion_biometric)
         }
     }
 

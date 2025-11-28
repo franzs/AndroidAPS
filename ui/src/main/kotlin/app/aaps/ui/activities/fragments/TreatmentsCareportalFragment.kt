@@ -27,11 +27,11 @@ import app.aaps.core.interfaces.resources.ResourceHelper
 import app.aaps.core.interfaces.rx.AapsSchedulers
 import app.aaps.core.interfaces.rx.bus.RxBus
 import app.aaps.core.interfaces.rx.events.EventTherapyEventChange
+import app.aaps.core.interfaces.ui.UiInteraction
 import app.aaps.core.interfaces.utils.DateUtil
 import app.aaps.core.interfaces.utils.Translator
 import app.aaps.core.interfaces.utils.fabric.FabricPrivacy
 import app.aaps.core.objects.ui.ActionModeHelper
-import app.aaps.core.ui.dialogs.OKDialog
 import app.aaps.core.ui.extensions.toVisibility
 import app.aaps.core.ui.toast.ToastUtils
 import app.aaps.ui.R
@@ -57,6 +57,7 @@ class TreatmentsCareportalFragment : DaggerFragment(), MenuProvider {
     @Inject lateinit var persistenceLayer: PersistenceLayer
     @Inject lateinit var uel: UserEntryLogger
     @Inject lateinit var profileUtil: ProfileUtil
+    @Inject lateinit var uiInteraction: UiInteraction
 
     private var _binding: TreatmentsCareportalFragmentBinding? = null
 
@@ -84,11 +85,13 @@ class TreatmentsCareportalFragment : DaggerFragment(), MenuProvider {
     }
 
     private fun removeStartedEvents() {
-        activity?.let { activity ->
-            OKDialog.showConfirmation(activity, rh.gs(app.aaps.core.ui.R.string.careportal), rh.gs(R.string.careportal_remove_started_events), Runnable {
+        uiInteraction.showOkCancelDialog(
+            context = requireActivity(),
+            title = rh.gs(app.aaps.core.ui.R.string.careportal),
+            message = rh.gs(R.string.careportal_remove_started_events),
+            ok = {
                 disposable += persistenceLayer.invalidateTherapyEventsWithNote(rh.gs(app.aaps.core.ui.R.string.androidaps_start), Action.RESTART_EVENTS_REMOVED, Sources.Treatments).subscribe()
             })
-        }
     }
 
     fun swapAdapter() {
@@ -222,8 +225,11 @@ class TreatmentsCareportalFragment : DaggerFragment(), MenuProvider {
     }
 
     private fun removeSelected(selectedItems: SparseArray<TE>) {
-        activity?.let { activity ->
-            OKDialog.showConfirmation(activity, rh.gs(app.aaps.core.ui.R.string.removerecord), getConfirmationText(selectedItems), Runnable {
+        uiInteraction.showOkCancelDialog(
+            context = requireActivity(),
+            title = rh.gs(app.aaps.core.ui.R.string.removerecord),
+            message = getConfirmationText(selectedItems),
+            ok = {
                 selectedItems.forEach { _, therapyEvent ->
                     disposable += persistenceLayer.invalidateTherapyEvent(
                         id = therapyEvent.id,
@@ -236,6 +242,5 @@ class TreatmentsCareportalFragment : DaggerFragment(), MenuProvider {
                 }
                 actionHelper.finish()
             })
-        }
     }
 }

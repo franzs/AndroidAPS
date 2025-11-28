@@ -17,7 +17,6 @@ import app.aaps.core.interfaces.rx.events.EventDismissNotification
 import app.aaps.core.interfaces.ui.UiInteraction
 import app.aaps.core.keys.IntKey
 import app.aaps.core.keys.interfaces.Preferences
-import app.aaps.core.ui.dialogs.OKDialog
 import app.aaps.core.utils.JsonHelper
 import app.aaps.plugins.sync.R
 import org.json.JSONException
@@ -178,7 +177,7 @@ class NSSettingsStatusImpl @Inject constructor(
         val pluginJson = extendedSettings.optJSONObject(plugin) ?: return null
         return try {
             pluginJson.getDouble(property)
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             null
         }
     }
@@ -221,7 +220,7 @@ class NSSettingsStatusImpl @Inject constructor(
         JsonHelper.safeGetString(extendedPumpSettings(), "fields", "")
 
     override fun copyStatusLightsNsSettings(context: Context?) {
-        val action = Runnable {
+        val action = {
             getExtendedWarnValue("cage", "warn")?.let { preferences.put(IntKey.OverviewCageWarning, it.toInt()) }
             getExtendedWarnValue("cage", "urgent")?.let { preferences.put(IntKey.OverviewCageCritical, it.toInt()) }
             getExtendedWarnValue("iage", "warn")?.let { preferences.put(IntKey.OverviewIageWarning, it.toInt()) }
@@ -233,7 +232,7 @@ class NSSettingsStatusImpl @Inject constructor(
             uel.log(Action.NS_SETTINGS_COPIED, Sources.NSClient)
         }
 
-        if (context != null) OKDialog.showConfirmation(context, rh.gs(app.aaps.core.ui.R.string.statuslights), rh.gs(R.string.copy_existing_values), action)
-        else action.run()
+        if (context != null) uiInteraction.showOkCancelDialog(context = context, title = app.aaps.core.ui.R.string.statuslights, message = R.string.copy_existing_values, ok = action)
+        else action.invoke()
     }
 }

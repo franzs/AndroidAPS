@@ -21,7 +21,6 @@ import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.RelativeLayout
 import android.widget.TextView
-import androidx.core.text.toSpanned
 import androidx.recyclerview.widget.LinearLayoutManager
 import app.aaps.core.data.configuration.Constants
 import app.aaps.core.data.model.GlucoseUnit
@@ -99,7 +98,6 @@ import app.aaps.core.objects.extensions.round
 import app.aaps.core.objects.profile.ProfileSealed
 import app.aaps.core.objects.wizard.QuickWizard
 import app.aaps.core.ui.UIRunnable
-import app.aaps.core.ui.dialogs.OKDialog
 import app.aaps.core.ui.elements.SingleClickButton
 import app.aaps.core.ui.extensions.runOnUiThread
 import app.aaps.core.ui.extensions.toVisibility
@@ -420,89 +418,63 @@ class OverviewFragment : DaggerFragment(), View.OnClickListener, OnLongClickList
         // try to fix  https://fabric.io/nightscout3/android/apps/info.nightscout.androidaps/issues/5aca7a1536c7b23527eb4be7?time=last-seven-days
         // https://stackoverflow.com/questions/14860239/checking-if-state-is-saved-before-committing-a-fragmenttransaction
         if (childFragmentManager.isStateSaved) return
-        activity?.let { activity ->
-            when (v.id) {
-                R.id.treatment_button    -> protectionCheck.queryProtection(
-                    activity,
-                    ProtectionCheck.Protection.BOLUS,
-                    UIRunnable { if (isAdded) uiInteraction.runTreatmentDialog(childFragmentManager) })
+        when (v.id) {
+            R.id.treatment_button -> protectionCheck.queryProtection(requireActivity(), ProtectionCheck.Protection.BOLUS, UIRunnable { if (isAdded) uiInteraction.runTreatmentDialog(childFragmentManager) })
+            R.id.wizard_button -> protectionCheck.queryProtection(requireActivity(), ProtectionCheck.Protection.BOLUS, UIRunnable { if (isAdded) uiInteraction.runWizardDialog(childFragmentManager) })
+            R.id.insulin_button -> protectionCheck.queryProtection(requireActivity(), ProtectionCheck.Protection.BOLUS, UIRunnable { if (isAdded) uiInteraction.runInsulinDialog(childFragmentManager) })
+            R.id.quick_wizard_button -> protectionCheck.queryProtection(requireActivity(), ProtectionCheck.Protection.BOLUS, UIRunnable { if (isAdded) onClickQuickWizard() })
+            R.id.carbs_button -> protectionCheck.queryProtection(requireActivity(), ProtectionCheck.Protection.BOLUS, UIRunnable { if (isAdded) uiInteraction.runCarbsDialog(childFragmentManager) })
+            R.id.temp_target -> protectionCheck.queryProtection(requireActivity(), ProtectionCheck.Protection.BOLUS, UIRunnable { if (isAdded) uiInteraction.runTempTargetDialog(childFragmentManager) })
+            R.id.active_profile -> uiInteraction.runProfileViewerDialog(childFragmentManager, dateUtil.now(), UiInteraction.Mode.RUNNING_PROFILE)
 
-                R.id.wizard_button       -> protectionCheck.queryProtection(
-                    activity,
-                    ProtectionCheck.Protection.BOLUS,
-                    UIRunnable { if (isAdded) uiInteraction.runWizardDialog(childFragmentManager) })
+            R.id.cgm_button -> {
+                if (xDripSource.isEnabled()) openCgmApp("com.eveningoutpost.dexdrip")
+                else if (dexcomBoyda.isEnabled()) dexcomBoyda.dexcomPackages().forEach { openCgmApp(it) }
+            }
 
-                R.id.insulin_button      -> protectionCheck.queryProtection(
-                    activity,
-                    ProtectionCheck.Protection.BOLUS,
-                    UIRunnable { if (isAdded) uiInteraction.runInsulinDialog(childFragmentManager) })
-
-                R.id.quick_wizard_button -> protectionCheck.queryProtection(activity, ProtectionCheck.Protection.BOLUS, UIRunnable { if (isAdded) onClickQuickWizard() })
-                R.id.carbs_button        -> protectionCheck.queryProtection(
-                    activity,
-                    ProtectionCheck.Protection.BOLUS,
-                    UIRunnable { if (isAdded) uiInteraction.runCarbsDialog(childFragmentManager) })
-
-                R.id.temp_target         -> protectionCheck.queryProtection(
-                    activity,
-                    ProtectionCheck.Protection.BOLUS,
-                    UIRunnable { if (isAdded) uiInteraction.runTempTargetDialog(childFragmentManager) })
-
-                R.id.active_profile      -> {
-                    uiInteraction.runProfileViewerDialog(
-                        childFragmentManager,
-                        dateUtil.now(),
-                        UiInteraction.Mode.RUNNING_PROFILE
-                    )
+            R.id.calibration_button -> {
+                if (xDripSource.isEnabled()) {
+                    uiInteraction.runCalibrationDialog(childFragmentManager)
                 }
+            }
 
-                R.id.cgm_button          -> {
-                    if (xDripSource.isEnabled()) openCgmApp("com.eveningoutpost.dexdrip")
-                    else if (dexcomBoyda.isEnabled()) dexcomBoyda.dexcomPackages().forEach { openCgmApp(it) }
-                }
-
-                R.id.calibration_button  -> {
-                    if (xDripSource.isEnabled()) {
-                        uiInteraction.runCalibrationDialog(childFragmentManager)
-                    }
-                }
-
-                R.id.accept_temp_button  -> {
-                    profileFunction.getProfile() ?: return
-                    if ((loop as PluginBase).isEnabled()) {
-                        handler.post {
-                            val lastRun = loop.lastRun
-                            loop.invoke("Accept temp button", false)
-                            if (lastRun?.lastAPSRun != null && lastRun.constraintsProcessed?.isChangeRequested == true) {
-                                runOnUiThread {
-                                    protectionCheck.queryProtection(activity, ProtectionCheck.Protection.BOLUS, UIRunnable {
-                                        if (isAdded)
-                                            OKDialog.showConfirmation(
-                                                activity, rh.gs(app.aaps.core.ui.R.string.tempbasal_label), lastRun.constraintsProcessed?.resultAsSpanned()
-                                                    ?: "".toSpanned(), {
-                                                    uel.log(Action.ACCEPTS_TEMP_BASAL, Sources.Overview)
-                                                    (context?.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager?)?.cancel(Constants.notificationID)
-                                                    rxBus.send(EventMobileToWear(EventData.CancelNotification(dateUtil.now())))
-                                                    handler.post { loop.acceptChangeRequest() }
-                                                    binding.buttonsLayout.acceptTempButton.visibility = View.GONE
-                                                })
-                                    })
-                                }
+            R.id.accept_temp_button -> {
+                profileFunction.getProfile() ?: return
+                if ((loop as PluginBase).isEnabled()) {
+                    handler.post {
+                        val lastRun = loop.lastRun
+                        loop.invoke("Accept temp button", false)
+                        if (lastRun?.lastAPSRun != null && lastRun.constraintsProcessed?.isChangeRequested == true) {
+                            runOnUiThread {
+                                protectionCheck.queryProtection(requireActivity(), ProtectionCheck.Protection.BOLUS, UIRunnable {
+                                    if (isAdded)
+                                        uiInteraction.showOkCancelDialog(
+                                            context = requireActivity(),
+                                            title = rh.gs(app.aaps.core.ui.R.string.tempbasal_label),
+                                            message = lastRun.constraintsProcessed?.resultAsHtmlString() ?: "",
+                                            ok = {
+                                                uel.log(Action.ACCEPTS_TEMP_BASAL, Sources.Overview)
+                                                (context?.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager?)?.cancel(Constants.notificationID)
+                                                rxBus.send(EventMobileToWear(EventData.CancelNotification(dateUtil.now())))
+                                                handler.post { loop.acceptChangeRequest() }
+                                                binding.buttonsLayout.acceptTempButton.visibility = View.GONE
+                                            })
+                                })
                             }
                         }
                     }
                 }
+            }
 
-                R.id.aps_mode            -> {
-                    protectionCheck.queryProtection(activity, ProtectionCheck.Protection.BOLUS, UIRunnable {
-                        if (isAdded) uiInteraction.runLoopDialog(childFragmentManager, 1)
-                    })
-                }
+            R.id.aps_mode -> {
+                protectionCheck.queryProtection(requireActivity(), ProtectionCheck.Protection.BOLUS, UIRunnable {
+                    if (isAdded) uiInteraction.runLoopDialog(childFragmentManager, 1)
+                })
+            }
 
-                R.id.pump_status_layout  -> {
-                    // Check if there is a bolus in progress
-                    popupBolusDialogIfRunning(onClick = true)
-                }
+            R.id.pump_status_layout -> {
+                // Check if there is a bolus in progress
+                popupBolusDialogIfRunning(onClick = true)
             }
         }
     }
@@ -536,14 +508,14 @@ class OverviewFragment : DaggerFragment(), View.OnClickListener, OnLongClickList
             }
 
             R.id.temp_target         -> v.performClick()
-            R.id.active_profile      -> activity?.let { activity ->
-                if (loop.runningMode == RM.Mode.DISCONNECTED_PUMP) OKDialog.show(activity, rh.gs(R.string.not_available_full), rh.gs(R.string.smscommunicator_pump_disconnected))
+            R.id.active_profile ->
+                if (loop.runningMode == RM.Mode.DISCONNECTED_PUMP) uiInteraction.showOkDialog(context = requireActivity(), title = R.string.not_available_full, message = R.string.smscommunicator_pump_disconnected)
                 else
                     protectionCheck.queryProtection(
-                        activity,
+                        requireActivity(),
                         ProtectionCheck.Protection.BOLUS,
-                        UIRunnable { uiInteraction.runProfileSwitchDialog(childFragmentManager) })
-            }
+                        UIRunnable { uiInteraction.runProfileSwitchDialog(childFragmentManager) }
+                    )
 
         }
         return false
@@ -562,7 +534,7 @@ class OverviewFragment : DaggerFragment(), View.OnClickListener, OnLongClickList
                 val carbsAfterConstraints = constraintChecker.applyCarbsConstraints(ConstraintObject(quickWizardEntry.carbs(), aapsLogger)).value()
                 activity?.let {
                     if (abs(wizard.insulinAfterConstraints - wizard.calculatedTotalInsulin) >= pump.pumpDescription.pumpType.determineCorrectBolusStepSize(wizard.insulinAfterConstraints) || carbsAfterConstraints != quickWizardEntry.carbs()) {
-                        OKDialog.show(it, rh.gs(app.aaps.core.ui.R.string.treatmentdeliveryerror), rh.gs(R.string.constraints_violation) + "\n" + rh.gs(R.string.change_your_input))
+                        uiInteraction.showOkDialog(context = it, title = rh.gs(app.aaps.core.ui.R.string.treatmentdeliveryerror), message = rh.gs(R.string.constraints_violation) + "\n" + rh.gs(R.string.change_your_input))
                         return
                     }
                     wizard.confirmAndExecute(it, quickWizardEntry)
@@ -677,7 +649,7 @@ class OverviewFragment : DaggerFragment(), View.OnClickListener, OnLongClickList
                                 )
                                 it.text = event.title
                                 it.setOnClickListener {
-                                    OKDialog.showConfirmation(context, rh.gs(R.string.run_question, event.title), { handler.post { automation.processEvent(event) } })
+                                    uiInteraction.showOkCancelDialog(context = context, message = rh.gs(R.string.run_question, event.title), ok = { handler.post { automation.processEvent(event) } })
                                 }
                                 binding.buttonsLayout.userButtonsLayout.addView(it)
                                 for (drawable in it.compoundDrawables) {
@@ -780,15 +752,15 @@ class OverviewFragment : DaggerFragment(), View.OnClickListener, OnLongClickList
 
             // pump status from ns
             binding.pump.text = processedDeviceStatusData.pumpStatus(nsSettingsStatus)
-            binding.pump.setOnClickListener { activity?.let { OKDialog.show(it, rh.gs(app.aaps.core.ui.R.string.pump), processedDeviceStatusData.extendedPumpStatus) } }
+            binding.pump.setOnClickListener { activity?.let { uiInteraction.showOkDialog(context = it, title = rh.gs(app.aaps.core.ui.R.string.pump), message = processedDeviceStatusData.extendedPumpStatusHtml) } }
 
             // OpenAPS status from ns
             binding.openaps.text = processedDeviceStatusData.openApsStatus
-            binding.openaps.setOnClickListener { activity?.let { OKDialog.show(it, rh.gs(R.string.openaps), processedDeviceStatusData.extendedOpenApsStatus) } }
+            binding.openaps.setOnClickListener { activity?.let { uiInteraction.showOkDialog(context = it, title = rh.gs(R.string.openaps), message = processedDeviceStatusData.extendedOpenApsStatusHtml) } }
 
             // Uploader status from ns
             binding.uploader.text = processedDeviceStatusData.uploaderStatusSpanned
-            binding.uploader.setOnClickListener { activity?.let { OKDialog.show(it, rh.gs(R.string.uploader), processedDeviceStatusData.extendedUploaderStatus) } }
+            binding.uploader.setOnClickListener { activity?.let { uiInteraction.showOkDialog(context = it, title = rh.gs(R.string.uploader), message = processedDeviceStatusData.extendedUploaderStatusHtml) } }
         }
     }
 
@@ -892,7 +864,7 @@ class OverviewFragment : DaggerFragment(), View.OnClickListener, OnLongClickList
                 binding.infoLayout.bgQuality.setImageResource(qualityIcon)
                 binding.infoLayout.bgQuality.contentDescription = rh.gs(R.string.a11y_bg_quality) + " " + bgQualityCheck.stateDescription()
                 binding.infoLayout.bgQuality.setOnClickListener {
-                    context?.let { context -> OKDialog.show(context, rh.gs(R.string.data_status), bgQualityCheck.message) }
+                    context?.let { context -> uiInteraction.showOkDialog(context = context, title = rh.gs(R.string.data_status), message = bgQualityCheck.message) }
                 }
             } else {
                 binding.infoLayout.bgQuality.visibility = View.GONE
@@ -934,7 +906,7 @@ class OverviewFragment : DaggerFragment(), View.OnClickListener, OnLongClickList
             binding.infoLayout.baseBasal.text = temporaryBasalText
             binding.infoLayout.baseBasal.setTextColor(temporaryBasalColor)
             binding.infoLayout.baseBasalIcon.setImageResource(temporaryBasalIcon)
-            binding.infoLayout.basalLayout.setOnClickListener { activity?.let { OKDialog.show(it, rh.gs(app.aaps.core.ui.R.string.basal), temporaryBasalDialogText) } }
+            binding.infoLayout.basalLayout.setOnClickListener { activity?.let { uiInteraction.showOkDialog(context = it, title = rh.gs(app.aaps.core.ui.R.string.basal), message = temporaryBasalDialogText) } }
         }
     }
 
@@ -946,7 +918,7 @@ class OverviewFragment : DaggerFragment(), View.OnClickListener, OnLongClickList
         runOnUiThread {
             _binding ?: return@runOnUiThread
             binding.infoLayout.extendedBolus.text = extendedBolusText
-            binding.infoLayout.extendedLayout.setOnClickListener { activity?.let { OKDialog.show(it, rh.gs(app.aaps.core.ui.R.string.extended_bolus), extendedBolusDialogText) } }
+            binding.infoLayout.extendedLayout.setOnClickListener { activity?.let { uiInteraction.showOkDialog(context = it, title = rh.gs(app.aaps.core.ui.R.string.extended_bolus), message = extendedBolusDialogText) } }
             binding.infoLayout.extendedLayout.visibility = (extendedBolus != null && !pump.isFakingTempsByExtendedBoluses).toVisibility()
         }
     }
@@ -999,7 +971,7 @@ class OverviewFragment : DaggerFragment(), View.OnClickListener, OnLongClickList
         runOnUiThread {
             _binding ?: return@runOnUiThread
             binding.infoLayout.iob.text = iobText
-            binding.infoLayout.iobLayout.setOnClickListener { activity?.let { OKDialog.show(it, rh.gs(app.aaps.core.ui.R.string.iob), iobDialogText) } }
+            binding.infoLayout.iobLayout.setOnClickListener { activity?.let { uiInteraction.showOkDialog(context = it, title = rh.gs(app.aaps.core.ui.R.string.iob), message = iobDialogText) } }
             // cob
             var cobText = displayText ?: rh.gs(app.aaps.core.ui.R.string.value_unavailable_short)
 
@@ -1227,7 +1199,7 @@ class OverviewFragment : DaggerFragment(), View.OnClickListener, OnLongClickList
             val autoSensMax = 100.0 + (preferences.get(DoubleKey.AutosensMax) - 1.0) * autoSensHiddenRange * 100.0
             val autoSensMin = 100.0 + (preferences.get(DoubleKey.AutosensMin) - 1.0) * autoSensHiddenRange * 100.0
             lastAutosensRatio?.let {
-                if (it < autoSensMin || it > autoSensMax)
+                if (it !in autoSensMin..autoSensMax)
                     overViewText.add(rh.gs(app.aaps.core.ui.R.string.autosens_short, it))
                 okDialogText.add(rh.gs(app.aaps.core.ui.R.string.autosens_long, it))
             }
@@ -1250,7 +1222,7 @@ class OverviewFragment : DaggerFragment(), View.OnClickListener, OnLongClickList
                     okDialogText.add(it)
                 }
             }
-            binding.infoLayout.asLayout.setOnClickListener { activity?.let { OKDialog.show(it, rh.gs(app.aaps.core.ui.R.string.sensitivity), okDialogText.joinToString("\n")) } }
+            binding.infoLayout.asLayout.setOnClickListener { activity?.let { uiInteraction.showOkDialog(context = it, title = rh.gs(app.aaps.core.ui.R.string.sensitivity), message = okDialogText.joinToString("\n")) } }
 
         } else {
             binding.infoLayout.sensitivity.text =

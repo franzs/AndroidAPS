@@ -9,12 +9,12 @@ import androidx.annotation.DrawableRes
 import androidx.annotation.LayoutRes
 import androidx.annotation.StyleRes
 import androidx.appcompat.view.ContextThemeWrapper
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import app.aaps.core.ui.R
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
+@Deprecated("Replaced by MaterialAlertDialogBuilder")
 object AlertDialogHelper {
 
-    @Suppress("FunctionName")
     fun Builder(context: Context, @StyleRes themeResId: Int = R.style.AppTheme) =
         MaterialAlertDialogBuilder(ContextThemeWrapper(context, themeResId))
 

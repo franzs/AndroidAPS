@@ -30,7 +30,6 @@ import app.aaps.core.keys.interfaces.Preferences
 import app.aaps.core.objects.extensions.blockFromJsonArray
 import app.aaps.core.objects.extensions.pureProfileFromJson
 import app.aaps.core.objects.profile.ProfileSealed
-import app.aaps.core.ui.dialogs.OKDialog
 import app.aaps.core.ui.toast.ToastUtils
 import app.aaps.core.utils.JsonHelper
 import app.aaps.plugins.main.R
@@ -204,7 +203,7 @@ class ProfilePlugin @Inject constructor(
         var namesOK = true
         profiles.forEach { if (it.name.contains(".")) namesOK = false }
         if (!namesOK) activity?.let {
-            OKDialog.show(it, "", rh.gs(R.string.profile_name_contains_dot))
+            uiInteraction.showOkDialog(context = it, title = "", message = rh.gs(R.string.profile_name_contains_dot))
         }
     }
 

@@ -28,9 +28,7 @@ import app.aaps.core.interfaces.utils.DecimalFormatter
 import app.aaps.core.interfaces.utils.SafeParse
 import app.aaps.core.objects.constraints.ConstraintObject
 import app.aaps.core.objects.extensions.formatColor
-import app.aaps.core.ui.dialogs.OKDialog
 import app.aaps.core.ui.toast.ToastUtils
-import app.aaps.core.utils.HtmlHelper
 import app.aaps.ui.R
 import app.aaps.ui.databinding.DialogTreatmentBinding
 import com.google.common.base.Joiner
@@ -169,8 +167,11 @@ class TreatmentDialog : DialogFragmentWithDate() {
                 actions.add(rh.gs(R.string.carbs_constraint_applied).formatColor(context, rh, app.aaps.core.ui.R.attr.warningColor))
         }
         if (insulinAfterConstraints > 0 || carbsAfterConstraints > 0) {
-            activity?.let { activity ->
-                OKDialog.showConfirmation(activity, rh.gs(app.aaps.core.ui.R.string.overview_treatment_label), HtmlHelper.fromHtml(Joiner.on("<br/>").join(actions)), {
+            uiInteraction.showOkCancelDialog(
+                context = requireActivity(),
+                title = rh.gs(app.aaps.core.ui.R.string.overview_treatment_label),
+                message = Joiner.on("<br/>").join(actions),
+                ok = {
                     val action = when {
                         insulinAfterConstraints.equals(0.0) -> Action.CARBS
                         carbsAfterConstraints == 0          -> Action.BOLUS
@@ -202,10 +203,10 @@ class TreatmentDialog : DialogFragmentWithDate() {
                             uel.log(
                                 action = action,
                                 source = Sources.TreatmentDialog,
-                                listValues = listOf(
+                                listValues = listOfNotNull(
                                     ValueWithUnit.Insulin(insulinAfterConstraints),
                                     ValueWithUnit.Gram(carbsAfterConstraints).takeIf { carbsAfterConstraints != 0 }
-                                ).filterNotNull()
+                                )
                             )
                             commandQueue.bolus(detailedBolusInfo, object : Callback() {
                                 override fun run() {
@@ -223,12 +224,14 @@ class TreatmentDialog : DialogFragmentWithDate() {
                                 ).subscribe()
                         }
                     }
-                })
-            }
+                }
+            )
         } else
-            activity?.let { activity ->
-                OKDialog.show(activity, rh.gs(app.aaps.core.ui.R.string.overview_treatment_label), rh.gs(app.aaps.core.ui.R.string.no_action_selected))
-            }
+            uiInteraction.showOkDialog(
+                context = requireActivity(),
+                title = rh.gs(app.aaps.core.ui.R.string.overview_treatment_label),
+                message = rh.gs(app.aaps.core.ui.R.string.no_action_selected)
+            )
         return true
     }
 
@@ -236,15 +239,13 @@ class TreatmentDialog : DialogFragmentWithDate() {
         super.onResume()
         if (!queryingProtection) {
             queryingProtection = true
-            activity?.let { activity ->
-                val cancelFail = {
-                    queryingProtection = false
-                    aapsLogger.debug(LTag.APS, "Dialog canceled on resume protection: ${this.javaClass.simpleName}")
-                    ToastUtils.warnToast(ctx, R.string.dialog_canceled)
-                    dismiss()
-                }
-                protectionCheck.queryProtection(activity, ProtectionCheck.Protection.BOLUS, { queryingProtection = false }, cancelFail, cancelFail)
+            val cancelFail = {
+                queryingProtection = false
+                aapsLogger.debug(LTag.APS, "Dialog canceled on resume protection: ${this.javaClass.simpleName}")
+                ToastUtils.warnToast(ctx, R.string.dialog_canceled)
+                dismiss()
             }
+            protectionCheck.queryProtection(requireActivity(), ProtectionCheck.Protection.BOLUS, { queryingProtection = false }, cancelFail, cancelFail)
         }
     }
 }

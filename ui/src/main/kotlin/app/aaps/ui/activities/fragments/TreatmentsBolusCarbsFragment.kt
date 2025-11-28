@@ -11,6 +11,7 @@ import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.util.forEach
+import androidx.core.util.size
 import androidx.core.view.MenuProvider
 import androidx.lifecycle.Lifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -32,11 +33,11 @@ import app.aaps.core.interfaces.resources.ResourceHelper
 import app.aaps.core.interfaces.rx.AapsSchedulers
 import app.aaps.core.interfaces.rx.bus.RxBus
 import app.aaps.core.interfaces.rx.events.EventTreatmentChange
+import app.aaps.core.interfaces.ui.UiInteraction
 import app.aaps.core.interfaces.utils.DateUtil
 import app.aaps.core.interfaces.utils.fabric.FabricPrivacy
 import app.aaps.core.objects.extensions.iobCalc
 import app.aaps.core.objects.ui.ActionModeHelper
-import app.aaps.core.ui.dialogs.OKDialog
 import app.aaps.core.ui.extensions.toVisibility
 import app.aaps.core.ui.toast.ToastUtils
 import app.aaps.ui.R
@@ -63,6 +64,7 @@ class TreatmentsBolusCarbsFragment : DaggerFragment(), MenuProvider {
     @Inject lateinit var uel: UserEntryLogger
     @Inject lateinit var persistenceLayer: PersistenceLayer
     @Inject lateinit var activePlugin: ActivePlugin
+    @Inject lateinit var uiInteraction: UiInteraction
 
     private var _binding: TreatmentsBolusCarbsFragmentBinding? = null
 
@@ -348,8 +350,11 @@ class TreatmentsBolusCarbsFragment : DaggerFragment(), MenuProvider {
         }
 
     private fun deleteFutureTreatments() {
-        activity?.let { activity ->
-            OKDialog.showConfirmation(activity, rh.gs(app.aaps.core.ui.R.string.overview_treatment_label), rh.gs(app.aaps.core.ui.R.string.delete_future_treatments) + "?", Runnable {
+        uiInteraction.showOkCancelDialog(
+            context = requireActivity(),
+            title = rh.gs(app.aaps.core.ui.R.string.overview_treatment_label),
+            message = rh.gs(app.aaps.core.ui.R.string.delete_future_treatments) + "?",
+            ok = {
                 disposable += persistenceLayer
                     .getBolusesFromTime(dateUtil.now(), false)
                     .observeOn(aapsSchedulers.main)
@@ -387,11 +392,10 @@ class TreatmentsBolusCarbsFragment : DaggerFragment(), MenuProvider {
                         }
                     }
             })
-        }
     }
 
     private fun getConfirmationText(selectedItems: SparseArray<MealLink>): String {
-        if (selectedItems.size() == 1) {
+        if (selectedItems.size == 1) {
             val mealLink = selectedItems.valueAt(0)
             val bolus = mealLink.bolus
             if (bolus != null)
@@ -402,13 +406,17 @@ class TreatmentsBolusCarbsFragment : DaggerFragment(), MenuProvider {
                 return rh.gs(app.aaps.core.ui.R.string.carbs) + ": " + rh.gs(app.aaps.core.objects.R.string.format_carbs, carbs.amount.toInt()) + "\n" +
                     rh.gs(app.aaps.core.ui.R.string.date) + ": " + dateUtil.dateAndTimeString(carbs.timestamp)
         }
-        return rh.gs(app.aaps.core.ui.R.string.confirm_remove_multiple_items, selectedItems.size())
+        return rh.gs(app.aaps.core.ui.R.string.confirm_remove_multiple_items, selectedItems.size)
     }
 
     private fun removeSelected(selectedItems: SparseArray<MealLink>) {
         activity?.let { activity ->
-            OKDialog.showConfirmation(activity, rh.gs(app.aaps.core.ui.R.string.removerecord), getConfirmationText(selectedItems), Runnable {
-                selectedItems.forEach { _, ml ->
+            uiInteraction.showOkCancelDialog(
+                context = activity,
+                title = rh.gs(app.aaps.core.ui.R.string.removerecord),
+                message = getConfirmationText(selectedItems),
+                ok = {
+                    selectedItems.forEach { _, ml ->
                     ml.bolus?.let { bolus ->
                         disposable += persistenceLayer.invalidateBolus(
                             bolus.id, action = Action.BOLUS_REMOVED,

@@ -14,13 +14,13 @@ import androidx.core.view.MenuProvider
 import androidx.lifecycle.Lifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import app.aaps.core.interfaces.aps.IobTotal
 import app.aaps.core.data.model.EB
 import app.aaps.core.data.model.TB
 import app.aaps.core.data.time.T
 import app.aaps.core.data.ue.Action
 import app.aaps.core.data.ue.Sources
 import app.aaps.core.data.ue.ValueWithUnit
+import app.aaps.core.interfaces.aps.IobTotal
 import app.aaps.core.interfaces.db.PersistenceLayer
 import app.aaps.core.interfaces.logging.AAPSLogger
 import app.aaps.core.interfaces.plugin.ActivePlugin
@@ -29,6 +29,7 @@ import app.aaps.core.interfaces.resources.ResourceHelper
 import app.aaps.core.interfaces.rx.AapsSchedulers
 import app.aaps.core.interfaces.rx.bus.RxBus
 import app.aaps.core.interfaces.rx.events.EventTempBasalChange
+import app.aaps.core.interfaces.ui.UiInteraction
 import app.aaps.core.interfaces.utils.DateUtil
 import app.aaps.core.interfaces.utils.DecimalFormatter
 import app.aaps.core.interfaces.utils.fabric.FabricPrivacy
@@ -36,7 +37,6 @@ import app.aaps.core.objects.extensions.iobCalc
 import app.aaps.core.objects.extensions.toStringFull
 import app.aaps.core.objects.extensions.toTemporaryBasal
 import app.aaps.core.objects.ui.ActionModeHelper
-import app.aaps.core.ui.dialogs.OKDialog
 import app.aaps.core.ui.extensions.toVisibility
 import app.aaps.core.ui.toast.ToastUtils
 import app.aaps.ui.R
@@ -64,6 +64,7 @@ class TreatmentsTemporaryBasalsFragment : DaggerFragment(), MenuProvider {
     @Inject lateinit var aapsSchedulers: AapsSchedulers
     @Inject lateinit var persistenceLayer: PersistenceLayer
     @Inject lateinit var decimalFormatter: DecimalFormatter
+    @Inject lateinit var uiInteraction: UiInteraction
 
     private var _binding: TreatmentsTempbasalsFragmentBinding? = null
 
@@ -277,8 +278,11 @@ class TreatmentsTemporaryBasalsFragment : DaggerFragment(), MenuProvider {
 
     private fun removeSelected(selectedItems: SparseArray<TB>) {
         if (selectedItems.size() > 0)
-            activity?.let { activity ->
-                OKDialog.showConfirmation(activity, rh.gs(app.aaps.core.ui.R.string.removerecord), getConfirmationText(selectedItems), Runnable {
+            uiInteraction.showOkCancelDialog(
+                context = requireActivity(),
+                title = rh.gs(app.aaps.core.ui.R.string.removerecord),
+                message = getConfirmationText(selectedItems),
+                ok = {
                     selectedItems.forEach { _, tempBasal ->
                         var extendedBolus: EB? = null
                         val isFakeExtended = tempBasal.type == TB.Type.FAKE_EXTENDED
@@ -314,6 +318,5 @@ class TreatmentsTemporaryBasalsFragment : DaggerFragment(), MenuProvider {
                     }
                     actionHelper.finish()
                 })
-            }
     }
 }

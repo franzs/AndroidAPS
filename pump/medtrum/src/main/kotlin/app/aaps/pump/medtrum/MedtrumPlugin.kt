@@ -47,7 +47,6 @@ import app.aaps.core.keys.BooleanKey
 import app.aaps.core.keys.IntKey
 import app.aaps.core.keys.interfaces.Preferences
 import app.aaps.core.objects.constraints.ConstraintObject
-import app.aaps.core.ui.dialogs.OKDialog
 import app.aaps.core.ui.toast.ToastUtils
 import app.aaps.core.validators.preferences.AdaptiveIntPreference
 import app.aaps.core.validators.preferences.AdaptiveListPreference
@@ -182,16 +181,20 @@ class MedtrumPlugin @Inject constructor(
 
                 when {
                     newDeviceType == ModelType.INVALID                               -> {
-                        preferenceFragment.activity?.let { activity ->
-                            OKDialog.show(activity, rh.gs(R.string.sn_input_title), rh.gs(R.string.sn_input_invalid))
-                        }
+                        uiInteraction.showOkDialog(
+                            context = preferenceFragment.requireActivity(),
+                            title = rh.gs(R.string.sn_input_title),
+                            message = rh.gs(R.string.sn_input_invalid)
+                        )
                         false
                     }
 
                     medtrumPump.pumpType(newDeviceType) == PumpType.MEDTRUM_UNTESTED -> {
-                        preferenceFragment.activity?.let { activity ->
-                            OKDialog.show(activity, rh.gs(R.string.sn_input_title), rh.gs(R.string.pump_unsupported, newDeviceType.toString()))
-                        }
+                        uiInteraction.showOkDialog(
+                            context = preferenceFragment.requireActivity(),
+                            title = rh.gs(R.string.sn_input_title),
+                            message = rh.gs(R.string.pump_unsupported, newDeviceType.toString())
+                        )
                         false
                     }
 
@@ -310,8 +313,8 @@ class MedtrumPlugin @Inject constructor(
     }
 
     override val lastDataTime: Long get() = medtrumPump.lastConnection
-    override val lastBolusTime: Long? get() = medtrumPump.lastBolusTime
-    override val lastBolusAmount: Double? get() = medtrumPump.lastBolusAmount
+    override val lastBolusTime: Long get() = medtrumPump.lastBolusTime
+    override val lastBolusAmount: Double get() = medtrumPump.lastBolusAmount
     override val baseBasalRate: Double get() = medtrumPump.baseBasalRate
     override val reservoirLevel: Double get() = medtrumPump.reservoir
     override val batteryLevel: Int? = null // We cannot determine battery level (yet)

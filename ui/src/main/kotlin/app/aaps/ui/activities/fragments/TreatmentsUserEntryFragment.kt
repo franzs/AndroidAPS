@@ -23,10 +23,10 @@ import app.aaps.core.interfaces.resources.ResourceHelper
 import app.aaps.core.interfaces.rx.AapsSchedulers
 import app.aaps.core.interfaces.rx.bus.RxBus
 import app.aaps.core.interfaces.rx.events.EventPreferenceChange
+import app.aaps.core.interfaces.ui.UiInteraction
 import app.aaps.core.interfaces.userEntry.UserEntryPresentationHelper
 import app.aaps.core.interfaces.utils.DateUtil
 import app.aaps.core.interfaces.utils.fabric.FabricPrivacy
-import app.aaps.core.ui.dialogs.OKDialog
 import app.aaps.core.ui.extensions.toVisibility
 import app.aaps.core.ui.toast.ToastUtils
 import app.aaps.ui.R
@@ -49,6 +49,7 @@ class TreatmentsUserEntryFragment : DaggerFragment(), MenuProvider {
     @Inject lateinit var importExportPrefs: ImportExportPrefs
     @Inject lateinit var uel: UserEntryLogger
     @Inject lateinit var userEntryPresentationHelper: UserEntryPresentationHelper
+    @Inject lateinit var uiInteraction: UiInteraction
 
     private val disposable = CompositeDisposable()
     private val millsToThePastFiltered = T.days(30).msecs()
@@ -73,12 +74,10 @@ class TreatmentsUserEntryFragment : DaggerFragment(), MenuProvider {
     }
 
     private fun exportUserEntries() {
-        activity?.let { activity ->
-            OKDialog.showConfirmation(activity, rh.gs(app.aaps.core.ui.R.string.ue_export_to_csv) + "?") {
-                uel.log(Action.EXPORT_CSV, Sources.Treatments)
-                importExportPrefs.exportUserEntriesCsv(activity)
-            }
-        }
+        uiInteraction.showOkCancelDialog(context = requireActivity(), title = rh.gs(app.aaps.core.ui.R.string.confirm), message = rh.gs(app.aaps.core.ui.R.string.ue_export_to_csv) + "?", ok = {
+            uel.log(Action.EXPORT_CSV, Sources.Treatments)
+            importExportPrefs.exportUserEntriesCsv(requireActivity())
+        })
     }
 
     private fun swapAdapter() {

@@ -12,7 +12,6 @@ import app.aaps.core.interfaces.rx.events.EventQueueChanged
 import app.aaps.core.interfaces.ui.UiInteraction
 import app.aaps.core.interfaces.utils.fabric.FabricPrivacy
 import app.aaps.core.ui.activities.TranslatedDaggerAppCompatActivity
-import app.aaps.core.ui.dialogs.OKDialog
 import app.aaps.core.ui.extensions.toVisibility
 import app.aaps.pump.omnipod.common.queue.command.CommandPlayTestBeep
 import app.aaps.pump.omnipod.common.ui.wizard.activation.PodActivationWizardActivity
@@ -68,10 +67,10 @@ class DashPodManagementActivity : TranslatedDaggerAppCompatActivity() {
         }
 
         binding.buttonDiscardPod.setOnClickListener {
-            OKDialog.showConfirmation(
-                this,
-                rh.gs(app.aaps.pump.omnipod.common.R.string.omnipod_common_pod_management_discard_pod_confirmation),
-                Thread {
+            uiInteraction.showOkCancelDialog(
+                context = this,
+                message = rh.gs(app.aaps.pump.omnipod.common.R.string.omnipod_common_pod_management_discard_pod_confirmation),
+                ok = {
                     podStateManager.reset()
                 }
             )

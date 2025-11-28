@@ -14,9 +14,9 @@ import app.aaps.core.interfaces.rx.AapsSchedulers
 import app.aaps.core.interfaces.stats.DexcomTirCalculator
 import app.aaps.core.interfaces.stats.TddCalculator
 import app.aaps.core.interfaces.stats.TirCalculator
+import app.aaps.core.interfaces.ui.UiInteraction
 import app.aaps.core.interfaces.utils.fabric.FabricPrivacy
 import app.aaps.core.ui.activities.TranslatedDaggerAppCompatActivity
-import app.aaps.core.ui.dialogs.OKDialog
 import app.aaps.ui.R
 import app.aaps.ui.activityMonitor.ActivityMonitor
 import app.aaps.ui.databinding.ActivityStatsBinding
@@ -36,6 +36,7 @@ class StatsActivity : TranslatedDaggerAppCompatActivity() {
     @Inject lateinit var fabricPrivacy: FabricPrivacy
     @Inject lateinit var rh: ResourceHelper
     @Inject lateinit var persistenceLayer: PersistenceLayer
+    @Inject lateinit var uiInteraction: UiInteraction
 
     private lateinit var binding: ActivityStatsBinding
     private val disposable = CompositeDisposable()
@@ -85,20 +86,20 @@ class StatsActivity : TranslatedDaggerAppCompatActivity() {
                        }, fabricPrivacy::logException)
 
         binding.resetActivity.setOnClickListener {
-            OKDialog.showConfirmation(this, rh.gs(R.string.do_you_want_reset_stats)) {
+            uiInteraction.showOkCancelDialog(context = this, message = rh.gs(R.string.do_you_want_reset_stats), ok = {
                 uel.log(Action.STAT_RESET, Sources.Stats)
                 activityMonitor.reset()
                 recreate()
-            }
+            })
         }
         binding.resetTdd.setOnClickListener {
-            OKDialog.showConfirmation(this, rh.gs(R.string.do_you_want_recalculate_tdd_stats)) {
+            uiInteraction.showOkCancelDialog(context = this, message = rh.gs(R.string.do_you_want_recalculate_tdd_stats), ok = {
                 handler.post {
                     uel.log(Action.STAT_RESET, Sources.Stats)
                     persistenceLayer.clearCachedTddData(0)
                     runOnUiThread { recreate() }
                 }
-            }
+            })
         }
     }
 

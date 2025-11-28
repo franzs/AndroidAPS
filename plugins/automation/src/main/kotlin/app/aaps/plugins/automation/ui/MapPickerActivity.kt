@@ -21,6 +21,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -39,6 +40,8 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import app.aaps.core.interfaces.rx.bus.RxBus
 import app.aaps.core.keys.interfaces.Preferences
 import app.aaps.core.ui.compose.AapsTheme
+import app.aaps.core.ui.compose.LocalPreferences
+import app.aaps.core.ui.compose.LocalRxBus
 import app.aaps.core.ui.locale.LocaleHelper
 import app.aaps.plugins.automation.R
 import app.aaps.plugins.automation.events.EventPlaceSelected
@@ -75,25 +78,30 @@ class MapPickerActivity : DaggerAppCompatActivity() {
         }
 
         setContent {
-            AapsTheme(preferences = preferences) {
-                MapPickerScreen(
-                    initialLocation = initialLocation,
-                    onLocationSelected = { lat, lon ->
-                        selectedLat = lat
-                        selectedLon = lon
-                    },
-                    onConfirm = {
-                        val lat = selectedLat
-                        val lon = selectedLon
-                        if (lat != null && lon != null) {
-                            rxBus.send(EventPlaceSelected(lat, lon))
+            CompositionLocalProvider(
+                LocalPreferences provides preferences,
+                LocalRxBus provides rxBus
+            ) {
+                AapsTheme {
+                    MapPickerScreen(
+                        initialLocation = initialLocation,
+                        onLocationSelected = { lat, lon ->
+                            selectedLat = lat
+                            selectedLon = lon
+                        },
+                        onConfirm = {
+                            val lat = selectedLat
+                            val lon = selectedLon
+                            if (lat != null && lon != null) {
+                                rxBus.send(EventPlaceSelected(lat, lon))
+                            }
+                            finish()
+                        },
+                        onCancel = {
+                            finish()
                         }
-                        finish()
-                    },
-                    onCancel = {
-                        finish()
-                    }
-                )
+                    )
+                }
             }
         }
     }

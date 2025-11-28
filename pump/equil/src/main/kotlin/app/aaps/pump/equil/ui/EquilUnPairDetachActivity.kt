@@ -10,10 +10,10 @@ import app.aaps.core.interfaces.queue.CommandQueue
 import app.aaps.core.interfaces.resources.ResourceHelper
 import app.aaps.core.interfaces.rx.AapsSchedulers
 import app.aaps.core.interfaces.rx.bus.RxBus
+import app.aaps.core.interfaces.ui.UiInteraction
 import app.aaps.core.interfaces.utils.fabric.FabricPrivacy
 import app.aaps.core.keys.interfaces.Preferences
 import app.aaps.core.ui.activities.TranslatedDaggerAppCompatActivity
-import app.aaps.core.ui.dialogs.OKDialog
 import app.aaps.core.ui.toast.ToastUtils
 import app.aaps.pump.equil.EquilPumpPlugin
 import app.aaps.pump.equil.R
@@ -41,6 +41,7 @@ class EquilUnPairDetachActivity : TranslatedDaggerAppCompatActivity() {
     @Inject lateinit var aapsSchedulers: AapsSchedulers
     @Inject lateinit var fabricPrivacy: FabricPrivacy
     @Inject lateinit var equilManager: EquilManager
+    @Inject lateinit var uiInteraction: UiInteraction
 
     private val disposable = CompositeDisposable()
 
@@ -64,8 +65,10 @@ class EquilUnPairDetachActivity : TranslatedDaggerAppCompatActivity() {
             .load(R.drawable.equil_animation_wizard_detach)
             .into(binding.imv)
         binding.btnNext.setOnClickListener {
-            OKDialog.showConfirmation(
-                this, rh.gs(app.aaps.core.ui.R.string.confirmation), rh.gs(R.string.equil_hint_dressing),
+            uiInteraction.showOkCancelDialog(
+                context = this,
+                title = app.aaps.core.ui.R.string.confirmation,
+                message = R.string.equil_hint_dressing,
                 ok = {
                     showLoading()
                     commandQueue.customCommand(CmdInsulinChange(aapsLogger, preferences, equilManager), object : Callback() {

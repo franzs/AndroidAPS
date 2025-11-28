@@ -2,7 +2,6 @@ package app.aaps.core.objects.wizard
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.text.Spanned
 import app.aaps.core.data.model.BCR
 import app.aaps.core.data.model.RM
 import app.aaps.core.data.model.TE
@@ -47,8 +46,6 @@ import app.aaps.core.objects.extensions.formatColor
 import app.aaps.core.objects.extensions.highValueToUnitsToString
 import app.aaps.core.objects.extensions.lowValueToUnitsToString
 import app.aaps.core.objects.extensions.round
-import app.aaps.core.ui.dialogs.OKDialog
-import app.aaps.core.utils.HtmlHelper
 import app.aaps.core.utils.JsonHelper
 import java.util.Calendar
 import java.util.LinkedList
@@ -319,7 +316,7 @@ class BolusWizard @Inject constructor(
         )
     }
 
-    private fun confirmMessageAfterConstraints(context: Context, advisor: Boolean, quickWizardEntry: QuickWizardEntry? = null): Spanned {
+    private fun confirmMessageAfterConstraints(context: Context, advisor: Boolean, quickWizardEntry: QuickWizardEntry? = null): String {
 
         val actions: LinkedList<String> = LinkedList()
         if (insulinAfterConstraints > 0) {
@@ -384,7 +381,7 @@ class BolusWizard @Inject constructor(
             }
         }
 
-        return HtmlHelper.fromHtml(actions.joinToString("<br/>"))
+        return actions.joinToString("<br/>")
     }
 
     fun confirmAndExecute(ctx: Context, quickWizardEntry: QuickWizardEntry? = null) {
@@ -399,21 +396,23 @@ class BolusWizard @Inject constructor(
             if (carbs > 0.0)
                 automation.removeAutomationEventEatReminder()
             if (preferences.get(BooleanKey.OverviewUseBolusAdvisor) && profileUtil.convertToMgdl(bg, profile.units) > 180 && carbs > 0 && carbTime >= 0)
-                OKDialog.showYesNoCancel(
-                    ctx, rh.gs(app.aaps.core.ui.R.string.bolus_advisor), rh.gs(app.aaps.core.ui.R.string.bolus_advisor_message),
-                    { bolusAdvisorProcessing(ctx) },
-                    { commonProcessing(ctx, quickWizardEntry) }
+                uiInteraction.showYesNoCancel(
+                    context = ctx,
+                    title = app.aaps.core.ui.R.string.bolus_advisor,
+                    message = app.aaps.core.ui.R.string.bolus_advisor_message,
+                    yes = { bolusAdvisorProcessing(ctx) },
+                    no = { commonProcessing(ctx, quickWizardEntry) }
                 )
             else
                 commonProcessing(ctx, quickWizardEntry)
         } else {
-            OKDialog.show(ctx, rh.gs(app.aaps.core.ui.R.string.boluswizard), rh.gs(app.aaps.core.ui.R.string.no_action_selected))
+            uiInteraction.showOkDialog(context = ctx, title = app.aaps.core.ui.R.string.boluswizard, message = app.aaps.core.ui.R.string.no_action_selected)
         }
     }
 
     private fun bolusAdvisorProcessing(ctx: Context) {
         val confirmMessage = confirmMessageAfterConstraints(ctx, advisor = true)
-        OKDialog.showConfirmation(ctx, rh.gs(app.aaps.core.ui.R.string.boluswizard), confirmMessage, {
+        uiInteraction.showOkCancelDialog(context = ctx, title = rh.gs(app.aaps.core.ui.R.string.boluswizard), message = confirmMessage, ok = {
             DetailedBolusInfo().apply {
                 eventType = TE.Type.CORRECTION_BOLUS
                 insulin = insulinAfterConstraints
@@ -477,7 +476,7 @@ class BolusWizard @Inject constructor(
         val now = dateUtil.now()
 
         val confirmMessage = confirmMessageAfterConstraints(ctx, advisor = false, quickWizardEntry)
-        OKDialog.showConfirmation(ctx, rh.gs(app.aaps.core.ui.R.string.boluswizard), confirmMessage, {
+        uiInteraction.showOkCancelDialog(context = ctx, title = rh.gs(app.aaps.core.ui.R.string.boluswizard), message = confirmMessage, ok = {
             if (insulinAfterConstraints > 0 || carbs > 0) {
                 if (useSuperBolus) {
                     if (loop.allowedNextModes().contains(RM.Mode.SUPER_BOLUS)) {

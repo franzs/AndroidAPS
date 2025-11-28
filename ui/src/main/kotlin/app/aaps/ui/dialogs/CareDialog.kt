@@ -23,8 +23,6 @@ import app.aaps.core.interfaces.resources.ResourceHelper
 import app.aaps.core.interfaces.ui.UiInteraction
 import app.aaps.core.interfaces.utils.Translator
 import app.aaps.core.keys.BooleanKey
-import app.aaps.core.ui.dialogs.OKDialog
-import app.aaps.core.utils.HtmlHelper
 import app.aaps.ui.R
 import app.aaps.ui.databinding.DialogCareBinding
 import com.google.common.base.Joiner
@@ -42,6 +40,7 @@ class CareDialog(val fm: FragmentManager) : DialogFragmentWithDate() {
     @Inject lateinit var persistenceLayer: PersistenceLayer
     @Inject lateinit var glucoseStatusProvider: GlucoseStatusProvider
     @Inject lateinit var profileUtil: ProfileUtil
+    @Inject lateinit var uiInteraction: UiInteraction
 
     private val disposable = CompositeDisposable()
 
@@ -224,8 +223,11 @@ class CareDialog(val fm: FragmentManager) : DialogFragmentWithDate() {
             UiInteraction.EventType.ANNOUNCEMENT   -> Sources.Announcement
         }
 
-        activity?.let { activity ->
-            OKDialog.showConfirmation(activity, rh.gs(event), HtmlHelper.fromHtml(Joiner.on("<br/>").join(actions)), {
+        uiInteraction.showOkCancelDialog(
+            context = requireActivity(),
+            title = rh.gs(event),
+            message = Joiner.on("<br/>").join(actions),
+            ok = {
                 valuesWithUnit.add(0, ValueWithUnit.Timestamp(eventTime).takeIf { eventTimeChanged })
                 valuesWithUnit.add(1, ValueWithUnit.TEType(therapyEvent.type))
                 disposable += persistenceLayer.insertPumpTherapyEventIfNewByTimestamp(
@@ -235,7 +237,7 @@ class CareDialog(val fm: FragmentManager) : DialogFragmentWithDate() {
                     note = notes,
                     listValues = valuesWithUnit.filterNotNull()
                 ).subscribe()
-                if (therapyEvent.type == TE.Type.SENSOR_CHANGE &&  preferences.get(BooleanKey.SiteRotationManageCgm)) {
+                if (therapyEvent.type == TE.Type.SENSOR_CHANGE && preferences.get(BooleanKey.SiteRotationManageCgm)) {
                     SiteRotationDialog().also { srd ->
                         srd.arguments = Bundle().also { args ->
                             args.putLong("time", therapyEvent.timestamp)
@@ -245,8 +247,9 @@ class CareDialog(val fm: FragmentManager) : DialogFragmentWithDate() {
                         srd.show(fm, "SiteRotationViewDialog")
                     }
                 }
-            }, null)
-        }
+            },
+            cancel = null
+        )
         return true
     }
 }

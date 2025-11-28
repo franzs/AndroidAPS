@@ -14,9 +14,9 @@ import app.aaps.core.data.ue.Sources
 import app.aaps.core.interfaces.logging.UserEntryLogger
 import app.aaps.core.interfaces.resources.ResourceHelper
 import app.aaps.core.interfaces.smsCommunicator.SmsCommunicator
+import app.aaps.core.interfaces.ui.UiInteraction
 import app.aaps.core.interfaces.utils.fabric.FabricPrivacy
 import app.aaps.core.ui.activities.TranslatedDaggerAppCompatActivity
-import app.aaps.core.ui.dialogs.OKDialog
 import app.aaps.core.ui.toast.ToastUtils
 import app.aaps.plugins.main.R
 import app.aaps.plugins.main.databinding.SmscommunicatorActivityOtpBinding
@@ -34,6 +34,7 @@ class SmsCommunicatorOtpActivity : TranslatedDaggerAppCompatActivity() {
     @Inject lateinit var otp: OneTimePassword
     @Inject lateinit var uel: UserEntryLogger
     @Inject lateinit var rh: ResourceHelper
+    @Inject lateinit var uiInteraction: UiInteraction
 
     private lateinit var binding: SmscommunicatorActivityOtpBinding
     private var otpTextWatcher: TextWatcher? = null
@@ -81,11 +82,11 @@ class SmsCommunicatorOtpActivity : TranslatedDaggerAppCompatActivity() {
         binding.otpVerifyEdit.addTextChangedListener(otpTextWatcher)
 
         binding.otpReset.setOnClickListener {
-            OKDialog.showConfirmation(
-                this,
-                rh.gs(R.string.smscommunicator_otp_reset_title),
-                rh.gs(R.string.smscommunicator_otp_reset_prompt),
-                Runnable {
+            uiInteraction.showOkCancelDialog(
+                context = this,
+                title = rh.gs(R.string.smscommunicator_otp_reset_title),
+                message = rh.gs(R.string.smscommunicator_otp_reset_prompt),
+                ok = {
                     uel.log(Action.OTP_RESET, Sources.SMS)
                     otp.ensureKey(true)
                     updateGui()
@@ -94,11 +95,11 @@ class SmsCommunicatorOtpActivity : TranslatedDaggerAppCompatActivity() {
         }
 
         binding.otpProvisioning.setOnLongClickListener {
-            OKDialog.showConfirmation(
-                this,
-                rh.gs(R.string.smscommunicator_otp_export_title),
-                rh.gs(R.string.smscommunicator_otp_export_prompt),
-                Runnable {
+            uiInteraction.showOkCancelDialog(
+                context = this,
+                title = rh.gs(R.string.smscommunicator_otp_export_title),
+                message = rh.gs(R.string.smscommunicator_otp_export_prompt),
+                ok = {
                     val clipboard = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
                     val clip = ClipData.newPlainText("OTP Secret", otp.provisioningSecret())
                     clipboard.setPrimaryClip(clip)

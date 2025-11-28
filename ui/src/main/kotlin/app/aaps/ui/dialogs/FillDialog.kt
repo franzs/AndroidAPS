@@ -28,9 +28,7 @@ import app.aaps.core.keys.BooleanKey
 import app.aaps.core.keys.DoubleKey
 import app.aaps.core.objects.constraints.ConstraintObject
 import app.aaps.core.objects.extensions.formatColor
-import app.aaps.core.ui.dialogs.OKDialog
 import app.aaps.core.ui.toast.ToastUtils
-import app.aaps.core.utils.HtmlHelper
 import app.aaps.ui.R
 import app.aaps.ui.databinding.DialogFillBinding
 import com.google.common.base.Joiner
@@ -147,8 +145,11 @@ class FillDialog(val fm: FragmentManager) : DialogFragmentWithDate() {
             actions.add(rh.gs(app.aaps.core.ui.R.string.time) + ": " + dateUtil.dateAndTimeString(eventTime))
 
         if (insulinAfterConstraints > 0 || binding.fillCatheterChange.isChecked || binding.fillCartridgeChange.isChecked) {
-            activity?.let { activity ->
-                OKDialog.showConfirmation(activity, rh.gs(app.aaps.core.ui.R.string.prime_fill), HtmlHelper.fromHtml(Joiner.on("<br/>").join(actions)), {
+            uiInteraction.showOkCancelDialog(
+                context = requireActivity(),
+                title = rh.gs(app.aaps.core.ui.R.string.prime_fill),
+                message = Joiner.on("<br/>").join(actions),
+                ok = {
                     if (insulinAfterConstraints > 0) {
                         uel.log(
                             action = Action.PRIME_BOLUS, source = Sources.FillDialog,
@@ -167,10 +168,10 @@ class FillDialog(val fm: FragmentManager) : DialogFragmentWithDate() {
                             ),
                             action = Action.SITE_CHANGE, source = Sources.FillDialog,
                             note = notes,
-                            listValues = listOf(
+                            listValues = listOfNotNull(
                                 ValueWithUnit.Timestamp(eventTime).takeIf { eventTimeChanged },
                                 ValueWithUnit.TEType(TE.Type.CANNULA_CHANGE)
-                            ).filterNotNull()
+                            )
                         ).subscribe()
                         if (preferences.get(BooleanKey.SiteRotationManageCgm)) {
                             SiteRotationDialog().also { srd ->
@@ -194,17 +195,20 @@ class FillDialog(val fm: FragmentManager) : DialogFragmentWithDate() {
                             ),
                             action = Action.RESERVOIR_CHANGE, source = Sources.FillDialog,
                             note = notes,
-                            listValues = listOf(
+                            listValues = listOfNotNull(
                                 ValueWithUnit.Timestamp(eventTime).takeIf { eventTimeChanged },
                                 ValueWithUnit.TEType(TE.Type.INSULIN_CHANGE)
-                            ).filterNotNull()
+                            )
                         ).subscribe()
-                }, null)
-            }
+                },
+                cancel = null
+            )
         } else {
-            activity?.let { activity ->
-                OKDialog.show(activity, rh.gs(app.aaps.core.ui.R.string.prime_fill), rh.gs(app.aaps.core.ui.R.string.no_action_selected))
-            }
+            uiInteraction.showOkDialog(
+                context = requireActivity(),
+                title = rh.gs(app.aaps.core.ui.R.string.prime_fill),
+                message = rh.gs(app.aaps.core.ui.R.string.no_action_selected)
+            )
         }
         dismiss()
         return true

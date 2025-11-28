@@ -32,7 +32,6 @@ import app.aaps.core.interfaces.rx.events.EventTempBasalChange
 import app.aaps.core.interfaces.ui.UiInteraction
 import app.aaps.core.interfaces.utils.DateUtil
 import app.aaps.core.interfaces.utils.fabric.FabricPrivacy
-import app.aaps.core.ui.dialogs.OKDialog
 import app.aaps.core.ui.extensions.toVisibility
 import app.aaps.pump.dana.activities.DanaHistoryActivity
 import app.aaps.pump.dana.activities.DanaUserOptionsActivity
@@ -115,12 +114,10 @@ class DanaFragment : DaggerFragment() {
             activePlugin.activePump.pumpDescription.pumpType == PumpType.DANA_I
         )
             binding.btConnectionLayout.setOnLongClickListener {
-                activity?.let {
-                    OKDialog.showConfirmation(it, rh.gs(R.string.resetpairing)) {
-                        uel.log(Action.CLEAR_PAIRING_KEYS, Sources.Dana)
-                        (activePlugin.activePump as Dana).clearPairing()
-                    }
-                }
+                uiInteraction.showOkCancelDialog(context = requireActivity(), message = rh.gs(R.string.resetpairing), ok = {
+                    uel.log(Action.CLEAR_PAIRING_KEYS, Sources.Dana)
+                    (activePlugin.activePump as Dana).clearPairing()
+                })
                 true
             }
     }

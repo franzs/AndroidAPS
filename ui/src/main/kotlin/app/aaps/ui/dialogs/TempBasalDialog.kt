@@ -23,9 +23,7 @@ import app.aaps.core.interfaces.ui.UiInteraction
 import app.aaps.core.interfaces.utils.SafeParse
 import app.aaps.core.objects.constraints.ConstraintObject
 import app.aaps.core.objects.extensions.formatColor
-import app.aaps.core.ui.dialogs.OKDialog
 import app.aaps.core.ui.toast.ToastUtils
-import app.aaps.core.utils.HtmlHelper
 import app.aaps.ui.R
 import app.aaps.ui.databinding.DialogTempbasalBinding
 import com.google.common.base.Joiner
@@ -131,8 +129,11 @@ class TempBasalDialog : DialogFragmentWithDate() {
             if (abs(absolute - basalAbsoluteInput) > 0.01)
                 actions.add(rh.gs(app.aaps.core.ui.R.string.constraint_applied).formatColor(context, rh, app.aaps.core.ui.R.attr.warningColor))
         }
-        activity?.let { activity ->
-            OKDialog.showConfirmation(activity, rh.gs(app.aaps.core.ui.R.string.tempbasal_label), HtmlHelper.fromHtml(Joiner.on("<br/>").join(actions)), {
+        uiInteraction.showOkCancelDialog(
+            context = requireActivity(),
+            title = rh.gs(app.aaps.core.ui.R.string.tempbasal_label),
+            message = Joiner.on("<br/>").join(actions),
+            ok = {
                 val callback: Callback = object : Callback() {
                     override fun run() {
                         if (!result.success) {
@@ -159,8 +160,8 @@ class TempBasalDialog : DialogFragmentWithDate() {
                     )
                     commandQueue.tempBasalAbsolute(absolute, durationInMinutes, true, profile, PumpSync.TemporaryBasalType.NORMAL, callback)
                 }
-            })
-        }
+            }
+        )
         return true
     }
 

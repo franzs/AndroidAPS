@@ -25,9 +25,9 @@ import app.aaps.core.interfaces.rx.events.EventPumpStatusChanged
 import app.aaps.core.interfaces.rx.events.EventQueueChanged
 import app.aaps.core.interfaces.rx.events.EventRefreshButtonState
 import app.aaps.core.interfaces.rx.events.EventTempBasalChange
+import app.aaps.core.interfaces.ui.UiInteraction
 import app.aaps.core.interfaces.utils.DateUtil
 import app.aaps.core.interfaces.utils.fabric.FabricPrivacy
-import app.aaps.core.ui.dialogs.OKDialog
 import app.aaps.pump.common.events.EventRileyLinkDeviceStatusChange
 import app.aaps.pump.common.extensions.stringResource
 import app.aaps.pump.common.hw.rileylink.defs.RileyLinkServiceState
@@ -64,6 +64,7 @@ class MedtronicFragment : DaggerFragment() {
     @Inject lateinit var rileyLinkServiceData: RileyLinkServiceData
     @Inject lateinit var aapsSchedulers: AapsSchedulers
     @Inject lateinit var pumpSync: PumpSync
+    @Inject lateinit var uiInteraction: UiInteraction
 
     private var disposable: CompositeDisposable = CompositeDisposable()
 
@@ -258,12 +259,11 @@ class MedtronicFragment : DaggerFragment() {
     }
 
     private fun displayNotConfiguredDialog() {
-        context?.let {
-            OKDialog.show(
-                it, rh.gs(R.string.medtronic_warning),
-                rh.gs(R.string.medtronic_error_operation_not_possible_no_configuration)
-            )
-        }
+        uiInteraction.showOkDialog(
+            context = requireActivity(),
+            title = rh.gs(R.string.medtronic_warning),
+            message = rh.gs(R.string.medtronic_error_operation_not_possible_no_configuration)
+        )
     }
 
     // GUI functions

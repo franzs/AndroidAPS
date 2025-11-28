@@ -120,7 +120,8 @@ open class APSResultObject(protected val injector: HasAndroidInjector) : APSResu
         } else rh.gs(R.string.nochangerequested)
     }
 
-    override fun resultAsSpanned(): Spanned {
+    override fun resultAsSpanned(): Spanned = HtmlHelper.fromHtml(resultAsHtmlString())
+    override fun resultAsHtmlString(): String {
         val pump = activePlugin.activePump
         if (isChangeRequested) {
             // rate
@@ -142,11 +143,10 @@ open class APSResultObject(protected val injector: HasAndroidInjector) : APSResu
 
             // reason
             ret += "<b>" + rh.gs(R.string.reason) + "</b>: " + reason.replace("<", "&lt;").replace(">", "&gt;")
-            return HtmlHelper.fromHtml(ret)
+            return ret
         }
-        return if (isCarbsRequired) {
-            HtmlHelper.fromHtml(carbsRequiredText)
-        } else HtmlHelper.fromHtml(rh.gs(R.string.nochangerequested))
+        return if (isCarbsRequired) carbsRequiredText
+        else rh.gs(R.string.nochangerequested)
     }
 
     override fun newAndClone(): APSResult {

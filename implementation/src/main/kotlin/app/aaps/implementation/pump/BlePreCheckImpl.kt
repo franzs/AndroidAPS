@@ -8,8 +8,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import app.aaps.core.interfaces.pump.BlePreCheck
-import app.aaps.core.interfaces.resources.ResourceHelper
-import app.aaps.core.ui.dialogs.OKDialog
+import app.aaps.core.interfaces.ui.UiInteraction
 import app.aaps.core.utils.extensions.safeEnable
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -17,7 +16,7 @@ import javax.inject.Singleton
 @Singleton
 class BlePreCheckImpl @Inject constructor(
     private val context: Context,
-    private val rh: ResourceHelper
+    private val uiInteraction: UiInteraction
 ) : BlePreCheck {
 
     companion object {
@@ -27,7 +26,7 @@ class BlePreCheckImpl @Inject constructor(
 
     override fun prerequisitesCheck(activity: AppCompatActivity): Boolean {
         if (!activity.packageManager.hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE)) {
-            OKDialog.show(activity, rh.gs(app.aaps.core.ui.R.string.message), rh.gs(app.aaps.core.ui.R.string.ble_not_supported))
+            uiInteraction.showOkDialog(context = activity, title = app.aaps.core.ui.R.string.message, message = app.aaps.core.ui.R.string.ble_not_supported)
             return false
         } else {
             if (ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED ||
@@ -41,7 +40,7 @@ class BlePreCheckImpl @Inject constructor(
             // Ensures Bluetooth is available on the device and it is enabled.
             bluetoothAdapter?.safeEnable(3000)
             if (bluetoothAdapter?.isEnabled != true) {
-                OKDialog.show(activity, rh.gs(app.aaps.core.ui.R.string.message), rh.gs(app.aaps.core.ui.R.string.ble_not_enabled))
+                uiInteraction.showOkDialog(context = activity, title = app.aaps.core.ui.R.string.message, message = app.aaps.core.ui.R.string.ble_not_enabled)
                 return false
             }
         }

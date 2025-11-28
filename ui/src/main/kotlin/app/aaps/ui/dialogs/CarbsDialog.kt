@@ -37,9 +37,7 @@ import app.aaps.core.keys.IntKey
 import app.aaps.core.keys.UnitDoubleKey
 import app.aaps.core.objects.constraints.ConstraintObject
 import app.aaps.core.objects.extensions.formatColor
-import app.aaps.core.ui.dialogs.OKDialog
 import app.aaps.core.ui.toast.ToastUtils
-import app.aaps.core.utils.HtmlHelper
 import app.aaps.ui.R
 import app.aaps.ui.databinding.DialogCarbsBinding
 import com.google.common.base.Joiner
@@ -325,8 +323,11 @@ class CarbsDialog : DialogFragmentWithDate() {
             actions.add(rh.gs(app.aaps.core.ui.R.string.time) + ": " + dateUtil.dateAndTimeString(eventTime))
 
         if (carbsAfterConstraints != 0 || activitySelected || eatingSoonSelected || hypoSelected) {
-            activity?.let { activity ->
-                OKDialog.showConfirmation(activity, rh.gs(app.aaps.core.ui.R.string.carbs), HtmlHelper.fromHtml(Joiner.on("<br/>").join(actions)), {
+            uiInteraction.showOkCancelDialog(
+                context = requireActivity(),
+                title = rh.gs(app.aaps.core.ui.R.string.carbs),
+                message = Joiner.on("<br/>").join(actions),
+                ok = {
                     val selectedTTDuration = when {
                         activitySelected   -> activityTTDuration
                         eatingSoonSelected -> eatingSoonTTDuration
@@ -395,12 +396,15 @@ class CarbsDialog : DialogFragmentWithDate() {
                     if (useAlarm && carbs > 0 && timeOffset > 0) {
                         automation.scheduleTimeToEatReminder(T.mins(timeOffset.toLong()).secs().toInt())
                     }
-                }, null)
-            }
+                },
+                cancel = null
+            )
         } else
-            activity?.let { activity ->
-                OKDialog.show(activity, rh.gs(app.aaps.core.ui.R.string.carbs), rh.gs(app.aaps.core.ui.R.string.no_action_selected))
-            }
+            uiInteraction.showOkDialog(
+                context = requireActivity(),
+                title = rh.gs(app.aaps.core.ui.R.string.carbs),
+                message = rh.gs(app.aaps.core.ui.R.string.no_action_selected)
+            )
         return true
     }
 

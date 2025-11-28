@@ -19,7 +19,6 @@ import app.aaps.core.interfaces.rx.events.EventSWUpdate
 import app.aaps.core.interfaces.ui.UiInteraction
 import app.aaps.core.interfaces.utils.fabric.FabricPrivacy
 import app.aaps.core.keys.BooleanKey
-import app.aaps.core.ui.dialogs.OKDialog
 import app.aaps.core.ui.locale.LocaleHelper.update
 import app.aaps.plugins.configuration.R
 import app.aaps.plugins.configuration.activities.DaggerAppCompatActivityWithResult
@@ -67,7 +66,8 @@ class SetupWizardActivity : DaggerAppCompatActivityWithResult() {
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 if (currentWizardPage == 0)
-                    OKDialog.showConfirmation(this@SetupWizardActivity, rh.gs(R.string.exitwizard)) { finish() } else {
+                    uiInteraction.showOkCancelDialog(context = this@SetupWizardActivity, message = rh.gs(R.string.exitwizard), ok = { finish() })
+                else {
                     currentWizardPage = previousPage(); prepareLayout()
                 }
             }
@@ -79,7 +79,7 @@ class SetupWizardActivity : DaggerAppCompatActivityWithResult() {
                 when (menuItem.itemId) {
                     android.R.id.home -> {
                         preferences.put(BooleanKey.GeneralSetupWizardProcessed, true)
-                        OKDialog.showConfirmation(this@SetupWizardActivity, rh.gs(R.string.exitwizard)) { finish() }
+                        uiInteraction.showOkCancelDialog(context = this@SetupWizardActivity, message = rh.gs(R.string.exitwizard), ok = { finish() })
                         true
                     }
 

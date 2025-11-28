@@ -25,7 +25,6 @@ import app.aaps.core.interfaces.rx.events.EventFoodDatabaseChanged
 import app.aaps.core.interfaces.ui.UiInteraction
 import app.aaps.core.interfaces.utils.fabric.FabricPrivacy
 import app.aaps.core.ui.UIRunnable
-import app.aaps.core.ui.dialogs.OKDialog
 import app.aaps.core.ui.extensions.toVisibility
 import app.aaps.plugins.main.R
 import app.aaps.plugins.main.databinding.FoodFragmentBinding
@@ -207,19 +206,15 @@ class FoodFragment : DaggerFragment() {
             init {
                 binding.icRemove.setOnClickListener { v: View ->
                     val food = v.tag as FD
-                    activity?.let { activity ->
-                        OKDialog.showConfirmation(activity, rh.gs(app.aaps.core.ui.R.string.removerecord) + "\n" + food.name, {
-                            disposable += persistenceLayer.invalidateFood(food.id, Action.FOOD_REMOVED, Sources.Food).subscribe()
-                        }, null)
-                    }
+                    uiInteraction.showOkCancelDialog(context = requireActivity(), message = rh.gs(app.aaps.core.ui.R.string.removerecord) + "\n" + food.name, ok = {
+                        disposable += persistenceLayer.invalidateFood(food.id, Action.FOOD_REMOVED, Sources.Food).subscribe()
+                    }, cancel = null)
                 }
                 binding.icCalculator.setOnClickListener { v: View ->
                     val food = v.tag as FD
-                    activity?.let { activity ->
-                        protectionCheck.queryProtection(activity, ProtectionCheck.Protection.BOLUS, UIRunnable {
-                            if (isAdded) uiInteraction.runWizardDialog(childFragmentManager, food.carbs, food.name)
-                        })
-                    }
+                    protectionCheck.queryProtection(requireActivity(), ProtectionCheck.Protection.BOLUS, UIRunnable {
+                        if (isAdded) uiInteraction.runWizardDialog(childFragmentManager, food.carbs, food.name)
+                    })
                 }
             }
         }

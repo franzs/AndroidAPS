@@ -22,7 +22,6 @@ import app.aaps.core.interfaces.utils.DateUtil
 import app.aaps.core.interfaces.utils.fabric.FabricPrivacy
 import app.aaps.core.objects.profile.ProfileSealed
 import app.aaps.core.ui.activities.TranslatedDaggerAppCompatActivity
-import app.aaps.core.ui.dialogs.OKDialog
 import app.aaps.core.ui.extensions.toVisibility
 import app.aaps.core.ui.toast.ToastUtils
 import app.aaps.ui.R
@@ -51,6 +50,7 @@ class ProfileHelperActivity : TranslatedDaggerAppCompatActivity() {
     @Inject lateinit var fabricPrivacy: FabricPrivacy
     @Inject lateinit var rh: ResourceHelper
     @Inject lateinit var rxBus: RxBus
+    @Inject lateinit var uiInteraction: UiInteraction
 
     enum class ProfileType {
         MOTOL_DEFAULT,
@@ -144,16 +144,21 @@ class ProfileHelperActivity : TranslatedDaggerAppCompatActivity() {
             val profile = if (typeSelected[tabSelected] == ProfileType.MOTOL_DEFAULT) defaultProfile.profile(age, tdd, weight, profileFunction.getUnits())
             else defaultProfileDPV.profile(age, tdd, pct / 100.0, profileFunction.getUnits())
             profile?.let {
-                OKDialog.showConfirmation(this, rh.gs(app.aaps.core.ui.R.string.careportal_profileswitch), rh.gs(app.aaps.core.ui.R.string.copytolocalprofile), {
-                    activePlugin.activeProfileSource.addProfile(
-                        activePlugin.activeProfileSource.copyFrom(
-                            it, "DefaultProfile " +
-                                dateUtil.dateAndTimeAndSecondsString(dateUtil.now())
-                                    .replace(".", "/")
+                uiInteraction.showOkCancelDialog(
+                    context = this,
+                    title = rh.gs(app.aaps.core.ui.R.string.careportal_profileswitch),
+                    message = rh.gs(app.aaps.core.ui.R.string.copytolocalprofile),
+                    ok = {
+                        activePlugin.activeProfileSource.addProfile(
+                            activePlugin.activeProfileSource.copyFrom(
+                                it, "DefaultProfile " +
+                                    dateUtil.dateAndTimeAndSecondsString(dateUtil.now())
+                                        .replace(".", "/")
+                            )
                         )
-                    )
-                    rxBus.send(EventLocalProfileChanged())
-                })
+                        rxBus.send(EventLocalProfileChanged())
+                    }
+                )
             }
         }
 
@@ -194,29 +199,29 @@ class ProfileHelperActivity : TranslatedDaggerAppCompatActivity() {
             storeValues()
             for (i in 0..1) {
                 if (typeSelected[i] == ProfileType.MOTOL_DEFAULT) {
-                    if (ageUsed[i] < 1 || ageUsed[i] > 18) {
+                    if (ageUsed[i] !in 1..18) {
                         ToastUtils.warnToast(this, R.string.invalid_age)
                         return@setOnClickListener
                     }
-                    if ((weightUsed[i] < 5 || weightUsed[i] > 150) && tddUsed[i] == 0.0) {
+                    if ((weightUsed[i] !in 5.0..150.0) && tddUsed[i] == 0.0) {
                         ToastUtils.warnToast(this, R.string.invalid_weight)
                         return@setOnClickListener
                     }
-                    if ((tddUsed[i] < 5 || tddUsed[i] > 150) && weightUsed[i] == 0.0) {
+                    if ((tddUsed[i] !in 5.0..150.0) && weightUsed[i] == 0.0) {
                         ToastUtils.warnToast(this, R.string.invalid_weight)
                         return@setOnClickListener
                     }
                 }
                 if (typeSelected[i] == ProfileType.DPV_DEFAULT) {
-                    if (ageUsed[i] < 1 || ageUsed[i] > 18) {
+                    if (ageUsed[i] !in 1..18) {
                         ToastUtils.warnToast(this, R.string.invalid_age)
                         return@setOnClickListener
                     }
-                    if (tddUsed[i] < 5 || tddUsed[i] > 150) {
+                    if (tddUsed[i] !in 5.0..150.0) {
                         ToastUtils.warnToast(this, R.string.invalid_weight)
                         return@setOnClickListener
                     }
-                    if ((pctUsed[i] < 32 || pctUsed[i] > 37)) {
+                    if ((pctUsed[i] !in 32.0..37.0)) {
                         ToastUtils.warnToast(this, R.string.invalid_pct)
                         return@setOnClickListener
                     }

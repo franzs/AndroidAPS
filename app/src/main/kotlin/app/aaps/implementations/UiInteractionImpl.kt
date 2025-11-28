@@ -18,7 +18,7 @@ import app.aaps.core.interfaces.rx.bus.RxBus
 import app.aaps.core.interfaces.rx.events.EventDismissNotification
 import app.aaps.core.interfaces.rx.events.EventNewNotification
 import app.aaps.core.interfaces.ui.UiInteraction
-import app.aaps.core.ui.dialogs.OKDialog
+import app.aaps.core.keys.interfaces.Preferences
 import app.aaps.core.ui.toast.ToastUtils
 import app.aaps.plugins.configuration.activities.SingleFragmentActivity
 import app.aaps.plugins.main.general.overview.notifications.NotificationWithAction
@@ -26,6 +26,7 @@ import app.aaps.ui.activities.BolusProgressHelperActivity
 import app.aaps.ui.activities.ErrorHelperActivity
 import app.aaps.ui.activities.QuickWizardListActivity
 import app.aaps.ui.activities.TDDStatsActivity
+import app.aaps.ui.dialogs.AlertDialogs
 import app.aaps.ui.dialogs.BolusProgressDialog
 import app.aaps.ui.dialogs.CalibrationDialog
 import app.aaps.ui.dialogs.CarbsDialog
@@ -55,8 +56,11 @@ class UiInteractionImpl @Inject constructor(
     private val rxBus: RxBus,
     private val alarmSoundServiceHelper: AlarmSoundServiceHelper,
     private val notificationWithActionProvider: Provider<NotificationWithAction>,
-    private val protectionCheck: Lazy<ProtectionCheck>
+    private val protectionCheck: Lazy<ProtectionCheck>,
+    preferences: Preferences
 ) : UiInteraction {
+
+    private val alertDialogs: AlertDialogs = AlertDialogs(preferences, rxBus)
 
     override val mainActivity: Class<*> = MainActivity::class.java
     override val tddStatsActivity: Class<*> = TDDStatsActivity::class.java
@@ -239,7 +243,7 @@ class UiInteractionImpl @Inject constructor(
                 notificationWithActionProvider.get().with(id, text, level, validityCheck)
                     .also { n ->
                         n.action(buttonText) {
-                            n.contextForAction?.let { OKDialog.show(it, title, message) }
+                            n.contextForAction?.let { showOkDialog(context = it, title = title, message = message) }
                         }
                     })
         )
@@ -266,5 +270,37 @@ class UiInteractionImpl @Inject constructor(
 
     override fun stopAlarm(reason: String) {
         alarmSoundServiceHelper.stopAlarm(reason)
+    }
+
+    override fun showOkDialog(context: Context, title: String, message: String, onFinish: (() -> Unit)?) {
+        alertDialogs.showOkDialog(context, title, message, onFinish)
+    }
+
+    override fun showOkDialog(context: Context, title: Int, message: Int, onFinish: (() -> Unit)?) {
+        alertDialogs.showOkDialog(context, title, message, onFinish)
+    }
+
+    override fun showOkCancelDialog(context: Context, title: Int, message: Int, ok: (() -> Unit)?, cancel: (() -> Unit)?, icon: Int?) {
+        alertDialogs.showOkCancelDialog(context, title, message, ok, cancel, icon)
+    }
+
+    override fun showOkCancelDialog(context: Context, title: String, message: String, ok: (() -> Unit)?, cancel: (() -> Unit)?, icon: Int?) {
+        alertDialogs.showOkCancelDialog(context, title, message, ok, cancel, icon)
+    }
+
+    override fun showOkCancelDialog(context: Context, title: String, message: String, secondMessage: String, ok: (() -> Unit)?, cancel: (() -> Unit)?, icon: Int?) {
+        alertDialogs.showOkCancelDialog(context, title, message, secondMessage, ok, cancel, icon)
+    }
+
+    override fun showYesNoCancel(context: Context, title: Int, message: Int, yes: (() -> Unit)?, no: (() -> Unit)?) {
+        alertDialogs.showYesNoCancel(context, title, message, yes, no)
+    }
+
+    override fun showYesNoCancel(context: Context, title: String, message: String, yes: (() -> Unit)?, no: (() -> Unit)?) {
+        alertDialogs.showYesNoCancel(context, title, message, yes, no)
+    }
+
+    override fun showError(context: Context, title: String, message: String, positiveButton: Int?, ok: (() -> Unit)?, cancel: (() -> Unit)?) {
+        alertDialogs.showError(context, title, message, positiveButton, ok, cancel)
     }
 }

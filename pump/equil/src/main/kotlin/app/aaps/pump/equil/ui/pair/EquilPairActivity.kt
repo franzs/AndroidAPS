@@ -9,8 +9,8 @@ import androidx.core.view.MenuProvider
 import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
 import app.aaps.core.interfaces.resources.ResourceHelper
+import app.aaps.core.interfaces.ui.UiInteraction
 import app.aaps.core.ui.activities.TranslatedDaggerAppCompatActivity
-import app.aaps.core.ui.dialogs.OKDialog
 import app.aaps.core.utils.extensions.safeGetSerializableExtra
 import app.aaps.pump.equil.R
 import javax.inject.Inject
@@ -18,6 +18,7 @@ import javax.inject.Inject
 class EquilPairActivity : TranslatedDaggerAppCompatActivity() {
 
     @Inject lateinit var rh: ResourceHelper
+    @Inject lateinit var uiInteraction: UiInteraction
 
     private var equilMenuProvider: MenuProvider? = null
 
@@ -85,7 +86,12 @@ class EquilPairActivity : TranslatedDaggerAppCompatActivity() {
 
     fun exitActivityAfterConfirmation() {
         if (getNavController().previousBackStackEntry == null) finish()
-        else OKDialog.showConfirmation(this, rh.gs(R.string.equil_common_wizard_exit_confirmation_text), { finish() }, null)
+        else uiInteraction.showOkCancelDialog(
+            context = this,
+            message = rh.gs(R.string.equil_common_wizard_exit_confirmation_text),
+            ok = { finish() },
+            cancel = null
+        )
     }
 
     private fun getNavController(): NavController =

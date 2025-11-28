@@ -24,14 +24,13 @@ import app.aaps.core.interfaces.profile.ProfileUtil
 import app.aaps.core.interfaces.protection.ProtectionCheck
 import app.aaps.core.interfaces.resources.ResourceHelper
 import app.aaps.core.interfaces.rx.bus.RxBus
+import app.aaps.core.interfaces.ui.UiInteraction
 import app.aaps.core.interfaces.utils.HardLimits
 import app.aaps.core.keys.BooleanNonKey
 import app.aaps.core.keys.UnitDoubleKey
 import app.aaps.core.objects.profile.ProfileSealed
-import app.aaps.core.ui.dialogs.OKDialog
 import app.aaps.core.ui.extensions.toVisibility
 import app.aaps.core.ui.toast.ToastUtils
-import app.aaps.core.utils.HtmlHelper
 import app.aaps.ui.R
 import app.aaps.ui.databinding.DialogProfileswitchBinding
 import com.google.common.base.Joiner
@@ -55,6 +54,7 @@ class ProfileSwitchDialog : DialogFragmentWithDate() {
     @Inject lateinit var rxBus: RxBus
     @Inject lateinit var ctx: Context
     @Inject lateinit var protectionCheck: ProtectionCheck
+    @Inject lateinit var uiInteraction: UiInteraction
 
     private var queryingProtection = false
     private var profileName: String? = null
@@ -192,11 +192,14 @@ class ProfileSwitchDialog : DialogFragmentWithDate() {
         if (isTT)
             actions.add(rh.gs(app.aaps.core.ui.R.string.temporary_target) + ": " + rh.gs(app.aaps.core.ui.R.string.activity))
 
-        activity?.let { activity ->
-            val ps = profileFunction.buildProfileSwitch(profileStore, profileName, duration, percent, timeShift, eventTime) ?: return@let
-            val validity = ProfileSealed.PS(ps, activePlugin).isValid(rh.gs(app.aaps.core.ui.R.string.careportal_profileswitch), activePlugin.activePump, config, rh, rxBus, hardLimits, false)
-            if (validity.isValid)
-                OKDialog.showConfirmation(activity, rh.gs(app.aaps.core.ui.R.string.careportal_profileswitch), HtmlHelper.fromHtml(Joiner.on("<br/>").join(actions)), {
+        val ps = profileFunction.buildProfileSwitch(profileStore, profileName, duration, percent, timeShift, eventTime) ?: return false
+        val validity = ProfileSealed.PS(ps, activePlugin).isValid(rh.gs(app.aaps.core.ui.R.string.careportal_profileswitch), activePlugin.activePump, config, rh, rxBus, hardLimits, false)
+        if (validity.isValid)
+            uiInteraction.showOkCancelDialog(
+                context = requireActivity(),
+                title = rh.gs(app.aaps.core.ui.R.string.careportal_profileswitch),
+                message = Joiner.on("<br/>").join(actions),
+                ok = {
                     if (profileFunction.createProfileSwitch(
                             profileStore = profileStore,
                             profileName = profileName,
@@ -207,13 +210,13 @@ class ProfileSwitchDialog : DialogFragmentWithDate() {
                             action = Action.PROFILE_SWITCH,
                             source = Sources.ProfileSwitchDialog,
                             note = notes,
-                            listValues = listOf(
+                            listValues = listOfNotNull(
                                 ValueWithUnit.Timestamp(eventTime).takeIf { eventTimeChanged },
                                 ValueWithUnit.SimpleString(profileName),
                                 ValueWithUnit.Percent(percent),
                                 ValueWithUnit.Hour(timeShift).takeIf { timeShift != 0 },
                                 ValueWithUnit.Minute(duration).takeIf { duration != 0 }
-                            ).filterNotNull()
+                            )
                         )
                     ) {
                         if (percent == 90 && duration == 10) preferences.put(BooleanNonKey.ObjectivesProfileSwitchUsed, true)
@@ -229,24 +232,24 @@ class ProfileSwitchDialog : DialogFragmentWithDate() {
                                 action = Action.TT,
                                 source = Sources.TTDialog,
                                 note = null,
-                                listValues = listOf(
+                                listValues = listOfNotNull(
                                     ValueWithUnit.Timestamp(eventTime).takeIf { eventTimeChanged },
                                     ValueWithUnit.TETTReason(TT.Reason.ACTIVITY),
                                     ValueWithUnit.fromGlucoseUnit(target, units),
                                     ValueWithUnit.Minute(duration)
-                                ).filterNotNull()
+                                )
                             ).subscribe()
                         }
                     }
-                })
-            else {
-                OKDialog.show(
-                    activity,
-                    rh.gs(app.aaps.core.ui.R.string.careportal_profileswitch),
-                    HtmlHelper.fromHtml(Joiner.on("<br/>").join(validity.reasons))
-                )
-                return false
-            }
+                }
+            )
+        else {
+            uiInteraction.showOkDialog(
+                context = requireActivity(),
+                title = rh.gs(app.aaps.core.ui.R.string.careportal_profileswitch),
+                message = Joiner.on("<br/>").join(validity.reasons)
+            )
+            return false
         }
         return true
     }

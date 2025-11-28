@@ -6,7 +6,7 @@ import androidx.lifecycle.ViewModelProvider
 import app.aaps.core.interfaces.logging.AAPSLogger
 import app.aaps.core.interfaces.logging.LTag
 import app.aaps.core.interfaces.resources.ResourceHelper
-import app.aaps.core.ui.dialogs.OKDialog
+import app.aaps.core.interfaces.ui.UiInteraction
 import app.aaps.pump.medtrum.R
 import app.aaps.pump.medtrum.code.PatchStep
 import app.aaps.pump.medtrum.databinding.FragmentMedtrumRetryActivationBinding
@@ -17,6 +17,7 @@ class MedtrumRetryActivationFragment : MedtrumBaseFragment<FragmentMedtrumRetryA
 
     @Inject lateinit var aapsLogger: AAPSLogger
     @Inject lateinit var rh: ResourceHelper
+    @Inject lateinit var uiInteraction: UiInteraction
 
     companion object {
 
@@ -34,11 +35,11 @@ class MedtrumRetryActivationFragment : MedtrumBaseFragment<FragmentMedtrumRetryA
                 preparePatch() // Use this to make sure we are disconnected at this stage
             }
             btnNegative.setOnClickListener {
-                OKDialog.showConfirmation(requireActivity(), rh.gs(R.string.medtrum_deactivate_pump_confirm)) {
+                uiInteraction.showOkCancelDialog(context = requireActivity(), message = rh.gs(R.string.medtrum_deactivate_pump_confirm), ok = {
                     viewModel?.apply {
                         moveStep(PatchStep.FORCE_DEACTIVATION)
                     }
-                }
+                })
             }
         }
     }

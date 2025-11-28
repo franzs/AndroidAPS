@@ -5,15 +5,41 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.compositionLocalOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import app.aaps.core.interfaces.rx.bus.RxBus
+import app.aaps.core.interfaces.rx.events.EventPreferenceChange
 import app.aaps.core.keys.StringKey
 import app.aaps.core.keys.interfaces.Preferences
 import app.aaps.core.ui.UiMode
 
+val LocalPreferences = compositionLocalOf<Preferences> { error("No Preferences provided") }
+val LocalRxBus = compositionLocalOf<RxBus> { error("No RxBus provided") }
+
 @Composable
 fun AapsTheme(
-    preferences: Preferences,
     content: @Composable () -> Unit
 ) {
+    val preferences = LocalPreferences.current
+    val rxBus = LocalRxBus.current
+    var uiMode by remember { mutableStateOf(UiMode.fromString(preferences.get(StringKey.GeneralDarkMode))) }
+
+    DisposableEffect(rxBus, preferences) {
+        val disposable = rxBus.toObservable(EventPreferenceChange::class.java)
+            .filter { it.changedKey == StringKey.GeneralDarkMode.key }
+            .subscribe {
+                uiMode = UiMode.fromString(preferences.get(StringKey.GeneralDarkMode))
+            }
+
+        onDispose {
+            disposable.dispose()
+        }
+    }
+
     val lightColors = lightColorScheme(
         /*
                 primary = colorResource(app.aaps.core.ui.R.color.aaps_theme_light_primary),
@@ -76,10 +102,9 @@ fun AapsTheme(
          */
     )
 
-    val mode = UiMode.fromString(preferences.get(StringKey.GeneralDarkMode))
-    val scheme = when (mode) {
-        UiMode.LIGHT  -> lightColors
-        UiMode.DARK   -> darkColors
+    val scheme = when (uiMode) {
+        UiMode.LIGHT -> lightColors
+        UiMode.DARK  -> darkColors
         UiMode.SYSTEM -> if (isSystemInDarkTheme()) darkColors else lightColors
     }
 

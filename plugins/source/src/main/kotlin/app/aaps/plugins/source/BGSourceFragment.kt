@@ -29,11 +29,11 @@ import app.aaps.core.interfaces.resources.ResourceHelper
 import app.aaps.core.interfaces.rx.AapsSchedulers
 import app.aaps.core.interfaces.rx.bus.RxBus
 import app.aaps.core.interfaces.rx.events.EventNewBG
+import app.aaps.core.interfaces.ui.UiInteraction
 import app.aaps.core.interfaces.utils.DateUtil
 import app.aaps.core.interfaces.utils.fabric.FabricPrivacy
 import app.aaps.core.objects.extensions.directionToIcon
 import app.aaps.core.objects.ui.ActionModeHelper
-import app.aaps.core.ui.dialogs.OKDialog
 import app.aaps.core.ui.extensions.toVisibility
 import app.aaps.core.ui.extensions.toVisibilityKeepSpace
 import app.aaps.plugins.source.databinding.SourceFragmentBinding
@@ -54,6 +54,7 @@ class BGSourceFragment : DaggerFragment(), MenuProvider {
     @Inject lateinit var persistenceLayer: PersistenceLayer
     @Inject lateinit var aapsSchedulers: AapsSchedulers
     @Inject lateinit var profileUtil: ProfileUtil
+    @Inject lateinit var uiInteraction: UiInteraction
 
     private val disposable = CompositeDisposable()
     private var millsToThePast = T.hours(36).msecs()
@@ -219,17 +220,15 @@ class BGSourceFragment : DaggerFragment(), MenuProvider {
 
     @SuppressLint("CheckResult")
     private fun removeSelected(selectedItems: SparseArray<GV>) {
-        activity?.let { activity ->
-            OKDialog.showConfirmation(activity, rh.gs(app.aaps.core.ui.R.string.removerecord), getConfirmationText(selectedItems), {
-                selectedItems.forEach { _, glucoseValue ->
-                    disposable += persistenceLayer.invalidateGlucoseValue(
-                        glucoseValue.id, action = Action.BG_REMOVED,
-                        source = Sources.BgFragment, note = null,
-                        listValues = listOf(ValueWithUnit.Timestamp(glucoseValue.timestamp))
-                    ).subscribe()
-                }
-                actionHelper.finish()
-            })
-        }
+        uiInteraction.showOkCancelDialog(context = requireActivity(), title = rh.gs(app.aaps.core.ui.R.string.removerecord), message = getConfirmationText(selectedItems), ok = {
+            selectedItems.forEach { _, glucoseValue ->
+                disposable += persistenceLayer.invalidateGlucoseValue(
+                    glucoseValue.id, action = Action.BG_REMOVED,
+                    source = Sources.BgFragment, note = null,
+                    listValues = listOf(ValueWithUnit.Timestamp(glucoseValue.timestamp))
+                ).subscribe()
+            }
+            actionHelper.finish()
+        })
     }
 }

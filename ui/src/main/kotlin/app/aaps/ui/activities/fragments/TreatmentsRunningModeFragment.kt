@@ -27,12 +27,12 @@ import app.aaps.core.interfaces.resources.ResourceHelper
 import app.aaps.core.interfaces.rx.AapsSchedulers
 import app.aaps.core.interfaces.rx.bus.RxBus
 import app.aaps.core.interfaces.rx.events.EventRunningModeChange
+import app.aaps.core.interfaces.ui.UiInteraction
 import app.aaps.core.interfaces.utils.DateUtil
 import app.aaps.core.interfaces.utils.DecimalFormatter
 import app.aaps.core.interfaces.utils.Translator
 import app.aaps.core.interfaces.utils.fabric.FabricPrivacy
 import app.aaps.core.objects.ui.ActionModeHelper
-import app.aaps.core.ui.dialogs.OKDialog
 import app.aaps.core.ui.extensions.toVisibility
 import app.aaps.core.ui.toast.ToastUtils
 import app.aaps.ui.R
@@ -57,6 +57,7 @@ class TreatmentsRunningModeFragment : DaggerFragment(), MenuProvider {
     @Inject lateinit var aapsSchedulers: AapsSchedulers
     @Inject lateinit var persistenceLayer: PersistenceLayer
     @Inject lateinit var decimalFormatter: DecimalFormatter
+    @Inject lateinit var uiInteraction: UiInteraction
 
     private var _binding: TreatmentsRunningModeFragmentBinding? = null
 
@@ -159,8 +160,8 @@ class TreatmentsRunningModeFragment : DaggerFragment(), MenuProvider {
             holder.binding.time.setTextColor(
                 when {
                     runningMode.id == currentlyActiveMode.id -> rh.gac(context, app.aaps.core.ui.R.attr.activeColor)
-                    runningMode.timestamp > dateUtil.now()    -> rh.gac(context, app.aaps.core.ui.R.attr.scheduledColor)
-                    else -> holder.binding.duration.currentTextColor
+                    runningMode.timestamp > dateUtil.now() -> rh.gac(context, app.aaps.core.ui.R.attr.scheduledColor)
+                    else                                   -> holder.binding.duration.currentTextColor
                 }
             )
         }
@@ -218,8 +219,11 @@ class TreatmentsRunningModeFragment : DaggerFragment(), MenuProvider {
     }
 
     private fun removeSelected(selectedItems: SparseArray<RM>) {
-        activity?.let { activity ->
-            OKDialog.showConfirmation(activity, rh.gs(app.aaps.core.ui.R.string.removerecord), getConfirmationText(selectedItems), Runnable {
+        uiInteraction.showOkCancelDialog(
+            context = requireActivity(),
+            title = rh.gs(app.aaps.core.ui.R.string.removerecord),
+            message = getConfirmationText(selectedItems),
+            ok = {
                 selectedItems.forEach { _, runningMode ->
                     disposable += persistenceLayer.invalidateRunningMode(
                         id = runningMode.id,
@@ -233,6 +237,5 @@ class TreatmentsRunningModeFragment : DaggerFragment(), MenuProvider {
                 }
                 actionHelper.finish()
             })
-        }
     }
 }

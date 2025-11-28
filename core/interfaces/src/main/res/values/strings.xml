@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!--    Dialogs-->
+    <string name="confirmation">Confirmation</string>
+
     <!--    Events-->
     <string name="bolus_delivering">Delivering %1$.2fU</string>
     <string name="bolus_delivered_successfully">Bolus %1$.2fU delivered successfully</string>

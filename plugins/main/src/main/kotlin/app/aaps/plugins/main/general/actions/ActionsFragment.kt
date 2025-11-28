@@ -35,13 +35,11 @@ import app.aaps.core.interfaces.ui.UiInteraction
 import app.aaps.core.interfaces.utils.DateUtil
 import app.aaps.core.interfaces.utils.DecimalFormatter
 import app.aaps.core.interfaces.utils.fabric.FabricPrivacy
-import app.aaps.core.keys.BooleanKey
 import app.aaps.core.keys.BooleanNonKey
 import app.aaps.core.keys.interfaces.Preferences
 import app.aaps.core.objects.extensions.toStringMedium
 import app.aaps.core.objects.extensions.toStringShort
 import app.aaps.core.ui.UIRunnable
-import app.aaps.core.ui.dialogs.OKDialog
 import app.aaps.core.ui.elements.SingleClickButton
 import app.aaps.core.ui.extensions.toVisibility
 import app.aaps.plugins.main.R
@@ -115,16 +113,14 @@ class ActionsFragment : DaggerFragment() {
             }
         }
         binding.extendedBolus.setOnClickListener {
-            activity?.let { activity ->
-                protectionCheck.queryProtection(activity, ProtectionCheck.Protection.BOLUS, UIRunnable {
-                    OKDialog.showConfirmation(
-                        activity, rh.gs(app.aaps.core.ui.R.string.extended_bolus), rh.gs(R.string.ebstopsloop),
-                        {
-                            uiInteraction.runExtendedBolusDialog(childFragmentManager)
-                        }, null
-                    )
-                })
-            }
+            protectionCheck.queryProtection(requireActivity(), ProtectionCheck.Protection.BOLUS, UIRunnable {
+                uiInteraction.showOkCancelDialog(
+                    context = requireActivity(),
+                    title = app.aaps.core.ui.R.string.extended_bolus,
+                    message = R.string.ebstopsloop,
+                    ok = { uiInteraction.runExtendedBolusDialog(childFragmentManager) }
+                )
+            })
         }
         binding.extendedBolusCancel.setOnClickListener {
             if (persistenceLayer.getExtendedBolusActiveAt(dateUtil.now()) != null) {
@@ -147,7 +143,7 @@ class ActionsFragment : DaggerFragment() {
             }
         }
         binding.cancelTempBasal.setOnClickListener {
-            if (processedTbrEbData.getTempBasalIncludingConvertedExtended(dateUtil.now()) != null) {
+            if (processedTbrEbData.getTempBasalIncludingConvertedExtended(System.currentTimeMillis()) != null) {
                 uel.log(Action.CANCEL_TEMP_BASAL, Sources.Actions)
                 commandQueue.cancelTempBasal(enforceNew = true, callback = object : Callback() {
                     override fun run() {
@@ -243,7 +239,7 @@ class ActionsFragment : DaggerFragment() {
                 loop.runningMode != RM.Mode.DISCONNECTED_PUMP &&
                 !pump.isSuspended()).toVisibility()
 
-        if (!pump.pumpDescription.isExtendedBolusCapable || !pump.isInitialized()  || pump.isSuspended() || loop.runningMode == RM.Mode.DISCONNECTED_PUMP || pump.isFakingTempsByExtendedBoluses || config.AAPSCLIENT) {
+        if (!pump.pumpDescription.isExtendedBolusCapable || !pump.isInitialized() || pump.isSuspended() || loop.runningMode == RM.Mode.DISCONNECTED_PUMP || pump.isFakingTempsByExtendedBoluses || config.AAPSCLIENT) {
             binding.extendedBolus.visibility = View.GONE
             binding.extendedBolusCancel.visibility = View.GONE
         } else {

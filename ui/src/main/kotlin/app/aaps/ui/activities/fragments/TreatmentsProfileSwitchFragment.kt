@@ -37,7 +37,6 @@ import app.aaps.core.interfaces.utils.fabric.FabricPrivacy
 import app.aaps.core.objects.extensions.getCustomizedName
 import app.aaps.core.objects.profile.ProfileSealed
 import app.aaps.core.objects.ui.ActionModeHelper
-import app.aaps.core.ui.dialogs.OKDialog
 import app.aaps.core.ui.extensions.toVisibility
 import app.aaps.core.ui.toast.ToastUtils
 import app.aaps.ui.R
@@ -63,6 +62,7 @@ class TreatmentsProfileSwitchFragment : DaggerFragment(), MenuProvider {
     @Inject lateinit var persistenceLayer: PersistenceLayer
     @Inject lateinit var uel: UserEntryLogger
     @Inject lateinit var decimalFormatter: DecimalFormatter
+    @Inject lateinit var uiInteraction: UiInteraction
 
     private var _binding: TreatmentsProfileswitchFragmentBinding? = null
 
@@ -202,32 +202,30 @@ class TreatmentsProfileSwitchFragment : DaggerFragment(), MenuProvider {
 
             init {
                 binding.clone.setOnClickListener {
-                    activity?.let { activity ->
-                        val profileSwitch = (it.tag as ProfileSealed.PS).value
-                        val profileSealed = it.tag as ProfileSealed
-                        OKDialog.showConfirmation(
-                            activity,
-                            rh.gs(app.aaps.core.ui.R.string.careportal_profileswitch),
-                            rh.gs(app.aaps.core.ui.R.string.copytolocalprofile) + "\n" + profileSwitch.getCustomizedName(decimalFormatter) + "\n" + dateUtil.dateAndTimeString(profileSwitch.timestamp),
-                            Runnable {
-                                uel.log(
-                                    action = Action.PROFILE_SWITCH_CLONED, source = Sources.Treatments,
-                                    note = profileSwitch.getCustomizedName(decimalFormatter) + " " + dateUtil.dateAndTimeString(profileSwitch.timestamp).replace(".", "_"),
-                                    listValues = listOf(
-                                        ValueWithUnit.Timestamp(profileSwitch.timestamp),
-                                        ValueWithUnit.SimpleString(profileSwitch.profileName)
-                                    )
+                    val profileSwitch = (it.tag as ProfileSealed.PS).value
+                    val profileSealed = it.tag as ProfileSealed
+                    uiInteraction.showOkCancelDialog(
+                        requireActivity(),
+                        rh.gs(app.aaps.core.ui.R.string.careportal_profileswitch),
+                        rh.gs(app.aaps.core.ui.R.string.copytolocalprofile) + "\n" + profileSwitch.getCustomizedName(decimalFormatter) + "\n" + dateUtil.dateAndTimeString(profileSwitch.timestamp),
+                        {
+                            uel.log(
+                                action = Action.PROFILE_SWITCH_CLONED, source = Sources.Treatments,
+                                note = profileSwitch.getCustomizedName(decimalFormatter) + " " + dateUtil.dateAndTimeString(profileSwitch.timestamp).replace(".", "_"),
+                                listValues = listOf(
+                                    ValueWithUnit.Timestamp(profileSwitch.timestamp),
+                                    ValueWithUnit.SimpleString(profileSwitch.profileName)
                                 )
-                                val nonCustomized = profileSealed.convertToNonCustomizedProfile(dateUtil)
-                                activePlugin.activeProfileSource.addProfile(
-                                    activePlugin.activeProfileSource.copyFrom(
-                                        nonCustomized,
-                                        profileSwitch.getCustomizedName(decimalFormatter) + " " + dateUtil.dateAndTimeString(profileSwitch.timestamp).replace(".", "_")
-                                    )
+                            )
+                            val nonCustomized = profileSealed.convertToNonCustomizedProfile(dateUtil)
+                            activePlugin.activeProfileSource.addProfile(
+                                activePlugin.activeProfileSource.copyFrom(
+                                    nonCustomized,
+                                    profileSwitch.getCustomizedName(decimalFormatter) + " " + dateUtil.dateAndTimeString(profileSwitch.timestamp).replace(".", "_")
                                 )
-                                rxBus.send(EventLocalProfileChanged())
-                            })
-                    }
+                            )
+                            rxBus.send(EventLocalProfileChanged())
+                        })
                 }
                 binding.clone.paintFlags = binding.clone.paintFlags or Paint.UNDERLINE_TEXT_FLAG
                 binding.name.setOnClickListener {
@@ -297,8 +295,7 @@ class TreatmentsProfileSwitchFragment : DaggerFragment(), MenuProvider {
     }
 
     private fun removeSelected(selectedItems: SparseArray<ProfileSealed>) {
-        activity?.let { activity ->
-            OKDialog.showConfirmation(activity, rh.gs(app.aaps.core.ui.R.string.removerecord), getConfirmationText(selectedItems), Runnable {
+        uiInteraction.showOkCancelDialog(requireActivity(), rh.gs(app.aaps.core.ui.R.string.removerecord), getConfirmationText(selectedItems), {
                 selectedItems.forEach { _, profileSwitch ->
                     disposable += persistenceLayer.invalidateProfileSwitch(
                         profileSwitch.id,
@@ -308,6 +305,5 @@ class TreatmentsProfileSwitchFragment : DaggerFragment(), MenuProvider {
                 }
                 actionHelper.finish()
             })
-        }
     }
 }

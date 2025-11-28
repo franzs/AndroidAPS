@@ -6,10 +6,10 @@ import app.aaps.core.interfaces.resources.ResourceHelper
 import app.aaps.core.interfaces.rx.AapsSchedulers
 import app.aaps.core.interfaces.rx.bus.RxBus
 import app.aaps.core.interfaces.rx.events.EventPumpStatusChanged
+import app.aaps.core.interfaces.ui.UiInteraction
 import app.aaps.core.interfaces.utils.fabric.FabricPrivacy
 import app.aaps.core.keys.interfaces.Preferences
 import app.aaps.core.ui.activities.TranslatedDaggerAppCompatActivity
-import app.aaps.core.ui.dialogs.OKDialog
 import app.aaps.core.utils.hexStringToByteArray
 import app.aaps.core.validators.DefaultEditTextValidator
 import app.aaps.core.validators.EditTextValidator
@@ -31,6 +31,7 @@ class EnterPinActivity : TranslatedDaggerAppCompatActivity() {
     @Inject lateinit var aapsSchedulers: AapsSchedulers
     @Inject lateinit var rh: ResourceHelper
     @Inject lateinit var rxBus: RxBus
+    @Inject lateinit var uiInteraction: UiInteraction
 
     private val disposable = CompositeDisposable()
 
@@ -60,7 +61,11 @@ class EnterPinActivity : TranslatedDaggerAppCompatActivity() {
                 if (result) {
                     bleComm.finishV3Pairing()
                     finish()
-                } else OKDialog.show(this, rh.gs(app.aaps.core.ui.R.string.error), rh.gs(app.aaps.core.ui.R.string.invalid_input))
+                } else uiInteraction.showOkDialog(
+                    context = this,
+                    title = rh.gs(app.aaps.core.ui.R.string.error),
+                    message = rh.gs(app.aaps.core.ui.R.string.invalid_input)
+                )
             }
         }
         binding.okcancel.cancel.setOnClickListener { finish() }

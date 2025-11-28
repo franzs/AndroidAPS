@@ -38,10 +38,8 @@ import app.aaps.core.keys.IntKey
 import app.aaps.core.keys.UnitDoubleKey
 import app.aaps.core.objects.constraints.ConstraintObject
 import app.aaps.core.objects.extensions.formatColor
-import app.aaps.core.ui.dialogs.OKDialog
 import app.aaps.core.ui.extensions.toVisibility
 import app.aaps.core.ui.toast.ToastUtils
-import app.aaps.core.utils.HtmlHelper
 import app.aaps.ui.R
 import app.aaps.ui.databinding.DialogInsulinBinding
 import app.aaps.ui.extensions.toSignedString
@@ -231,8 +229,11 @@ class InsulinDialog : DialogFragmentWithDate() {
             actions.add(rh.gs(app.aaps.core.ui.R.string.notes_label) + ": " + notes)
 
         if (insulinAfterConstraints > 0 || eatingSoonChecked) {
-            activity?.let { activity ->
-                OKDialog.showConfirmation(activity, rh.gs(app.aaps.core.ui.R.string.bolus), HtmlHelper.fromHtml(Joiner.on("<br/>").join(actions)), {
+            uiInteraction.showOkCancelDialog(
+                context = requireActivity(),
+                title = rh.gs(app.aaps.core.ui.R.string.bolus),
+                message = Joiner.on("<br/>").join(actions),
+                ok = {
                     if (eatingSoonChecked) {
                         disposable += persistenceLayer.insertAndCancelCurrentTemporaryTarget(
                             TT(
@@ -284,12 +285,14 @@ class InsulinDialog : DialogFragmentWithDate() {
                             })
                         }
                     }
-                })
-            }
+                }
+            )
         } else
-            activity?.let { activity ->
-                OKDialog.show(activity, rh.gs(app.aaps.core.ui.R.string.bolus), rh.gs(app.aaps.core.ui.R.string.no_action_selected))
-            }
+            uiInteraction.showOkDialog(
+                context = requireActivity(),
+                title = rh.gs(app.aaps.core.ui.R.string.bolus),
+                message = rh.gs(app.aaps.core.ui.R.string.no_action_selected)
+            )
         return true
     }
 

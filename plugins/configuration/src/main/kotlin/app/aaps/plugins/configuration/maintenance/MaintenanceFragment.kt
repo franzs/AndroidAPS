@@ -30,10 +30,8 @@ import app.aaps.core.interfaces.sync.DataSyncSelectorXdrip
 import app.aaps.core.interfaces.ui.UiInteraction
 import app.aaps.core.interfaces.utils.fabric.FabricPrivacy
 import app.aaps.core.keys.StringKey
-import app.aaps.core.ui.dialogs.OKDialog
 import app.aaps.core.ui.extensions.runOnUiThread
 import app.aaps.core.ui.extensions.toVisibility
-import app.aaps.core.utils.HtmlHelper
 import app.aaps.plugins.configuration.R
 import app.aaps.plugins.configuration.activities.DaggerAppCompatActivityWithResult
 import app.aaps.plugins.configuration.databinding.MaintenanceFragmentBinding
@@ -92,7 +90,7 @@ class MaintenanceFragment : DaggerFragment() {
         }
         binding.navResetApsResults.setOnClickListener {
             activity?.let { activity ->
-                OKDialog.showConfirmation(activity, rh.gs(R.string.maintenance), rh.gs(R.string.reset_aps_results_confirm), Runnable {
+                uiInteraction.showOkCancelDialog(context = activity, title = R.string.maintenance, message = R.string.reset_aps_results_confirm, ok = {
                     disposable +=
                         Completable.fromAction {
                             persistenceLayer.clearApsResults()
@@ -108,7 +106,7 @@ class MaintenanceFragment : DaggerFragment() {
         }
         binding.navResetdb.setOnClickListener {
             activity?.let { activity ->
-                OKDialog.showConfirmation(activity, rh.gs(R.string.maintenance), rh.gs(R.string.reset_db_confirm), Runnable {
+                uiInteraction.showOkCancelDialog(context = activity, title = R.string.maintenance, message = R.string.reset_db_confirm, ok = {
                     disposable +=
                         Completable.fromAction {
                             persistenceLayer.clearDatabases()
@@ -135,28 +133,26 @@ class MaintenanceFragment : DaggerFragment() {
             }
         }
         binding.cleanupDb.setOnClickListener {
-            activity?.let { activity ->
-                var result = ""
-                OKDialog.showConfirmation(activity, rh.gs(R.string.maintenance), rh.gs(app.aaps.core.ui.R.string.cleanup_db_confirm), Runnable {
-                    disposable += Completable.fromAction { result = persistenceLayer.cleanupDatabase(93, deleteTrackedChanges = true) }
-                        .subscribeOn(aapsSchedulers.io)
-                        .observeOn(aapsSchedulers.main)
-                        .subscribeBy(
-                            onError = { aapsLogger.error("Error cleaning up databases", it) },
-                            onComplete = {
-                                if (result.isNotEmpty())
-                                    OKDialog.show(
-                                        activity,
-                                        rh.gs(app.aaps.core.ui.R.string.result),
-                                        HtmlHelper.fromHtml("<b>" + rh.gs(app.aaps.core.ui.R.string.cleared_entries) + "</b><br>" + result)
-                                            .toSpanned()
-                                    )
-                                aapsLogger.info(LTag.CORE, "Cleaned up databases with result: $result")
-                            }
-                        )
-                    uel.log(Action.CLEANUP_DATABASES, Sources.Maintenance)
-                })
-            }
+            var result = ""
+            uiInteraction.showOkCancelDialog(context = requireActivity(), title = R.string.maintenance, message = app.aaps.core.ui.R.string.cleanup_db_confirm, ok = {
+                disposable += Completable.fromAction { result = persistenceLayer.cleanupDatabase(93, deleteTrackedChanges = true) }
+                    .subscribeOn(aapsSchedulers.io)
+                    .observeOn(aapsSchedulers.main)
+                    .subscribeBy(
+                        onError = { aapsLogger.error("Error cleaning up databases", it) },
+                        onComplete = {
+                            if (result.isNotEmpty())
+                                uiInteraction.showOkDialog(
+                                    context = requireActivity(),
+                                    title = rh.gs(app.aaps.core.ui.R.string.result),
+                                    message = "<b>" + rh.gs(app.aaps.core.ui.R.string.cleared_entries) + "</b><br>" + result
+                                        .toSpanned()
+                                )
+                            aapsLogger.info(LTag.CORE, "Cleaned up databases with result: $result")
+                        }
+                    )
+                uel.log(Action.CLEANUP_DATABASES, Sources.Maintenance)
+            })
         }
         binding.navExport.setOnClickListener {
             uel.log(Action.EXPORT_SETTINGS, Sources.Maintenance)
@@ -177,12 +173,10 @@ class MaintenanceFragment : DaggerFragment() {
         }
         binding.navLogsettings.setOnClickListener { startActivity(Intent(activity, LogSettingActivity::class.java)) }
         binding.exportCsv.setOnClickListener {
-            activity?.let { activity ->
-                OKDialog.showConfirmation(activity, rh.gs(app.aaps.core.ui.R.string.ue_export_to_csv) + "?") {
-                    uel.log(Action.EXPORT_CSV, Sources.Maintenance)
-                    importExportPrefs.exportUserEntriesCsv(activity)
-                }
-            }
+            uiInteraction.showOkCancelDialog(context = requireActivity(), message = rh.gs(app.aaps.core.ui.R.string.ue_export_to_csv) + "?", ok = {
+                uel.log(Action.EXPORT_CSV, Sources.Maintenance)
+                importExportPrefs.exportUserEntriesCsv(requireActivity())
+            })
         }
 
         binding.unlock.setOnClickListener { queryProtection() }
