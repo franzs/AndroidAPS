@@ -198,8 +198,8 @@ class MaintenancePlugin @Inject constructor(
         builder.append("Build: " + config.BUILD_VERSION + System.lineSeparator())
         builder.append("Remote: " + config.REMOTE + System.lineSeparator())
         builder.append("Flavor: " + config.FLAVOR + config.BUILD_TYPE + System.lineSeparator())
-        builder.append(rh.gs(R.string.configbuilder_nightscoutversion_label) + " " + nsSettingsStatus.getVersion() + System.lineSeparator())
-        if (config.isEngineeringMode()) builder.append(rh.gs(R.string.engineering_mode_enabled))
+        builder.append(rh.gs(app.aaps.core.ui.R.string.configbuilder_nightscoutversion_label) + " " + nsSettingsStatus.getVersion() + System.lineSeparator())
+        if (config.isEngineeringMode()) builder.append(rh.gs(app.aaps.core.ui.R.string.engineering_mode_enabled))
         return sendMail(attachmentUri, recipient, subject, builder.toString())
     }
 

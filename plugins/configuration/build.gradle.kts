@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.compose.compiler)
     id("kotlin-android")
     id("kotlin-parcelize")
     id("android-module-dependencies")
@@ -10,6 +11,10 @@ plugins {
 
 android {
     namespace = "app.aaps.plugins.configuration"
+
+    buildFeatures {
+        compose = true
+    }
 }
 
 
@@ -31,6 +36,12 @@ dependencies {
     api(libs.androidx.work.runtime)
     // Maintenance
     api(libs.androidx.gridlayout)
+
+    // Compose
+    implementation(platform(libs.androidx.compose.bom))
+    implementation(libs.androidx.compose.material3)
+    implementation(libs.androidx.compose.runtime)
+    implementation(libs.androidx.lifecycle.runtime.compose)
 
     ksp(libs.com.google.dagger.compiler)
     ksp(libs.com.google.dagger.android.processor)

@@ -16,6 +16,7 @@ import app.aaps.pump.eopatch.code.PatchStep
 import app.aaps.pump.eopatch.core.code.BolusType
 import app.aaps.pump.eopatch.databinding.FragmentEopatchOverviewBinding
 import app.aaps.pump.eopatch.extension.takeOne
+import app.aaps.pump.eopatch.ui.dialogs.AlertDialogHelper
 import app.aaps.pump.eopatch.ui.viewmodel.EopatchOverviewViewModel
 import app.aaps.pump.eopatch.vo.TempBasalManager
 import dagger.android.support.DaggerAppCompatActivity
@@ -97,7 +98,7 @@ class EopatchOverviewFragment : EoBaseFragment<FragmentEopatchOverviewBinding>()
     private fun suspend() {
         binding.viewmodel?.apply {
             activity?.let {
-                val builder = app.aaps.core.ui.dialogs.AlertDialogHelper.Builder(it)
+                val builder = AlertDialogHelper.Builder(it)
                 val msg = getSuspendDialogText()
 
                 val dialog = builder.setTitle(R.string.string_suspend)
@@ -116,7 +117,7 @@ class EopatchOverviewFragment : EoBaseFragment<FragmentEopatchOverviewBinding>()
     private fun resume() {
         binding.viewmodel?.apply {
             activity?.let {
-                val builder = app.aaps.core.ui.dialogs.AlertDialogHelper.Builder(it)
+                val builder = AlertDialogHelper.Builder(it)
                 val dialog = builder.setTitle(R.string.string_resume_insulin_delivery_title)
                     .setMessage(R.string.string_resume_insulin_delivery_message)
                     .setPositiveButton(R.string.confirm) { _, _ ->
@@ -137,7 +138,7 @@ class EopatchOverviewFragment : EoBaseFragment<FragmentEopatchOverviewBinding>()
     private fun openPauseTimePicker() {
         binding.viewmodel?.apply {
             activity?.let {
-                val builder = app.aaps.core.ui.dialogs.AlertDialogHelper.Builder(it)
+                val builder = AlertDialogHelper.Builder(it)
                 val listArr = requireContext().resources.getStringArray(R.array.suspend_duration_array)
                 var select = 0
                 val dialog = builder.setTitle(R.string.string_suspend_time_insulin_delivery_title)

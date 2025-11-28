@@ -17,6 +17,7 @@ import app.aaps.pump.eopatch.code.PatchStep
 import app.aaps.pump.eopatch.databinding.ActivityEopatchBinding
 import app.aaps.pump.eopatch.extension.replaceFragmentInActivity
 import app.aaps.pump.eopatch.extension.takeOne
+import app.aaps.pump.eopatch.ui.dialogs.AlertDialogHelper
 import app.aaps.pump.eopatch.ui.dialogs.ProgressDialogHelper
 import app.aaps.pump.eopatch.ui.viewmodel.EopatchViewModel
 
@@ -175,7 +176,7 @@ class EopatchActivity : EoBaseActivity<ActivityEopatchBinding>() {
                         if (patchStep.value?.isSafeDeactivation == true || connectionTryCnt >= 2) {
                             val cancelLabel = commCheckCancelLabel.value ?: getString(R.string.cancel)
                             val message = "${getString(R.string.patch_comm_error_during_discard_desc_2)}\n${getString(R.string.patch_communication_check_helper_2)}"
-                            mPatchCommCheckDialog = app.aaps.core.ui.dialogs.AlertDialogHelper.Builder(this@EopatchActivity)
+                            mPatchCommCheckDialog = AlertDialogHelper.Builder(this@EopatchActivity)
                                 .setTitle(R.string.patch_communication_failed)
                                 .setMessage(message)
                                 .setCancelable(false)
@@ -189,7 +190,7 @@ class EopatchActivity : EoBaseActivity<ActivityEopatchBinding>() {
                         } else {
                             val cancelLabel = commCheckCancelLabel.value ?: getString(R.string.cancel)
                             val message = "${getString(R.string.patch_communication_check_helper_1)}\n${getString(R.string.patch_communication_check_helper_2)}"
-                            mPatchCommCheckDialog = app.aaps.core.ui.dialogs.AlertDialogHelper.Builder(this@EopatchActivity)
+                            mPatchCommCheckDialog = AlertDialogHelper.Builder(this@EopatchActivity)
                                 .setTitle(R.string.patch_communication_failed)
                                 .setMessage(message)
                                 .setCancelable(false)
@@ -205,7 +206,7 @@ class EopatchActivity : EoBaseActivity<ActivityEopatchBinding>() {
 
                     EventType.SHOW_BONDED_DIALOG           -> {
                         dismissProgressDialog()
-                        app.aaps.core.ui.dialogs.AlertDialogHelper.Builder(this@EopatchActivity)
+                        AlertDialogHelper.Builder(this@EopatchActivity)
                             .setTitle(R.string.patch_communication_succeed)
                             .setMessage(R.string.patch_communication_succeed_message)
                             .setPositiveButton(R.string.confirm) { _, _ ->
@@ -214,7 +215,7 @@ class EopatchActivity : EoBaseActivity<ActivityEopatchBinding>() {
                     }
 
                     EventType.SHOW_CHANGE_PATCH_DIALOG     -> {
-                        app.aaps.core.ui.dialogs.AlertDialogHelper.Builder(this@EopatchActivity).apply {
+                        AlertDialogHelper.Builder(this@EopatchActivity).apply {
                             setTitle(R.string.string_discard_patch)
                             setMessage(
                                 when {
@@ -238,7 +239,7 @@ class EopatchActivity : EoBaseActivity<ActivityEopatchBinding>() {
                     // EventType.SHOW_BONDED_DIALOG           -> this@EopatchActivity.finish()
                     EventType.SHOW_DISCARD_DIALOG          -> {
                         val cancelLabel = isInAlarmHandling.takeOne(null, getString(R.string.cancel))
-                        app.aaps.core.ui.dialogs.AlertDialogHelper.Builder(this@EopatchActivity).apply {
+                        AlertDialogHelper.Builder(this@EopatchActivity).apply {
                             setTitle(R.string.string_discard_patch)
                             if (isBolusActive) {
                                 setMessage(R.string.patch_change_confirm_bolus_is_active_desc)

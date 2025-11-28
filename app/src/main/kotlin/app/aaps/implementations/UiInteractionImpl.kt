@@ -23,7 +23,7 @@ import app.aaps.core.ui.toast.ToastUtils
 import app.aaps.plugins.configuration.activities.SingleFragmentActivity
 import app.aaps.plugins.main.general.overview.notifications.NotificationWithAction
 import app.aaps.ui.activities.BolusProgressHelperActivity
-import app.aaps.ui.activities.ErrorHelperActivity
+import app.aaps.ui.activities.ErrorActivity
 import app.aaps.ui.activities.QuickWizardListActivity
 import app.aaps.ui.activities.TDDStatsActivity
 import app.aaps.ui.dialogs.AlertDialogs
@@ -65,7 +65,7 @@ class UiInteractionImpl @Inject constructor(
     override val mainActivity: Class<*> = MainActivity::class.java
     override val tddStatsActivity: Class<*> = TDDStatsActivity::class.java
     override val historyBrowseActivity: Class<*> = HistoryBrowseActivity::class.java
-    override val errorHelperActivity: Class<*> = ErrorHelperActivity::class.java
+    override val errorHelperActivity: Class<*> = ErrorActivity::class.java
     override val bolusProgressHelperActivity: Class<*> = BolusProgressHelperActivity::class.java
     override val singleFragmentActivity: Class<*> = SingleFragmentActivity::class.java
     override val preferencesActivity: Class<*> = PreferencesActivity::class.java

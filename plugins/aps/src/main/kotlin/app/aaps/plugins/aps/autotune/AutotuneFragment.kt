@@ -258,7 +258,7 @@ class AutotuneFragment : DaggerFragment() {
             autotunePlugin.updateProfile(tunedProfile)
             val circadian = preferences.get(BooleanKey.AutotuneCircadianIcIsf)
             if (loop.runningMode == RM.Mode.DISCONNECTED_PUMP) {
-                uiInteraction.showOkDialog(context = requireActivity(), title = R.string.not_available_full, message = R.string.pump_disconnected)
+                uiInteraction.showOkDialog(context = requireActivity(), title = app.aaps.core.ui.R.string.not_available_full, message = R.string.pump_disconnected)
             } else {
                 tunedProfile?.let { tunedP ->
                     tunedP.profileStore(circadian)?.let {

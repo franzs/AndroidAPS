@@ -3,14 +3,10 @@ package app.aaps
 import android.content.Context
 import android.content.Intent
 import android.graphics.Rect
-import android.net.Uri
-import android.os.Build
 import android.os.Bundle
 import android.os.PersistableBundle
 import android.text.SpannableString
-import android.text.method.LinkMovementMethod
 import android.text.style.ForegroundColorSpan
-import android.text.util.Linkify
 import android.util.TypedValue
 import android.view.Menu
 import android.view.MenuInflater
@@ -21,7 +17,6 @@ import android.view.WindowManager
 import android.view.inputmethod.InputMethodManager
 import android.widget.EditText
 import android.widget.LinearLayout
-import android.widget.TextView
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.widget.Toolbar
@@ -47,10 +42,8 @@ import app.aaps.core.interfaces.rx.events.EventAppInitialized
 import app.aaps.core.interfaces.rx.events.EventPreferenceChange
 import app.aaps.core.interfaces.rx.events.EventRebuildTabs
 import app.aaps.core.interfaces.smsCommunicator.SmsCommunicator
-import app.aaps.core.interfaces.ui.IconsProvider
 import app.aaps.core.interfaces.ui.UiInteraction
 import app.aaps.core.interfaces.utils.fabric.FabricPrivacy
-import app.aaps.core.interfaces.versionChecker.VersionCheckerUtils
 import app.aaps.core.keys.BooleanKey
 import app.aaps.core.keys.StringKey
 import app.aaps.core.objects.crypto.CryptoUtil
@@ -67,8 +60,8 @@ import app.aaps.plugins.constraints.signatureVerifier.SignatureVerifierPlugin
 import app.aaps.ui.activities.ProfileHelperActivity
 import app.aaps.ui.activities.StatsActivity
 import app.aaps.ui.activities.TreatmentsActivity
+import app.aaps.ui.alertDialogs.AboutDialog
 import app.aaps.ui.tabs.TabPageAdapter
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.tabs.TabLayoutMediator
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.joanzapata.iconify.Iconify
@@ -83,14 +76,12 @@ class MainActivity : DaggerAppCompatActivityWithResult() {
     private val disposable = CompositeDisposable()
 
     @Inject lateinit var aapsSchedulers: AapsSchedulers
-    @Inject lateinit var versionCheckerUtils: VersionCheckerUtils
     @Inject lateinit var smsCommunicator: SmsCommunicator
     @Inject lateinit var loop: Loop
     @Inject lateinit var config: Config
     @Inject lateinit var activePlugin: ActivePlugin
     @Inject lateinit var fabricPrivacy: FabricPrivacy
     @Inject lateinit var protectionCheck: ProtectionCheck
-    @Inject lateinit var iconsProvider: IconsProvider
     @Inject lateinit var constraintChecker: ConstraintsChecker
     @Inject lateinit var signatureVerifierPlugin: SignatureVerifierPlugin
     @Inject lateinit var maintenancePlugin: MaintenancePlugin
@@ -100,6 +91,7 @@ class MainActivity : DaggerAppCompatActivityWithResult() {
     @Inject lateinit var exportPasswordDataStore: ExportPasswordDataStore
     @Inject lateinit var uiInteraction: UiInteraction
     @Inject lateinit var configBuilder: ConfigBuilder
+    @Inject lateinit var aboutDialog: AboutDialog
 
     private lateinit var actionBarDrawerToggle: ActionBarDrawerToggle
     private var pluginPreferencesMenuItem: MenuItem? = null
@@ -195,32 +187,7 @@ class MainActivity : DaggerAppCompatActivityWithResult() {
                     }
 
                     R.id.nav_about              -> {
-                        var message = "Build: ${config.BUILD_VERSION}\n"
-                        message += "Flavor: ${BuildConfig.FLAVOR}${BuildConfig.BUILD_TYPE}\n"
-                        message += "${rh.gs(app.aaps.plugins.configuration.R.string.configbuilder_nightscoutversion_label)} ${activePlugin.activeNsClient?.detectedNsVersion() ?: rh.gs(app.aaps.plugins.main.R.string.not_available_full)}"
-                        if (config.isEngineeringMode()) message += "\n${rh.gs(app.aaps.plugins.configuration.R.string.engineering_mode_enabled)}"
-                        if (config.isUnfinishedMode()) message += "\nUnfinished mode enabled"
-                        if (!fabricPrivacy.fabricEnabled()) message += "\n${rh.gs(app.aaps.core.ui.R.string.fabric_upload_disabled)}"
-                        message += rh.gs(app.aaps.core.ui.R.string.about_link_urls)
-                        val messageSpanned = SpannableString(message)
-                        Linkify.addLinks(messageSpanned, Linkify.WEB_URLS)
-                        MaterialAlertDialogBuilder(this@MainActivity, app.aaps.core.ui.R.style.DialogTheme)
-                            .setTitle(rh.gs(R.string.app_name) + " " + config.VERSION)
-                            .setIcon(iconsProvider.getIcon())
-                            .setMessage(messageSpanned)
-                            .setPositiveButton(rh.gs(app.aaps.core.ui.R.string.ok), null)
-                            .setNeutralButton(rh.gs(app.aaps.core.ui.R.string.cta_dont_kill_my_app_info)) { _, _ ->
-                                startActivity(
-                                    Intent(
-                                        Intent.ACTION_VIEW,
-                                        Uri.parse("https://dontkillmyapp.com/" + Build.MANUFACTURER.lowercase().replace(" ", "-"))
-                                    )
-                                )
-                            }
-                            .create().apply {
-                                show()
-                                findViewById<TextView>(android.R.id.message)?.movementMethod = LinkMovementMethod.getInstance()
-                            }
+                        aboutDialog.showAboutDialog(this@MainActivity, R.string.app_name)
                         true
                     }
 

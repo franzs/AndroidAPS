@@ -97,7 +97,8 @@ class ImportExportPrefsImpl @Inject constructor(
     private val context: Context,
     private val dataWorkerStorage: DataWorkerStorage,
     private val activePlugin: ActivePlugin,
-    private val configBuilder: ConfigBuilder
+    private val configBuilder: ConfigBuilder,
+    private val prefImportSummaryDialog: PrefImportSummaryDialog
 ) : ImportExportPrefs {
 
     override var selectedImportFile: PrefsFile? = null
@@ -394,7 +395,7 @@ class ImportExportPrefsImpl @Inject constructor(
                     // if at end we allow to import preferences
                     val importPossible = (importOk || config.isEngineeringMode()) && (prefs.values.isNotEmpty())
 
-                    PrefImportSummaryDialog.showSummary(activity, importOk, importPossible, prefs, {
+                    prefImportSummaryDialog.showSummary(activity, importOk, importPossible, prefs, {
                         if (importPossible) {
                             activePlugin.beforeImport()
                             sp.clear()

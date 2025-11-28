@@ -187,6 +187,9 @@
     <string name="extended_bolus_medium">%1$.2f U/h %2$s/%3$s\'</string>
     <string name="nav_export">Export settings</string>
     <string name="location_permission_not_granted">Location permission not granted. Allow in android settings.</string>
+    <string name="configbuilder_nightscoutversion_label">Nightscout version:</string>
+    <string name="not_available_full">Not available</string>
+    <string name="engineering_mode_enabled">Engineering mode enabled</string>
 
     <!--    Protection-->
     <string name="wrongpassword">Wrong password</string>

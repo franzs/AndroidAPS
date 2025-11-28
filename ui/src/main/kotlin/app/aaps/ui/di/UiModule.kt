@@ -1,9 +1,7 @@
 package app.aaps.ui.di
 
-import dagger.Module
-import dagger.android.ContributesAndroidInjector
 import app.aaps.ui.activities.BolusProgressHelperActivity
-import app.aaps.ui.activities.ErrorHelperActivity
+import app.aaps.ui.activities.ErrorActivity
 import app.aaps.ui.activities.ProfileHelperActivity
 import app.aaps.ui.activities.QuickWizardListActivity
 import app.aaps.ui.activities.StatsActivity
@@ -18,7 +16,6 @@ import app.aaps.ui.activities.fragments.TreatmentsRunningModeFragment
 import app.aaps.ui.activities.fragments.TreatmentsTempTargetFragment
 import app.aaps.ui.activities.fragments.TreatmentsTemporaryBasalsFragment
 import app.aaps.ui.activities.fragments.TreatmentsUserEntryFragment
-import app.aaps.ui.alertDialogs.ErrorDialog
 import app.aaps.ui.dialogs.BolusProgressDialog
 import app.aaps.ui.dialogs.CalibrationDialog
 import app.aaps.ui.dialogs.CarbsDialog
@@ -39,6 +36,8 @@ import app.aaps.ui.dialogs.WizardInfoDialog
 import app.aaps.ui.services.AlarmSoundService
 import app.aaps.ui.widget.Widget
 import app.aaps.ui.widget.WidgetConfigureActivity
+import dagger.Module
+import dagger.android.ContributesAndroidInjector
 
 @Module
 @Suppress("unused")
@@ -65,13 +64,12 @@ abstract class UiModule {
     @ContributesAndroidInjector abstract fun contributesTempTargetDialog(): TempTargetDialog
     @ContributesAndroidInjector abstract fun contributesLoopDialog(): LoopDialog
     @ContributesAndroidInjector abstract fun contributesBolusProgressDialog(): BolusProgressDialog
-    @ContributesAndroidInjector abstract fun contributesErrorDialog(): ErrorDialog
     @ContributesAndroidInjector abstract fun contributesQuickWizardListActivity(): QuickWizardListActivity
     @ContributesAndroidInjector abstract fun contributesEditQuickWizardDialog(): EditQuickWizardDialog
 
     @ContributesAndroidInjector abstract fun contributesTDDStatsActivity(): TDDStatsActivity
     @ContributesAndroidInjector abstract fun contributeBolusProgressHelperActivity(): BolusProgressHelperActivity
-    @ContributesAndroidInjector abstract fun contributeErrorHelperActivity(): ErrorHelperActivity
+    @ContributesAndroidInjector abstract fun contributeErrorActivity(): ErrorActivity
     @ContributesAndroidInjector abstract fun contributesStatsActivity(): StatsActivity
     @ContributesAndroidInjector abstract fun contributesSurveyActivity(): SurveyActivity
     @ContributesAndroidInjector abstract fun contributesTreatmentsActivity(): TreatmentsActivity

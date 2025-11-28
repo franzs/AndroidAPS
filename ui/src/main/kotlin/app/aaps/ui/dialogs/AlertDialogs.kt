@@ -58,7 +58,7 @@ import kotlinx.coroutines.launch
  * This object provides a simple API for showing informational, confirmation, and
  * choice-based dialogs.
  */
-class AlertDia(
+class AlertDialogs(
     private val preferences: Preferences,
     private val rxBus: RxBus
 ) {
