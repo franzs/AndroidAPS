@@ -70,7 +70,7 @@ class TDDStatsActivity : TranslatedDaggerAppCompatActivity() {
         binding = ActivityTddStatsBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        title = rh.gs(app.aaps.core.ui.R.string.tdd)
+        title = rh.gs(app.aaps.core.ui.R.string.tdd_short)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         supportActionBar?.setDisplayShowHomeEnabled(true)
 
@@ -111,7 +111,7 @@ class TDDStatsActivity : TranslatedDaggerAppCompatActivity() {
                     labelBolus.setTextColor(rh.gac(this, app.aaps.core.ui.R.attr.defaultTextColor))
                 })
                 trHead.addView(TextView(this).also { labelTdd ->
-                    labelTdd.text = rh.gs(app.aaps.core.ui.R.string.tdd)
+                    labelTdd.text = rh.gs(app.aaps.core.ui.R.string.tdd_short)
                     labelTdd.setTextColor(rh.gac(this, app.aaps.core.ui.R.attr.defaultTextColor))
                 })
                 trHead.addView(TextView(this).also { labelRatio ->
@@ -131,7 +131,7 @@ class TDDStatsActivity : TranslatedDaggerAppCompatActivity() {
                     labelCumAmountDays.setTextColor(rh.gac(this, app.aaps.core.ui.R.attr.defaultTextColor))
                 })
                 ctrHead.addView(TextView(this).also { labelCumTdd ->
-                    labelCumTdd.text = rh.gs(app.aaps.core.ui.R.string.tdd)
+                    labelCumTdd.text = rh.gs(app.aaps.core.ui.R.string.tdd_short)
                     labelCumTdd.setTextColor(rh.gac(this, app.aaps.core.ui.R.attr.defaultTextColor))
                 })
                 ctrHead.addView(TextView(this).also { labelCumRatio ->
@@ -151,7 +151,7 @@ class TDDStatsActivity : TranslatedDaggerAppCompatActivity() {
                     labelExpWeight.setTextColor(rh.gac(this, app.aaps.core.ui.R.attr.defaultTextColor))
                 })
                 etrHead.addView(TextView(this).also { labelExpTdd ->
-                    labelExpTdd.text = rh.gs(app.aaps.core.ui.R.string.tdd)
+                    labelExpTdd.text = rh.gs(app.aaps.core.ui.R.string.tdd_short)
                     labelExpTdd.setTextColor(rh.gac(this, app.aaps.core.ui.R.attr.defaultTextColor))
                 })
                 etrHead.addView(TextView(this).also { labelExpRatio ->

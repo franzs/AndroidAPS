@@ -1,30 +1,60 @@
 package app.aaps.ui.activities
 
-import android.annotation.SuppressLint
 import android.os.Bundle
-import android.os.Handler
-import android.os.HandlerThread
-import android.widget.TextView
-import app.aaps.core.data.ue.Action
-import app.aaps.core.data.ue.Sources
+import androidx.activity.compose.setContent
+import androidx.compose.runtime.CompositionLocalProvider
 import app.aaps.core.interfaces.db.PersistenceLayer
 import app.aaps.core.interfaces.logging.UserEntryLogger
+import app.aaps.core.interfaces.profile.ProfileUtil
 import app.aaps.core.interfaces.resources.ResourceHelper
-import app.aaps.core.interfaces.rx.AapsSchedulers
+import app.aaps.core.interfaces.rx.bus.RxBus
 import app.aaps.core.interfaces.stats.DexcomTirCalculator
 import app.aaps.core.interfaces.stats.TddCalculator
 import app.aaps.core.interfaces.stats.TirCalculator
 import app.aaps.core.interfaces.ui.UiInteraction
-import app.aaps.core.interfaces.utils.fabric.FabricPrivacy
+import app.aaps.core.interfaces.utils.DateUtil
+import app.aaps.core.keys.interfaces.Preferences
 import app.aaps.core.ui.activities.TranslatedDaggerAppCompatActivity
-import app.aaps.ui.R
+import app.aaps.core.ui.compose.AapsTheme
+import app.aaps.core.ui.compose.LocalPreferences
+import app.aaps.core.ui.compose.LocalRxBus
 import app.aaps.ui.activityMonitor.ActivityMonitor
-import app.aaps.ui.databinding.ActivityStatsBinding
-import io.reactivex.rxjava3.core.Single
-import io.reactivex.rxjava3.disposables.CompositeDisposable
-import io.reactivex.rxjava3.kotlin.plusAssign
+import app.aaps.ui.compose.StatsScreen
 import javax.inject.Inject
 
+/**
+ * Activity that displays comprehensive diabetes management statistics.
+ *
+ * This Compose-based activity provides a centralized view of various statistical analyses
+ * for diabetes management, including:
+ *
+ * 1. **Total Daily Dose (TDD)**: Insulin usage statistics showing basal, bolus, and total
+ *    insulin amounts over configurable time periods (7 or 30 days)
+ *
+ * 2. **Time In Range (TIR)**: Standard glucose range analysis with user-configurable
+ *    low and high thresholds, showing percentages of time below, within, and above target
+ *
+ * 3. **Dexcom TIR**: Extended 14-day glucose analysis following Dexcom's methodology with
+ *    5 ranges (Very Low, Low, In Range, High, Very High), including HbA1c estimation
+ *
+ * 4. **Activity Monitor**: Usage statistics showing how much time users spend in different
+ *    activities within the app
+ *
+ * Each statistics section is presented in a collapsible Material3 Card with:
+ * - Loading states with animated transitions
+ * - Expandable/collapsible headers
+ * - Floating action buttons for recalculation (TDD) and reset (Activity)
+ * - Smooth Crossfade animations between loading and data states
+ *
+ * The activity uses Jetpack Compose with AapsTheme and provides LocalPreferences and
+ * LocalRxBus through CompositionLocalProvider for child composables.
+ *
+ * @see app.aaps.ui.compose.StatsScreen
+ * @see TddCalculator
+ * @see TirCalculator
+ * @see DexcomTirCalculator
+ * @see ActivityMonitor
+ */
 class StatsActivity : TranslatedDaggerAppCompatActivity() {
 
     @Inject lateinit var tddCalculator: TddCalculator
@@ -32,88 +62,37 @@ class StatsActivity : TranslatedDaggerAppCompatActivity() {
     @Inject lateinit var dexcomTirCalculator: DexcomTirCalculator
     @Inject lateinit var activityMonitor: ActivityMonitor
     @Inject lateinit var uel: UserEntryLogger
-    @Inject lateinit var aapsSchedulers: AapsSchedulers
-    @Inject lateinit var fabricPrivacy: FabricPrivacy
     @Inject lateinit var rh: ResourceHelper
     @Inject lateinit var persistenceLayer: PersistenceLayer
     @Inject lateinit var uiInteraction: UiInteraction
+    @Inject lateinit var preferences: Preferences
+    @Inject lateinit var rxBus: RxBus
+    @Inject lateinit var dateUtil: DateUtil
+    @Inject lateinit var profileUtil: ProfileUtil
 
-    private lateinit var binding: ActivityStatsBinding
-    private val disposable = CompositeDisposable()
-    private var handler = Handler(HandlerThread(this::class.simpleName + "Handler").also { it.start() }.looper)
-
-    @SuppressLint("SetTextI18n")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        binding = ActivityStatsBinding.inflate(layoutInflater)
-        setContentView(binding.root)
-
-        title = rh.gs(R.string.statistics)
-        supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        supportActionBar?.setDisplayShowHomeEnabled(true)
-
-        binding.tdds.addView(TextView(this).apply { text = getString(app.aaps.core.ui.R.string.tdd) + ": " + rh.gs(R.string.calculation_in_progress) })
-        binding.tir.addView(TextView(this).apply { text = getString(app.aaps.core.ui.R.string.tir) + ": " + rh.gs(R.string.calculation_in_progress) })
-        binding.activity.addView(TextView(this).apply { text = getString(R.string.activity_monitor) + ": " + rh.gs(R.string.calculation_in_progress) })
-
-        disposable += Single.fromCallable { tddCalculator.stats(this) }
-            .subscribeOn(aapsSchedulers.io)
-            .observeOn(aapsSchedulers.main)
-            .subscribe({
-                           binding.tdds.removeAllViews()
-                           binding.tdds.addView(it)
-                       }, fabricPrivacy::logException)
-        disposable += Single.fromCallable { tirCalculator.stats(this) }
-            .subscribeOn(aapsSchedulers.io)
-            .observeOn(aapsSchedulers.main)
-            .subscribe({
-                           binding.tir.removeAllViews()
-                           binding.tir.addView(it)
-                       }, fabricPrivacy::logException)
-        disposable += Single.fromCallable { dexcomTirCalculator.stats(this) }
-            .subscribeOn(aapsSchedulers.io)
-            .observeOn(aapsSchedulers.main)
-            .subscribe({
-                           binding.dexcomTir.removeAllViews()
-                           binding.dexcomTir.addView(it)
-                       }, fabricPrivacy::logException)
-        disposable += Single.fromCallable { activityMonitor.stats(this) }
-            .subscribeOn(aapsSchedulers.io)
-            .observeOn(aapsSchedulers.main)
-            .subscribe({
-                           binding.activity.removeAllViews()
-                           binding.activity.addView(it)
-                       }, fabricPrivacy::logException)
-
-        binding.resetActivity.setOnClickListener {
-            uiInteraction.showOkCancelDialog(context = this, message = rh.gs(R.string.do_you_want_reset_stats), ok = {
-                uel.log(Action.STAT_RESET, Sources.Stats)
-                activityMonitor.reset()
-                recreate()
-            })
-        }
-        binding.resetTdd.setOnClickListener {
-            uiInteraction.showOkCancelDialog(context = this, message = rh.gs(R.string.do_you_want_recalculate_tdd_stats), ok = {
-                handler.post {
-                    uel.log(Action.STAT_RESET, Sources.Stats)
-                    persistenceLayer.clearCachedTddData(0)
-                    runOnUiThread { recreate() }
+        setContent {
+            CompositionLocalProvider(
+                LocalPreferences provides preferences,
+                LocalRxBus provides rxBus
+            ) {
+                AapsTheme {
+                    StatsScreen(
+                        tddCalculator = tddCalculator,
+                        tirCalculator = tirCalculator,
+                        dexcomTirCalculator = dexcomTirCalculator,
+                        activityMonitor = activityMonitor,
+                        persistenceLayer = persistenceLayer,
+                        rh = rh,
+                        uiInteraction = uiInteraction,
+                        uel = uel,
+                        dateUtil = dateUtil,
+                        profileUtil = profileUtil,
+                        onNavigateBack = { finish() }
+                    )
                 }
-            })
+            }
         }
-    }
-
-    override fun onPause() {
-        super.onPause()
-        disposable.clear()
-        handler.removeCallbacksAndMessages(null)
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        binding.resetActivity.setOnClickListener(null)
-        binding.resetTdd.setOnClickListener(null)
-        handler.removeCallbacksAndMessages(null)
-        handler.looper.quitSafely()
     }
 }

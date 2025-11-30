@@ -6,7 +6,6 @@ import app.aaps.ui.activities.ProfileHelperActivity
 import app.aaps.ui.activities.ProfileViewerActivity
 import app.aaps.ui.activities.QuickWizardListActivity
 import app.aaps.ui.activities.StatsActivity
-import app.aaps.ui.activities.SurveyActivity
 import app.aaps.ui.activities.TDDStatsActivity
 import app.aaps.ui.activities.TreatmentsActivity
 import app.aaps.ui.activities.fragments.TreatmentsBolusCarbsFragment
@@ -71,7 +70,6 @@ abstract class UiModule {
     @ContributesAndroidInjector abstract fun contributeBolusProgressHelperActivity(): BolusProgressHelperActivity
     @ContributesAndroidInjector abstract fun contributeErrorActivity(): ErrorActivity
     @ContributesAndroidInjector abstract fun contributesStatsActivity(): StatsActivity
-    @ContributesAndroidInjector abstract fun contributesSurveyActivity(): SurveyActivity
     @ContributesAndroidInjector abstract fun contributesTreatmentsActivity(): TreatmentsActivity
     @ContributesAndroidInjector abstract fun contributesProfileHelperActivity(): ProfileHelperActivity
 

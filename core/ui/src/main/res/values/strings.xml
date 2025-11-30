@@ -140,7 +140,8 @@
     <string name="a11y_inrange">in range</string>
     <string name="a11y_low">low</string>
     <string name="average">Average</string>
-    <string name="tir">TIR</string>
+    <string name="tir_short">TIR</string>
+    <string name="tir">Time in Range</string>
     <string name="none"><![CDATA[<none>]]></string>
     <string name="remove_label">REMOVE</string>
     <string name="activate_profile">Activate profile</string>
@@ -328,7 +329,8 @@
     <string name="expweight">Exponentially Weighted TDD</string>
     <string name="basalrate">Basal</string>
     <string name="bolus">Bolus</string>
-    <string name="tdd">TDD</string>
+    <string name="tdd_short">TDD</string>
+    <string name="tdd">Total Daily Dose</string>
     <string name="ratio">Ratio</string>
     <string name="amount_days"># Days</string>
     <string name="weight">Weight</string>

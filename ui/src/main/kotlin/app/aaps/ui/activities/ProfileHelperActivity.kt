@@ -2,7 +2,6 @@ package app.aaps.ui.activities
 
 import android.os.Bundle
 import androidx.activity.compose.setContent
-import androidx.collection.LongSparseArray
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -28,7 +27,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FilledTonalButton
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
@@ -58,10 +56,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
-import app.aaps.core.data.aps.AverageTDD
 import app.aaps.core.data.model.EPS
 import app.aaps.core.data.model.GlucoseUnit
-import app.aaps.core.data.model.TDD
 import app.aaps.core.data.time.T
 import app.aaps.core.interfaces.db.PersistenceLayer
 import app.aaps.core.interfaces.plugin.ActivePlugin
@@ -593,18 +589,6 @@ fun ProfileHelperScreen(
                                 showPct = profileTypes[selectedTab] == ProfileHelperActivity.ProfileType.DPV_DEFAULT,
                                 showWeight = tdds[selectedTab] == 0.0,
                                 showTdd = weights[selectedTab] == 0.0,
-                                tddStatsData = tddStatsData,
-                                isLoadingStats = isLoadingStats,
-                                dateUtil = dateUtil,
-                                onCopyToLocal = {
-                                    onCopyToLocal(
-                                        ages[selectedTab],
-                                        tdds[selectedTab],
-                                        weights[selectedTab],
-                                        pcts[selectedTab],
-                                        profileTypes[selectedTab]
-                                    )
-                                },
                                 modifier = Modifier.padding(16.dp)
                             )
                         }
@@ -633,6 +617,78 @@ fun ProfileHelperScreen(
                                 modifier = Modifier.padding(16.dp)
                             )
                         }
+                    }
+                }
+
+                // TDD Statistics Card (only for default profile types)
+                if (profileTypes[selectedTab] == ProfileHelperActivity.ProfileType.MOTOL_DEFAULT ||
+                    profileTypes[selectedTab] == ProfileHelperActivity.ProfileType.DPV_DEFAULT
+                ) {
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    ElevatedCard(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp),
+                        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            when {
+                                isLoadingStats       -> {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.Center,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        CircularProgressIndicator(
+                                            modifier = Modifier.size(24.dp),
+                                            strokeWidth = 2.dp
+                                        )
+                                        Spacer(modifier = Modifier.width(12.dp))
+                                        Text(
+                                            text = stringResource(app.aaps.core.ui.R.string.loading),
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                }
+
+                                tddStatsData != null -> {
+                                    tddStatsData?.let { data ->
+                                        TddStatsCompose(
+                                            tddStatsData = data,
+                                            dateUtil = dateUtil
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    FilledTonalButton(
+                        onClick = {
+                            onCopyToLocal(
+                                ages[selectedTab],
+                                tdds[selectedTab],
+                                weights[selectedTab],
+                                pcts[selectedTab],
+                                profileTypes[selectedTab]
+                            )
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp)
+                            .height(48.dp)
+                    ) {
+                        Icon(
+                            painter = painterResource(app.aaps.core.objects.R.drawable.ic_clone_48),
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(stringResource(R.string.clone_label))
                     }
                 }
             }
@@ -668,8 +724,6 @@ fun getProfileTypeDisplayName(type: ProfileHelperActivity.ProfileType): String {
  * - TDD (optional): Total Daily Dose in units, shown for both Motol and DPV
  * - Basal % (optional): Basal percentage (0-100), shown for DPV algorithm
  *
- * Also displays TDD statistics table when available, and a "Copy to Local Profile" button.
- *
  * @param age Current age value
  * @param onAgeChange Callback when age changes
  * @param weight Current weight value in kg
@@ -681,10 +735,6 @@ fun getProfileTypeDisplayName(type: ProfileHelperActivity.ProfileType): String {
  * @param showPct Whether to show basal percentage input (true for DPV algorithm)
  * @param showWeight Whether to show weight input (true for Motol when TDD = 0)
  * @param showTdd Whether to show TDD input
- * @param tddStatsData TDD statistics data for display (null if not loaded)
- * @param isLoadingStats Whether TDD statistics are currently loading
- * @param dateUtil Date utility for formatting
- * @param onCopyToLocal Callback when "Copy to Local Profile" button is clicked
  * @param modifier Modifier for the root Column
  */
 @Composable
@@ -700,10 +750,6 @@ fun DefaultProfileContent(
     showPct: Boolean,
     showWeight: Boolean,
     showTdd: Boolean,
-    tddStatsData: TddStatsData?,
-    isLoadingStats: Boolean,
-    dateUtil: DateUtil,
-    onCopyToLocal: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier) {
@@ -754,57 +800,6 @@ fun DefaultProfileContent(
                 maxValue = 37.0,
                 step = 1.0
             )
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-        HorizontalDivider()
-        Spacer(modifier = Modifier.height(16.dp))
-
-        when {
-            isLoadingStats       -> {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(24.dp),
-                        strokeWidth = 2.dp
-                    )
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Text(
-                        text = stringResource(app.aaps.core.ui.R.string.loading),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-
-            tddStatsData != null -> {
-                TddStatsCompose(
-                    tddStatsData = tddStatsData,
-                    dateUtil = dateUtil
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-        HorizontalDivider()
-        Spacer(modifier = Modifier.height(16.dp))
-
-        FilledTonalButton(
-            onClick = onCopyToLocal,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(48.dp)
-        ) {
-            Icon(
-                painter = painterResource(app.aaps.core.objects.R.drawable.ic_clone_48),
-                contentDescription = null,
-                modifier = Modifier.size(20.dp)
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(stringResource(R.string.clone_label))
         }
     }
 }

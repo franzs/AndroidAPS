@@ -202,12 +202,6 @@ class MainActivity : DaggerAppCompatActivityWithResult() {
                         uiInteraction.runPreferencesForPlugin(this@MainActivity, plugin.javaClass.simpleName)
                         true
                     }
-                    /*
-                                R.id.nav_survey             -> {
-                                    startActivity(Intent(this, SurveyActivity::class.java))
-                                    return true
-                                }
-                    */
                     R.id.nav_defaultprofile     -> {
                         startActivity(Intent(this@MainActivity, ProfileHelperActivity::class.java).setAction("info.nightscout.androidaps.MainActivity"))
                         true
