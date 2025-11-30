@@ -208,7 +208,7 @@ interface UiInteraction {
      * @param customProfileName The name of the first custom profile.
      * @param customProfile2 The second custom profile JSON string (for comparison mode).
      */
-    fun runProfileViewerDialog(fragmentManager: FragmentManager, time: Long, mode: Mode, customProfile: String? = null, customProfileName: String? = null, customProfile2: String? = null)
+    fun runProfileViewerActivity(context: Context, time: Long, mode: Mode, customProfile: String? = null, customProfileName: String? = null, customProfile2: String? = null)
 
     /**
      * Defines types of care portal events.
@@ -362,9 +362,7 @@ interface UiInteraction {
      * @param context The context to use for displaying the dialog.
      * @param title The title of the dialog.
      * @param message The message to display in the dialog. HTML formatted text is accepted.
-     * @param runOnDismiss If true, the [ok] will also be executed when the dialog is dismissed
-     *   by tapping outside or pressing the back button. Run in UI thread.
-     * @param ok The action to perform when the OK button is clicked or the dialog is dismissed. Run in UI thread.
+     * @param onFinish The action to perform when the OK button is clicked or the dialog is dismissed. Run in UI thread.
      */
     fun showOkDialog(context: Context, title: String, message: String, onFinish: (() -> Unit)? = null)
 

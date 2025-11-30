@@ -43,7 +43,6 @@ import app.aaps.ui.R
 import app.aaps.ui.activities.fragments.TreatmentsProfileSwitchFragment.RecyclerProfileViewAdapter.ProfileSwitchViewHolder
 import app.aaps.ui.databinding.TreatmentsProfileswitchFragmentBinding
 import app.aaps.ui.databinding.TreatmentsProfileswitchItemBinding
-import app.aaps.ui.dialogs.ProfileViewerDialog
 import dagger.android.support.DaggerFragment
 import io.reactivex.rxjava3.disposables.CompositeDisposable
 import io.reactivex.rxjava3.kotlin.plusAssign
@@ -229,22 +228,20 @@ class TreatmentsProfileSwitchFragment : DaggerFragment(), MenuProvider {
                 }
                 binding.clone.paintFlags = binding.clone.paintFlags or Paint.UNDERLINE_TEXT_FLAG
                 binding.name.setOnClickListener {
-                    ProfileViewerDialog().also { pvd ->
-                        pvd.arguments = Bundle().also { args ->
-                            args.putLong("time", (it.tag as ProfileSealed).timestamp)
-                            args.putInt("mode", UiInteraction.Mode.RUNNING_PROFILE.ordinal)
-                        }
-                        pvd.show(childFragmentManager, "ProfileViewDialog")
-                    }
+                    val profile = it.tag as ProfileSealed
+                    uiInteraction.runProfileViewerActivity(
+                        context = requireContext(),
+                        time = profile.timestamp,
+                        mode = UiInteraction.Mode.RUNNING_PROFILE
+                    )
                 }
                 binding.date.setOnClickListener {
-                    ProfileViewerDialog().also { pvd ->
-                        pvd.arguments = Bundle().also { args ->
-                            args.putLong("time", (it.tag as ProfileSealed).timestamp)
-                            args.putInt("mode", UiInteraction.Mode.RUNNING_PROFILE.ordinal)
-                        }
-                        pvd.show(childFragmentManager, "ProfileViewDialog")
-                    }
+                    val profile = it.tag as ProfileSealed
+                    uiInteraction.runProfileViewerActivity(
+                        context = requireContext(),
+                        time = profile.timestamp,
+                        mode = UiInteraction.Mode.RUNNING_PROFILE
+                    )
                 }
             }
         }

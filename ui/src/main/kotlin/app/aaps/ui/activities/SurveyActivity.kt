@@ -54,8 +54,8 @@ class SurveyActivity : TranslatedDaggerAppCompatActivity() {
             }
             profileFunction.getProfile()?.let { runningProfile ->
                 defaultProfile.profile(age, tdd, weight, profileFunction.getUnits())?.let { profile ->
-                    uiInteraction.runProfileViewerDialog(
-                        fragmentManager = supportFragmentManager,
+                    uiInteraction.runProfileViewerActivity(
+                        context = this,
                         time = dateUtil.now(),
                         mode = UiInteraction.Mode.PROFILE_COMPARE,
                         customProfile = runningProfile.toPureNsJson(dateUtil).toString(),

@@ -22,6 +22,7 @@ composeBom = "2025.12.01"
 navigationCompose = "2.9.6"
 lifecycleRuntimeKtx = "2.10.0"
 materialPullRefresh = "1.2.0"
+vico = "2.3.6"
 
 [plugins]
 android-library = { id = "com.android.library" }
@@ -188,4 +189,7 @@ androidx-lifecycle-runtime-compose = { group = "androidx.lifecycle", name = "lif
 androidx-compose-foundation = { group = "androidx.compose.foundation", name = "foundation" }
 androidx-compose-navigation = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigationCompose" }
 androidx-compose-runtime-livedata = { group = "androidx.compose.runtime", name = "runtime-livedata" }
+com-patrykandpatrick-vico-core = { group = "com.patrykandpatrick.vico", name = "core", version.ref = "vico" }
+com-patrykandpatrick-vico-compose = { group = "com.patrykandpatrick.vico", name = "compose", version.ref = "vico" }
+com-patrykandpatrick-vico-compose-m3 = { group = "com.patrykandpatrick.vico", name = "compose-m3", version.ref = "vico" }
 

@@ -1,0 +1,563 @@
+package app.aaps.ui.compose
+
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import app.aaps.core.graph.BasalProfileGraphCompose
+import app.aaps.core.graph.IcProfileGraphCompose
+import app.aaps.core.graph.IsfProfileGraphCompose
+import app.aaps.core.graph.TargetBgProfileGraphCompose
+import app.aaps.core.objects.profile.ProfileSealed
+import app.aaps.core.ui.compose.AapsTheme
+
+/**
+ * Data class representing a single row in a profile comparison table.
+ *
+ * @param time Time of day in HH:MM format or "∑" for summary row
+ * @param value1 Value from first profile (formatted as string with units)
+ * @param value2 Value from second profile (formatted as string with units)
+ */
+data class ProfileCompareRow(
+    val time: String,
+    val value1: String,
+    val value2: String
+)
+
+/**
+ * Composable that displays a single profile's data in individual elevated cards.
+ * Each profile parameter (Units, DIA, IC, ISF, Basal, Target) is shown in its own card with:
+ * - Label and value using ProfileRow styling (bodySmall typography)
+ * - Graph visualization for IC, ISF, Basal, and Target
+ * - 16dp horizontal padding per card
+ * - 8dp spacing between cards
+ *
+ * This is used in both ProfileViewerScreen (single mode) and ProfileHelperActivity tabs.
+ *
+ * @param profile The profile to display (ProfileSealed can be EPS, PS, or Pure)
+ * @param getIcList Lambda that formats IC values as a comma-separated string
+ * @param getIsfList Lambda that formats ISF values as a comma-separated string
+ * @param getBasalList Lambda that formats basal values as a comma-separated string
+ * @param getTargetList Lambda that formats target values as a range string
+ * @param formatDia Lambda that formats DIA value with units (e.g., "5.0 h")
+ * @param formatBasalSum Lambda that formats total basal sum with units (e.g., "24.5 U")
+ */
+@Composable
+fun ProfileSingleContent(
+    profile: ProfileSealed,
+    getIcList: (ProfileSealed) -> String,
+    getIsfList: (ProfileSealed) -> String,
+    getBasalList: (ProfileSealed) -> String,
+    getTargetList: (ProfileSealed) -> String,
+    formatDia: (Double) -> String,
+    formatBasalSum: (Double) -> String
+) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        // Units Card
+        ElevatedCard(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
+            elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                ProfileRow(
+                    label = stringResource(app.aaps.core.ui.R.string.units_label),
+                    value = profile.units.asText
+                )
+            }
+        }
+
+        // DIA Card
+        ElevatedCard(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
+            elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                ProfileRow(
+                    label = stringResource(app.aaps.core.ui.R.string.dia_label),
+                    value = formatDia(profile.dia)
+                )
+            }
+        }
+
+        // IC Card
+        ElevatedCard(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
+            elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                ProfileRow(
+                    label = stringResource(app.aaps.core.ui.R.string.ic_label),
+                    value = getIcList(profile)
+                )
+                IcProfileGraphCompose(
+                    profile1 = profile,
+                    profile1Name = "Profile",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(200.dp)
+                        .padding(top = 16.dp)
+                )
+            }
+        }
+
+        // ISF Card
+        ElevatedCard(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
+            elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                ProfileRow(
+                    label = stringResource(app.aaps.core.ui.R.string.isf_label),
+                    value = getIsfList(profile)
+                )
+                IsfProfileGraphCompose(
+                    profile1 = profile,
+                    profile1Name = "Profile",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(200.dp)
+                        .padding(top = 16.dp)
+                )
+            }
+        }
+
+        // Basal Card
+        ElevatedCard(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
+            elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                ProfileRow(
+                    label = stringResource(app.aaps.core.ui.R.string.basal_label),
+                    value = "∑ " + formatBasalSum(profile.baseBasalSum()) + "\n" + getBasalList(profile)
+                )
+                BasalProfileGraphCompose(
+                    profile1 = profile,
+                    profile1Name = "Profile",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(300.dp)
+                        .padding(top = 16.dp)
+                )
+            }
+        }
+
+        // Target Card
+        ElevatedCard(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
+            elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                ProfileRow(
+                    label = stringResource(app.aaps.core.ui.R.string.target_label),
+                    value = getTargetList(profile)
+                )
+                TargetBgProfileGraphCompose(
+                    profile1 = profile,
+                    profile1Name = "Profile",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(150.dp)
+                        .padding(top = 16.dp)
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Composable that displays a comparison between two profiles in individual elevated cards.
+ * Each section (Profile names, Units, DIA, IC, ISF, Basal, Target) is shown in its own card with:
+ * - Optional profile names header card (if names are provided)
+ * - Comparison tables showing time-based values for both profiles side-by-side
+ * - Dual-line graphs with colored legends distinguishing profile1 (first color) and profile2 (second color)
+ * - 16dp horizontal padding per card
+ * - 8dp spacing between cards
+ *
+ * This is used in ProfileViewerScreen (compare mode) and ProfileHelperActivity comparison tab.
+ *
+ * @param profile1 First profile to compare
+ * @param profile2 Second profile to compare
+ * @param unitsText Blood glucose units (mg/dL or mmol/L)
+ * @param formatDia Lambda that formats DIA value (e.g., "5.00" from Double)
+ * @param shortHourUnit Short form of hour unit (e.g., "h")
+ * @param icsRows List of IC comparison rows with time and values for both profiles
+ * @param icUnits IC units text (e.g., "g/U")
+ * @param isfsRows List of ISF comparison rows with time and values for both profiles
+ * @param isfUnits ISF units text (e.g., "mmol/L/U" or "mg/dL/U")
+ * @param basalsRows List of basal comparison rows with time and values for both profiles (includes summary row)
+ * @param basalUnits Basal units text (e.g., "U/h")
+ * @param targetsRows List of target comparison rows with time and range values for both profiles
+ * @param targetUnits Target units text (e.g., "mmol/L" or "mg/dL")
+ * @param profileName1 Display name for first profile (shown in colored text)
+ * @param profileName2 Display name for second profile (shown in colored text)
+ */
+@Composable
+fun ProfileCompareContent(
+    profile1: ProfileSealed,
+    profile2: ProfileSealed,
+    unitsText: String,
+    formatDia: (Double) -> String,
+    shortHourUnit: String,
+    icsRows: List<ProfileCompareRow>,
+    icUnits: String,
+    isfsRows: List<ProfileCompareRow>,
+    isfUnits: String,
+    basalsRows: List<ProfileCompareRow>,
+    basalUnits: String,
+    targetsRows: List<ProfileCompareRow>,
+    targetUnits: String,
+    profileName1: String,
+    profileName2: String
+) {
+    val colors = AapsTheme.profileHelperColors
+
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        // Profile names header Card
+        if (profileName1.isNotEmpty() || profileName2.isNotEmpty()) {
+            ElevatedCard(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(
+                        text = stringResource(app.aaps.core.ui.R.string.profile),
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            text = profileName1,
+                            modifier = Modifier.weight(1f),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = colors.profile1,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                        )
+                        Text(
+                            text = profileName2,
+                            modifier = Modifier.weight(1f),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = colors.profile2,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                        )
+                    }
+                }
+            }
+        }
+
+        // Units Card
+        ElevatedCard(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
+            elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                ProfileRow(
+                    label = stringResource(app.aaps.core.ui.R.string.units_label),
+                    value = unitsText,
+                    showColon = false
+                )
+            }
+        }
+
+        // DIA Card
+        ElevatedCard(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
+            elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text(
+                    text = stringResource(app.aaps.core.ui.R.string.dia_label),
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                        Text(
+                            text = "${formatDia(profile1.dia)} $shortHourUnit",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = colors.profile1,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                        )
+                        Text(
+                            text = "${formatDia(profile2.dia)} $shortHourUnit",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = colors.profile2,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                        )
+                    }
+                }
+            }
+        }
+
+        // IC Card
+        ElevatedCard(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
+            elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text(
+                    text = stringResource(app.aaps.core.ui.R.string.ic_label),
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                ProfileCompareTable(
+                    rows = icsRows,
+                    units = icUnits
+                )
+                IcProfileGraphCompose(
+                    profile1 = profile1,
+                    profile2 = profile2,
+                    profile1Name = profileName1,
+                    profile2Name = profileName2,
+                    profile1Color = colors.profile1,
+                    profile2Color = colors.profile2,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(200.dp)
+                        .padding(top = 8.dp)
+                )
+            }
+        }
+
+        // ISF Card
+        ElevatedCard(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
+            elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text(
+                    text = stringResource(app.aaps.core.ui.R.string.isf_label),
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                ProfileCompareTable(
+                    rows = isfsRows,
+                    units = isfUnits
+                )
+                IsfProfileGraphCompose(
+                    profile1 = profile1,
+                    profile2 = profile2,
+                    profile1Name = profileName1,
+                    profile2Name = profileName2,
+                    profile1Color = colors.profile1,
+                    profile2Color = colors.profile2,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(200.dp)
+                        .padding(top = 8.dp)
+                )
+            }
+        }
+
+        // Basal Card
+        ElevatedCard(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
+            elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text(
+                    text = stringResource(app.aaps.core.ui.R.string.basal_label),
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                ProfileCompareTable(
+                    rows = basalsRows,
+                    units = basalUnits
+                )
+                BasalProfileGraphCompose(
+                    profile1 = profile1,
+                    profile2 = profile2,
+                    profile1Name = profileName1,
+                    profile2Name = profileName2,
+                    profile1Color = colors.profile1,
+                    profile2Color = colors.profile2,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(300.dp)
+                        .padding(top = 8.dp)
+                )
+            }
+        }
+
+        // Target Card
+        ElevatedCard(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
+            elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text(
+                    text = stringResource(app.aaps.core.ui.R.string.target_label),
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                ProfileCompareTable(
+                    rows = targetsRows,
+                    units = targetUnits
+                )
+                TargetBgProfileGraphCompose(
+                    profile1 = profile1,
+                    profile2 = profile2,
+                    profile1Name = profileName1,
+                    profile2Name = profileName2,
+                    profile1Color = colors.profile1,
+                    profile2Color = colors.profile2,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(150.dp)
+                        .padding(top = 8.dp)
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Composable that displays a single row of profile data with label and value.
+ * Uses bodySmall typography to maintain consistent text sizing across profile cards.
+ *
+ * Layout:
+ * - Label (1/3 width): Bold text on the left
+ * - Colon separator (optional): ": " between label and value
+ * - Value (2/3 width): Regular text on the right
+ *
+ * @param label The label text (e.g., "Units", "DIA")
+ * @param value The value text (e.g., "mg/dL", "5.0 h")
+ * @param showColon Whether to show the colon separator (default true, set false for Units in comparison mode)
+ */
+@Composable
+fun ProfileRow(label: String, value: String, showColon: Boolean = true) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp)
+    ) {
+        Text(
+            text = label,
+            modifier = Modifier.weight(1f),
+            style = MaterialTheme.typography.bodySmall,
+            fontWeight = FontWeight.Bold
+        )
+        if (showColon) {
+            Text(
+                text = ": ",
+                style = MaterialTheme.typography.bodySmall
+            )
+        }
+        Text(
+            text = value,
+            modifier = Modifier.weight(2f),
+            style = MaterialTheme.typography.bodySmall
+        )
+    }
+}
+
+/**
+ * Composable that displays a comparison table showing values from two profiles side-by-side.
+ * Used in ProfileCompareContent for IC, ISF, Basal, and Target comparisons.
+ *
+ * Each row shows:
+ * - Time column (left): HH:MM format or "∑" for summary
+ * - Value1 column (center): First profile's value in profile1 color
+ * - Value2 column (right): Second profile's value in profile2 color
+ * - Units label: Displayed below the table, centered
+ *
+ * Values are right-aligned with minimum widths for consistent column alignment.
+ * Colors from AapsTheme.profileHelperColors distinguish between profiles.
+ *
+ * @param rows List of ProfileCompareRow containing time and both profile values
+ * @param units Units text to display below the table (e.g., "g/U", "U/h")
+ */
+@Composable
+fun ProfileCompareTable(rows: List<ProfileCompareRow>, units: String) {
+    val colors = AapsTheme.profileHelperColors
+
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally
+    ) {
+        rows.forEach { row ->
+            Row(
+                modifier = Modifier.padding(vertical = 2.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(
+                    text = row.time,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.widthIn(min = 50.dp),
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Start
+                )
+                Text(
+                    text = "${row.value1} $units",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colors.profile1,
+                    modifier = Modifier.widthIn(min = 90.dp),
+                    textAlign = androidx.compose.ui.text.style.TextAlign.End
+                )
+                Text(
+                    text = "${row.value2} $units",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colors.profile2,
+                    modifier = Modifier.widthIn(min = 90.dp),
+                    textAlign = androidx.compose.ui.text.style.TextAlign.End
+                )
+            }
+        }
+    }
+}

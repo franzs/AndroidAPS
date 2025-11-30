@@ -3,6 +3,7 @@ package app.aaps.ui.di
 import app.aaps.ui.activities.BolusProgressHelperActivity
 import app.aaps.ui.activities.ErrorActivity
 import app.aaps.ui.activities.ProfileHelperActivity
+import app.aaps.ui.activities.ProfileViewerActivity
 import app.aaps.ui.activities.QuickWizardListActivity
 import app.aaps.ui.activities.StatsActivity
 import app.aaps.ui.activities.SurveyActivity
@@ -26,7 +27,6 @@ import app.aaps.ui.dialogs.FillDialog
 import app.aaps.ui.dialogs.InsulinDialog
 import app.aaps.ui.dialogs.LoopDialog
 import app.aaps.ui.dialogs.ProfileSwitchDialog
-import app.aaps.ui.dialogs.ProfileViewerDialog
 import app.aaps.ui.dialogs.SiteRotationDialog
 import app.aaps.ui.dialogs.TempBasalDialog
 import app.aaps.ui.dialogs.TempTargetDialog
@@ -53,7 +53,7 @@ abstract class UiModule {
     @ContributesAndroidInjector abstract fun contributesCarbsDialog(): CarbsDialog
     @ContributesAndroidInjector abstract fun contributesCareDialog(): CareDialog
     @ContributesAndroidInjector abstract fun contributesWizardInfoDialog(): WizardInfoDialog
-    @ContributesAndroidInjector abstract fun contributesProfileViewerDialog(): ProfileViewerDialog
+    @ContributesAndroidInjector abstract fun contributesProfileViewerActivity(): ProfileViewerActivity
     @ContributesAndroidInjector abstract fun contributesExtendedBolusDialog(): ExtendedBolusDialog
     @ContributesAndroidInjector abstract fun contributesFillDialog(): FillDialog
     @ContributesAndroidInjector abstract fun contributesSiteRotationDialog(): SiteRotationDialog
@@ -73,7 +73,7 @@ abstract class UiModule {
     @ContributesAndroidInjector abstract fun contributesStatsActivity(): StatsActivity
     @ContributesAndroidInjector abstract fun contributesSurveyActivity(): SurveyActivity
     @ContributesAndroidInjector abstract fun contributesTreatmentsActivity(): TreatmentsActivity
-    @ContributesAndroidInjector abstract fun contributesProfileHelperActivityActivity(): ProfileHelperActivity
+    @ContributesAndroidInjector abstract fun contributesProfileHelperActivity(): ProfileHelperActivity
 
     @ContributesAndroidInjector abstract fun contributesTreatmentsBolusFragment(): TreatmentsBolusCarbsFragment
     @ContributesAndroidInjector abstract fun contributesTreatmentsTemporaryBasalsFragment(): TreatmentsTemporaryBasalsFragment

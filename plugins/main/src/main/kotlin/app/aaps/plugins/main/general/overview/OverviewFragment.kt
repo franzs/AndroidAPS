@@ -425,7 +425,7 @@ class OverviewFragment : DaggerFragment(), View.OnClickListener, OnLongClickList
             R.id.quick_wizard_button -> protectionCheck.queryProtection(requireActivity(), ProtectionCheck.Protection.BOLUS, UIRunnable { if (isAdded) onClickQuickWizard() })
             R.id.carbs_button -> protectionCheck.queryProtection(requireActivity(), ProtectionCheck.Protection.BOLUS, UIRunnable { if (isAdded) uiInteraction.runCarbsDialog(childFragmentManager) })
             R.id.temp_target -> protectionCheck.queryProtection(requireActivity(), ProtectionCheck.Protection.BOLUS, UIRunnable { if (isAdded) uiInteraction.runTempTargetDialog(childFragmentManager) })
-            R.id.active_profile -> uiInteraction.runProfileViewerDialog(childFragmentManager, dateUtil.now(), UiInteraction.Mode.RUNNING_PROFILE)
+            R.id.active_profile -> uiInteraction.runProfileViewerActivity(requireContext(), dateUtil.now(), UiInteraction.Mode.RUNNING_PROFILE)
 
             R.id.cgm_button -> {
                 if (xDripSource.isEnabled()) openCgmApp("com.eveningoutpost.dexdrip")

@@ -5,7 +5,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -17,9 +19,78 @@ import app.aaps.core.keys.StringKey
 import app.aaps.core.keys.interfaces.Preferences
 import app.aaps.core.ui.UiMode
 
+/**
+ * CompositionLocal providing access to user preferences for theme configuration.
+ * Used to retrieve dark mode setting and react to preference changes.
+ */
 val LocalPreferences = compositionLocalOf<Preferences> { error("No Preferences provided") }
+
+/**
+ * CompositionLocal providing access to RxBus for listening to app-wide events.
+ * Used to react to preference changes (e.g., dark mode toggle) in real-time.
+ */
 val LocalRxBus = compositionLocalOf<RxBus> { error("No RxBus provided") }
 
+/**
+ * AndroidAPS theme object providing access to custom theme colors and extensions.
+ * Supplements Material 3 theme with AndroidAPS-specific color schemes.
+ *
+ * **Available Color Schemes:**
+ * - profileHelperColors: Colors for profile viewer and comparison screens
+ *
+ * **Usage:**
+ * ```kotlin
+ * @Composable
+ * fun MyProfileGraph() {
+ *     val colors = AapsTheme.profileHelperColors
+ *     LineChart(color = colors.profile1)  // Use blue for primary profile
+ * }
+ * ```
+ */
+object AapsTheme {
+
+    /**
+     * Color scheme for profile helper, profile viewer, and profile comparison screens.
+     * Provides consistent blue/red color coding for distinguishing between two profiles.
+     *
+     * Automatically adapts to light/dark mode based on current theme.
+     *
+     * @see ProfileHelperColors for detailed color assignments
+     */
+    val profileHelperColors: ProfileHelperColors
+        @Composable
+        @ReadOnlyComposable
+        get() = LocalProfileHelperColors.current
+}
+
+/**
+ * Main AndroidAPS theme wrapper that applies Material 3 theming with custom extensions.
+ * Wraps content with Material 3 ColorScheme and provides AndroidAPS-specific theme values.
+ *
+ * **Features:**
+ * - Material 3 color scheme (light/dark mode)
+ * - User preference-based theme selection (Light, Dark, System)
+ * - Reactive theme switching (listens to preference changes via RxBus)
+ * - Custom AndroidAPS color schemes (ProfileHelperColors)
+ *
+ * **Theme Modes:**
+ * - LIGHT: Always use light theme
+ * - DARK: Always use dark theme
+ * - SYSTEM: Follow system dark mode setting
+ *
+ * The theme automatically updates when user changes dark mode preference in settings.
+ *
+ * **Usage:**
+ * ```kotlin
+ * setContent {
+ *     AapsTheme {
+ *         MyScreen()
+ *     }
+ * }
+ * ```
+ *
+ * @param content The composable content to wrap with the theme
+ */
 @Composable
 fun AapsTheme(
     content: @Composable () -> Unit
@@ -102,14 +173,19 @@ fun AapsTheme(
          */
     )
 
-    val scheme = when (uiMode) {
-        UiMode.LIGHT -> lightColors
-        UiMode.DARK  -> darkColors
-        UiMode.SYSTEM -> if (isSystemInDarkTheme()) darkColors else lightColors
+    val isDark = when (uiMode) {
+        UiMode.LIGHT  -> false
+        UiMode.DARK   -> true
+        UiMode.SYSTEM -> isSystemInDarkTheme()
     }
 
-    MaterialTheme(
-        colorScheme = scheme,
-        content = content
-    )
+    val scheme = if (isDark) darkColors else lightColors
+    val profileViewerColors = if (isDark) DarkProfileHelperColors else LightProfileHelperColors
+
+    CompositionLocalProvider(LocalProfileHelperColors provides profileViewerColors) {
+        MaterialTheme(
+            colorScheme = scheme,
+            content = content
+        )
+    }
 }

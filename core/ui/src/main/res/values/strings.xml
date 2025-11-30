@@ -190,6 +190,7 @@
     <string name="configbuilder_nightscoutversion_label">Nightscout version:</string>
     <string name="not_available_full">Not available</string>
     <string name="engineering_mode_enabled">Engineering mode enabled</string>
+    <string name="back">Back</string>
 
     <!--    Protection-->
     <string name="wrongpassword">Wrong password</string>

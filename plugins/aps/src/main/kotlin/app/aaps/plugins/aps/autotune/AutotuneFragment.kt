@@ -229,8 +229,8 @@ class AutotuneFragment : DaggerFragment() {
                     }
             }
             pumpProfile?.let {
-                uiInteraction.runProfileViewerDialog(
-                    fragmentManager = childFragmentManager,
+                uiInteraction.runProfileViewerActivity(
+                    context = requireContext(),
                     time = dateUtil.now(),
                     mode = UiInteraction.Mode.CUSTOM_PROFILE,
                     customProfile = pumpProfile.profile.toPureNsJson(dateUtil).toString(),
@@ -243,8 +243,8 @@ class AutotuneFragment : DaggerFragment() {
             val pumpProfile = autotunePlugin.pumpProfile
             val circadian = preferences.get(BooleanKey.AutotuneCircadianIcIsf)
             val tunedProfile = if (circadian) autotunePlugin.tunedProfile?.circadianProfile else autotunePlugin.tunedProfile?.profile
-            uiInteraction.runProfileViewerDialog(
-                fragmentManager = childFragmentManager,
+            uiInteraction.runProfileViewerActivity(
+                context = requireContext(),
                 time = dateUtil.now(),
                 mode = UiInteraction.Mode.PROFILE_COMPARE,
                 customProfile = pumpProfile.profile.toPureNsJson(dateUtil).toString(),

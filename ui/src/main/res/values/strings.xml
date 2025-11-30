@@ -130,12 +130,14 @@
     <string name="show_hide_records">Hide loop records</string>
 
     <!-- ProfileHelperActivity -->
-    <string name="profile1">Profile 1</string>
-    <string name="profile2">Profile 2</string>
     <string name="profile_type">Profile type</string>
+    <string name="profile_parameters">Profile Parameters</string>
+    <string name="active_profile">Active Profile</string>
+    <string name="available_profiles">Available Profiles</string>
+    <string name="profile_switches">Profile Switches</string>
     <string name="basal_pct_from_tdd_label">% of basal</string>
     <string name="selected_profile">Selected:</string>
-    <string name="compare_profile">Compare profiles</string>
+    <string name="comparation">Comparation</string>
     <string name="nav_profile_helper">Profile helper</string>
     <string name="motol_default_profile">Default profile</string>
     <string name="current_profile">Current profile</string>

@@ -24,6 +24,7 @@ import app.aaps.plugins.configuration.activities.SingleFragmentActivity
 import app.aaps.plugins.main.general.overview.notifications.NotificationWithAction
 import app.aaps.ui.activities.BolusProgressHelperActivity
 import app.aaps.ui.activities.ErrorActivity
+import app.aaps.ui.activities.ProfileViewerActivity
 import app.aaps.ui.activities.QuickWizardListActivity
 import app.aaps.ui.activities.TDDStatsActivity
 import app.aaps.ui.dialogs.AlertDialogs
@@ -36,7 +37,6 @@ import app.aaps.ui.dialogs.FillDialog
 import app.aaps.ui.dialogs.InsulinDialog
 import app.aaps.ui.dialogs.LoopDialog
 import app.aaps.ui.dialogs.ProfileSwitchDialog
-import app.aaps.ui.dialogs.ProfileViewerDialog
 import app.aaps.ui.dialogs.SiteRotationDialog
 import app.aaps.ui.dialogs.TempBasalDialog
 import app.aaps.ui.dialogs.TempTargetDialog
@@ -155,18 +155,15 @@ class UiInteractionImpl @Inject constructor(
             .show(fragmentManager, "SiteRotationDialog")
     }
 
-    override fun runProfileViewerDialog(fragmentManager: FragmentManager, time: Long, mode: UiInteraction.Mode, customProfile: String?, customProfileName: String?, customProfile2: String?) {
-        ProfileViewerDialog()
-            .also {
-                it.arguments = Bundle().also { bundle ->
-                    bundle.putLong("time", time)
-                    bundle.putInt("mode", mode.ordinal)
-                    bundle.putString("customProfile", customProfile)
-                    bundle.putString("customProfileName", customProfileName)
-                    bundle.putString("customProfile2", customProfile2)
-                }
-            }
-            .show(fragmentManager, "ProfileViewer")
+    override fun runProfileViewerActivity(context: Context, time: Long, mode: UiInteraction.Mode, customProfile: String?, customProfileName: String?, customProfile2: String?) {
+        val intent = Intent(context, ProfileViewerActivity::class.java).apply {
+            putExtra("time", time)
+            putExtra("mode", mode.ordinal)
+            putExtra("customProfile", customProfile)
+            putExtra("customProfileName", customProfileName)
+            putExtra("customProfile2", customProfile2)
+        }
+        context.startActivity(intent)
     }
 
     override fun runCareDialog(fragmentManager: FragmentManager, options: UiInteraction.EventType, @StringRes event: Int) {

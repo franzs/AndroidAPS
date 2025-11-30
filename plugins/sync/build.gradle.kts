@@ -27,14 +27,14 @@ dependencies {
     implementation(project(":shared:impl"))
 
     // Compose
-    implementation(platform(libs.androidx.compose.bom))
-    implementation(libs.androidx.compose.material3)
-    implementation(libs.androidx.compose.material.icons.extended)
-    implementation(libs.androidx.lifecycle.runtime.compose)
+    api(platform(libs.androidx.compose.bom))
+    api(libs.androidx.compose.material3)
+    api(libs.androidx.compose.material.icons.extended)
+    api(libs.androidx.lifecycle.runtime.compose)
 
 
-    testImplementation(libs.kotlinx.coroutines.test)
-    testImplementation(libs.androidx.work.testing)
+    testApi(libs.kotlinx.coroutines.test)
+    testApi(libs.androidx.work.testing)
 
     testImplementation(project(":shared:tests"))
     testImplementation(project(":implementation"))

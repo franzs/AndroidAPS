@@ -95,8 +95,8 @@ class DanaFragment : DaggerFragment() {
                 ?: return@setOnClickListener
             val profileName = danaPump.createConvertedProfile()?.getDefaultProfileName()
                 ?: return@setOnClickListener
-            uiInteraction.runProfileViewerDialog(
-                fragmentManager = childFragmentManager,
+            uiInteraction.runProfileViewerActivity(
+                context = requireContext(),
                 time = dateUtil.now(),
                 mode = UiInteraction.Mode.CUSTOM_PROFILE,
                 customProfile = profile.toString(),
