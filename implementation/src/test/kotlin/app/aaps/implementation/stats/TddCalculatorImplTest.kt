@@ -34,7 +34,7 @@ class TddCalculatorImplTest : TestBase() {
 
     @BeforeEach
     fun setup() {
-        tddCalculator = TddCalculatorImpl(aapsLogger, rh, activePlugin, profileFunction, dateUtil, iobCobCalculator, persistenceLayer)
+        tddCalculator = TddCalculatorImpl(aapsLogger, activePlugin, profileFunction, dateUtil, iobCobCalculator, persistenceLayer)
         whenever(dateUtil.now()).thenReturn(now)
     }
 

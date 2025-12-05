@@ -153,7 +153,7 @@ fun ProfileViewerScreen(
                         }
 
                         IconButton(onClick = onClose) {
-                            Icon(Icons.Filled.Close, contentDescription = "Close")
+                            Icon(Icons.Filled.Close, contentDescription = stringResource(app.aaps.core.ui.R.string.close))
                         }
                     }
                 }

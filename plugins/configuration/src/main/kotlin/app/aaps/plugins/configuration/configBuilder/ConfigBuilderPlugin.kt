@@ -18,6 +18,7 @@ import app.aaps.core.data.ue.Sources
 import app.aaps.core.data.ue.ValueWithUnit
 import app.aaps.core.interfaces.aps.APS
 import app.aaps.core.interfaces.aps.Sensitivity
+import app.aaps.core.interfaces.configuration.Config
 import app.aaps.core.interfaces.configuration.ConfigBuilder
 import app.aaps.core.interfaces.insulin.Insulin
 import app.aaps.core.interfaces.logging.AAPSLogger
@@ -70,7 +71,8 @@ class ConfigBuilderPlugin @Inject constructor(
     private val pumpSync: PumpSync,
     private val protectionCheck: ProtectionCheck,
     private val uiInteraction: UiInteraction,
-    private val context: Context
+    private val context: Context,
+    private val config: Config
 ) : PluginBaseWithPreferences(
     pluginDescription = PluginDescription()
         .mainType(PluginType.GENERAL)
@@ -204,19 +206,21 @@ class ConfigBuilderPlugin @Inject constructor(
     }
 
     override fun performPluginSwitch(changedPlugin: PluginBase, enabled: Boolean, type: PluginType) {
-        if (enabled && !changedPlugin.isEnabled()) {
-            scope.launch {
-                uel.log(
-                    Action.PLUGIN_ENABLED, Sources.ConfigBuilder, rh.gs(changedPlugin.pluginDescription.pluginName),
-                    ValueWithUnit.SimpleString(rh.gsNotLocalised(changedPlugin.pluginDescription.pluginName))
-                )
-            }
-        } else if (!enabled) {
-            scope.launch {
-                uel.log(
-                    Action.PLUGIN_DISABLED, Sources.ConfigBuilder, rh.gs(changedPlugin.pluginDescription.pluginName),
-                    ValueWithUnit.SimpleString(rh.gsNotLocalised(changedPlugin.pluginDescription.pluginName))
-                )
+        if (!config.AAPSCLIENT) {
+            if (enabled && !changedPlugin.isEnabled()) {
+                scope.launch {
+                    uel.log(
+                        Action.PLUGIN_ENABLED, Sources.ConfigBuilder, null,
+                        ValueWithUnit.SimpleString(rh.gsNotLocalised(changedPlugin.pluginDescription.pluginName))
+                    )
+                }
+            } else if (!enabled) {
+                scope.launch {
+                    uel.log(
+                        Action.PLUGIN_DISABLED, Sources.ConfigBuilder, null,
+                        ValueWithUnit.SimpleString(rh.gsNotLocalised(changedPlugin.pluginDescription.pluginName))
+                    )
+                }
             }
         }
         changedPlugin.setPluginEnabled(type, enabled)

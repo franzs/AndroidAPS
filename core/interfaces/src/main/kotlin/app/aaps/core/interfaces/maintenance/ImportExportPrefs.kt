@@ -17,7 +17,7 @@ interface ImportExportPrefs {
     fun verifyStoragePermissions(fragment: Fragment, onGranted: Runnable)
     fun exportSharedPreferences(f: Fragment)
     fun exportSharedPreferencesNonInteractive(context: Context, password: String): Boolean
-    fun exportUserEntriesCsv(activity: FragmentActivity)
+    fun exportUserEntriesCsv(context: Context)
     fun exportApsResult(algorithm: String?, input: JSONObject, output: JSONObject?)
 
     /**

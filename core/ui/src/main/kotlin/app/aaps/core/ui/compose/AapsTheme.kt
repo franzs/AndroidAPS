@@ -37,6 +37,8 @@ val LocalRxBus = compositionLocalOf<RxBus> { error("No RxBus provided") }
  *
  * **Available Color Schemes:**
  * - profileHelperColors: Colors for profile viewer and comparison screens
+ * - elementColors: Colors for treatment tab icons and elements
+ * - generalColors: Colors for general UI elements (IOB, COB, etc.)
  *
  * **Usage:**
  * ```kotlin
@@ -44,6 +46,18 @@ val LocalRxBus = compositionLocalOf<RxBus> { error("No RxBus provided") }
  * fun MyProfileGraph() {
  *     val colors = AapsTheme.profileHelperColors
  *     LineChart(color = colors.profile1)  // Use blue for primary profile
+ * }
+ *
+ * @Composable
+ * fun MyTreatmentTab() {
+ *     val colors = AapsTheme.elementColors
+ *     Icon(tint = colors.bolusCarbs)  // Use orange for bolus/carbs icon
+ * }
+ *
+ * @Composable
+ * fun MyOverviewScreen() {
+ *     val colors = AapsTheme.generalColors
+ *     Text(color = colors.activeInsulinText)  // Use IOB color for active insulin
  * }
  * ```
  */
@@ -61,6 +75,30 @@ object AapsTheme {
         @Composable
         @ReadOnlyComposable
         get() = LocalProfileHelperColors.current
+
+    /**
+     * Color scheme for for basic elements.
+     *
+     * Automatically adapts to light/dark mode based on current theme.
+     *
+     */
+    val elementColors: ElementColors
+        @Composable
+        @ReadOnlyComposable
+        get() = LocalElementColors.current
+
+    /**
+     * Color scheme for general UI elements.
+     * Provides colors for common elements like IOB, COB, etc.
+     *
+     * Automatically adapts to light/dark mode based on current theme.
+     *
+     * @see GeneralColors for detailed color assignments
+     */
+    val generalColors: GeneralColors
+        @Composable
+        @ReadOnlyComposable
+        get() = LocalGeneralColors.current
 }
 
 /**
@@ -181,8 +219,14 @@ fun AapsTheme(
 
     val scheme = if (isDark) darkColors else lightColors
     val profileViewerColors = if (isDark) DarkProfileHelperColors else LightProfileHelperColors
+    val treatmentIconColors = if (isDark) DarkElementColors else LightElementColors
+    val generalColors = if (isDark) DarkGeneralColors else LightGeneralColors
 
-    CompositionLocalProvider(LocalProfileHelperColors provides profileViewerColors) {
+    CompositionLocalProvider(
+        LocalProfileHelperColors provides profileViewerColors,
+        LocalElementColors provides treatmentIconColors,
+        LocalGeneralColors provides generalColors
+    ) {
         MaterialTheme(
             colorScheme = scheme,
             content = content

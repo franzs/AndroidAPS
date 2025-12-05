@@ -1,6 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!--    General-->
+    <string name="treatments">Treatments</string>
+    <string name="count_selected">%1$d selected</string>
+    <string name="delete">Delete</string>
+    <string name="show_invalidated">Show invalidated</string>
+    <string name="hide_invalidated">Hide invalidated</string>
+    <string name="more_options">More options</string>
     <string name="refresh">Refresh</string>
     <string name="error">Error</string>
     <string name="profile_set_ok">Basal profile in pump updated</string>

@@ -1,0 +1,286 @@
+package app.aaps.ui.compose
+
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.aaps.core.data.model.EB
+import app.aaps.core.data.time.T
+import app.aaps.core.interfaces.insulin.Insulin
+import app.aaps.core.interfaces.profile.ProfileFunction
+import app.aaps.core.interfaces.resources.ResourceHelper
+import app.aaps.core.interfaces.ui.UiInteraction
+import app.aaps.core.interfaces.utils.DateUtil
+import app.aaps.core.objects.extensions.iobCalc
+import app.aaps.core.objects.extensions.isInProgress
+import app.aaps.core.ui.compose.AapsTheme
+import app.aaps.core.ui.compose.icons.Ns
+import app.aaps.core.ui.compose.icons.Pump
+import app.aaps.ui.R
+import app.aaps.ui.compose.components.ErrorSnackbar
+import app.aaps.ui.viewmodels.ExtendedBolusViewModel
+
+/**
+ * Composable screen displaying extended boluses with delete and show hidden functionality.
+ *
+ * @param viewModel ViewModel managing state and business logic
+ * @param profileFunction Profile function for getting profiles
+ * @param activeInsulin Active insulin plugin for IOB calculation
+ * @param uiInteraction UI interaction helper for showing dialogs
+ * @param setToolbarConfig Callback to set the toolbar configuration
+ * @param onNavigateBack Callback to navigate back
+ */
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
+@Composable
+fun ExtendedBolusScreen(
+    viewModel: ExtendedBolusViewModel,
+    profileFunction: ProfileFunction,
+    activeInsulin: Insulin,
+    uiInteraction: UiInteraction,
+    setToolbarConfig: (ToolbarConfig) -> Unit,
+    onNavigateBack: () -> Unit = { }
+) {
+    val context = LocalContext.current
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    // Update toolbar configuration whenever state changes
+    LaunchedEffect(uiState.isRemovingMode, uiState.selectedItems.size, uiState.showInvalidated) {
+        setToolbarConfig(
+            viewModel.getToolbarConfig(
+                onNavigateBack = onNavigateBack,
+                onDeleteClick = {
+                    if (uiState.selectedItems.isNotEmpty()) {
+                        val confirmationMessage = viewModel.getDeleteConfirmationMessage()
+                        uiInteraction.showOkCancelDialog(
+                            context = context,
+                            title = viewModel.rh.gs(app.aaps.core.ui.R.string.removerecord),
+                            message = confirmationMessage,
+                            ok = { viewModel.deleteSelected() }
+                        )
+                    }
+                }
+            )
+        )
+    }
+
+    AapsTheme {
+        Box(modifier = Modifier.fillMaxSize()) {
+            TreatmentContentContainer(
+                isLoading = uiState.isLoading,
+                isEmpty = uiState.extendedBoluses.isEmpty()
+            ) {
+                val haptic = LocalHapticFeedback.current
+
+                TreatmentLazyColumn(
+                    items = uiState.extendedBoluses,
+                    getTimestamp = { it.timestamp },
+                    getItemKey = { it.id },
+                    dateUtil = viewModel.dateUtil,
+                    rh = viewModel.rh,
+                    itemContent = { eb ->
+                        ExtendedBolusItem(
+                            extendedBolus = eb,
+                            isRemovingMode = uiState.isRemovingMode,
+                            isSelected = eb in uiState.selectedItems,
+                            onClick = {
+                                if (uiState.isRemovingMode && eb.isValid) {
+                                    // Haptic feedback for selection toggle
+                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                    // Toggle selection
+                                    viewModel.toggleSelection(eb)
+                                }
+                            },
+                            onLongPress = {
+                                if (eb.isValid && !uiState.isRemovingMode) {
+                                    // Haptic feedback for selection mode entry
+                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                    // Enter selection mode and select this item
+                                    viewModel.enterSelectionMode(eb)
+                                }
+                            },
+                            profileFunction = profileFunction,
+                            activeInsulin = activeInsulin,
+                            rh = viewModel.rh,
+                            dateUtil = viewModel.dateUtil
+                        )
+                    }
+                )
+            }
+
+            // Error display
+            ErrorSnackbar(
+                error = uiState.error,
+                onDismiss = { viewModel.clearError() },
+                modifier = Modifier.align(Alignment.BottomCenter)
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun ExtendedBolusItem(
+    extendedBolus: EB,
+    isRemovingMode: Boolean,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    onLongPress: () -> Unit,
+    profileFunction: ProfileFunction,
+    activeInsulin: Insulin,
+    rh: ResourceHelper,
+    dateUtil: DateUtil
+) {
+    val profile = profileFunction.getProfile(extendedBolus.timestamp)
+    val iob = if (profile != null) {
+        extendedBolus.iobCalc(System.currentTimeMillis(), profile, activeInsulin)
+    } else {
+        null
+    }
+    val isActive = extendedBolus.isInProgress(dateUtil)
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 2.dp)
+            .combinedClickable(
+                onClick = onClick,
+                onLongClick = onLongPress
+            ),
+        colors = CardDefaults.cardColors(
+            containerColor = if (isSelected) {
+                MaterialTheme.colorScheme.secondaryContainer
+            } else {
+                MaterialTheme.colorScheme.surface
+            }
+        )
+    ) {
+        // Single row with all info
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp, vertical = 5.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Time range, rate, IOB, duration - all in one compact format
+            Text(
+                text = buildAnnotatedString {
+                    // Time range
+                    append(
+                        if (isActive) {
+                            dateUtil.timeString(extendedBolus.timestamp)
+                        } else {
+                            dateUtil.timeRangeString(extendedBolus.timestamp, extendedBolus.end)
+                        }
+                    )
+                    append(" ")
+                    // Rate
+                    val formattedRate = String.format("%.2f", extendedBolus.rate)
+                    append(formattedRate)
+                    append(rh.gs(app.aaps.core.ui.R.string.profile_ins_units_per_hour))
+                    // IOB in blue color when != 0.0
+                    if (iob != null && iob.iob != 0.0) {
+                        append(" ")
+                        withStyle(
+                            style = SpanStyle(
+                                fontWeight = FontWeight.Bold,
+                                color = Color(AapsTheme.generalColors.activeInsulinText.value)
+                            )
+                        ) {
+                            append("(")
+                            val formattedIob = String.format("%.2f", iob.iob)
+                            append(formattedIob)
+                            append(rh.gs(app.aaps.core.ui.R.string.insulin_unit_shortname))
+                            append(")")
+                        }
+                    }
+                    append(" ")
+                    // Duration
+                    append(T.msecs(extendedBolus.duration).mins().toInt().toString())
+                    append(rh.gs(R.string.unit_minute_short))
+                },
+                modifier = Modifier.padding(start = 4.dp),
+                fontSize = 14.sp,
+                color = when {
+                    isActive -> Color(AapsTheme.generalColors.activeInsulinText.value)
+                    else     -> MaterialTheme.colorScheme.onSurface
+                }
+            )
+
+            // Spacer
+            Box(modifier = Modifier.weight(1f))
+
+            // Invalid indicator
+            if (!extendedBolus.isValid) {
+                Icon(
+                    imageVector = Icons.Filled.Delete,
+                    contentDescription = stringResource(app.aaps.core.ui.R.string.invalid),
+                    modifier = Modifier
+                        .size(21.dp)
+                        .padding(start = 5.dp),
+                    tint = Color(AapsTheme.generalColors.invalidatedRecord.value)
+                )
+            }
+
+            // Pump indicator (on right, before NS)
+            if (extendedBolus.ids.pumpId != null) {
+                Icon(
+                    imageVector = Pump,
+                    contentDescription = stringResource(app.aaps.core.ui.R.string.pump_history),
+                    modifier = Modifier
+                        .size(21.dp)
+                        .padding(start = 5.dp)
+                )
+            }
+
+            // NS indicator
+            if (extendedBolus.ids.nightscoutId != null) {
+                Icon(
+                    imageVector = Ns,
+                    contentDescription = stringResource(app.aaps.core.ui.R.string.ns),
+                    modifier = Modifier
+                        .size(21.dp)
+                        .padding(start = 5.dp)
+                )
+            }
+
+            // Checkbox for removal
+            if (isRemovingMode && extendedBolus.isValid) {
+                Checkbox(
+                    checked = isSelected,
+                    onCheckedChange = { onClick() },
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+        }
+    }
+}

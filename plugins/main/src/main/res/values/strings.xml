@@ -237,7 +237,6 @@
     <string name="quickwizard_settings">QuickWizard settings</string>
     <string name="keep_screen_on_title">Keep screen on</string>
     <string name="keep_screen_on_summary">Prevent Android to turn screen off. It will consume lot of energy when not plugged to power outlet.</string>
-    <string name="treatments">Treatments</string>
     <string name="carb_increment_button_message">Number of carbs to add when button is pressed</string>
     <string name="insulin_increment_button_message">Amount of insulin to add when button is pressed</string>
     <string name="firstinsulinincrement">First insulin increment</string>

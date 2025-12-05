@@ -1,6 +1,5 @@
 package app.aaps.implementation.userEntry
 
-import android.text.Spanned
 import app.aaps.core.data.configuration.Constants
 import app.aaps.core.data.model.GlucoseUnit
 import app.aaps.core.data.model.UE
@@ -14,7 +13,6 @@ import app.aaps.core.interfaces.utils.DateUtil
 import app.aaps.core.interfaces.utils.DecimalFormatter
 import app.aaps.core.interfaces.utils.Translator
 import app.aaps.core.objects.R
-import app.aaps.core.utils.HtmlHelper
 import dagger.Reusable
 import javax.inject.Inject
 
@@ -26,20 +24,6 @@ class UserEntryPresentationHelperImpl @Inject constructor(
     private val dateUtil: DateUtil,
     private val decimalFormatter: DecimalFormatter
 ) : UserEntryPresentationHelper {
-
-    override fun colorId(colorGroup: Action.ColorGroup): Int = when (colorGroup) {
-        Action.ColorGroup.InsulinTreatment -> app.aaps.core.ui.R.color.iob
-        Action.ColorGroup.BasalTreatment   -> app.aaps.core.ui.R.color.basal
-        Action.ColorGroup.CarbTreatment    -> app.aaps.core.ui.R.color.carbs
-        Action.ColorGroup.TT               -> app.aaps.core.ui.R.color.tempTargetConfirmation
-        Action.ColorGroup.Profile          -> app.aaps.core.ui.R.color.white
-        Action.ColorGroup.Loop             -> app.aaps.core.ui.R.color.loopClosed
-        Action.ColorGroup.Careportal       -> app.aaps.core.ui.R.color.high
-        Action.ColorGroup.Pump             -> app.aaps.core.ui.R.color.loopDisconnected
-        Action.ColorGroup.Aaps             -> app.aaps.core.ui.R.color.defaultText
-        Action.ColorGroup.RunningMode      -> app.aaps.core.ui.R.color.white
-        // else                               -> app.aaps.core.ui.R.color.defaultText
-    }
 
     override fun iconId(source: Sources): Int = when (source) {
         Sources.TreatmentDialog     -> R.drawable.icon_insulin_carbs
@@ -121,13 +105,6 @@ class UserEntryPresentationHelperImpl @Inject constructor(
         Sources.Random              -> R.drawable.ic_aaps
         Sources.BgFragment          -> R.drawable.ic_aaps
     }
-
-    override fun actionToColoredString(action: Action): Spanned = when (action) {
-        Action.TREATMENT -> HtmlHelper.fromHtml(coloredAction(Action.BOLUS) + " + " + coloredAction(Action.CARBS))
-        else             -> HtmlHelper.fromHtml(coloredAction(action))
-    }
-
-    private fun coloredAction(action: Action): String = "<font color='${rh.gc(colorId(action.colorGroup))}'>${translator.translate(action)}</font>"
 
     override fun listToPresentationString(list: List<ValueWithUnit>) =
         list.joinToString(separator = "  ", transform = this::toPresentationString)

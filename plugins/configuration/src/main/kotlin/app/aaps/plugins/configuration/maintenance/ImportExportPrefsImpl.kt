@@ -451,8 +451,8 @@ class ImportExportPrefsImpl @Inject constructor(
             })
     }
 
-    override fun exportUserEntriesCsv(activity: FragmentActivity) {
-        WorkManager.getInstance(activity).enqueueUniqueWork(
+    override fun exportUserEntriesCsv(context: Context) {
+        WorkManager.getInstance(context).enqueueUniqueWork(
             "export",
             ExistingWorkPolicy.APPEND_OR_REPLACE,
             OneTimeWorkRequest.Builder(CsvExportWorker::class.java).build()

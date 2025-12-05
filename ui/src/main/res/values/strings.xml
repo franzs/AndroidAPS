@@ -115,8 +115,6 @@
     <string name="meal_bolus">Meal</string>
     <string name="prime">Prime</string>
     <string name="carbs_and_bolus">Carbs and bolus</string>
-    <string name="show_invalidated_records">Show invalidated / removed records</string>
-    <string name="hide_invalidated_records">Hide invalidated / removed records</string>
     <string name="show_invalidated">Show invalidated</string>
     <string name="hide_invalidated">Hide invalidated</string>
     <string name="careportal_remove_started_events">Remove AAPS started entries</string>
@@ -126,6 +124,10 @@
     <string name="clone_label">Clone</string>
     <string name="show_loop_records">Show loop records</string>
     <string name="show_hide_records">Hide loop records</string>
+    <string name="tbr_type_flag_extended">E</string>
+    <string name="tbr_type_flag_suspended">S</string>
+    <string name="tbr_type_flag_emulated_suspended">ES</string>
+    <string name="tbr_type_flag_superbolus">SB</string>
 
     <!-- ProfileHelperActivity -->
     <string name="profile_type">Profile type</string>

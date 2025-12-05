@@ -1,73 +1,101 @@
 package app.aaps.ui.activities
 
 import android.os.Bundle
-import androidx.fragment.app.Fragment
-import androidx.fragment.app.FragmentTransaction
-import app.aaps.core.interfaces.configuration.Config
+import androidx.activity.compose.setContent
+import androidx.compose.runtime.CompositionLocalProvider
+import app.aaps.core.interfaces.db.PersistenceLayer
+import app.aaps.core.interfaces.logging.AAPSLogger
+import app.aaps.core.interfaces.logging.UserEntryLogger
+import app.aaps.core.interfaces.maintenance.ImportExportPrefs
 import app.aaps.core.interfaces.plugin.ActivePlugin
+import app.aaps.core.interfaces.profile.ProfileFunction
+import app.aaps.core.interfaces.profile.ProfileUtil
 import app.aaps.core.interfaces.resources.ResourceHelper
+import app.aaps.core.interfaces.rx.AapsSchedulers
+import app.aaps.core.interfaces.rx.bus.RxBus
+import app.aaps.core.interfaces.ui.UiInteraction
+import app.aaps.core.interfaces.userEntry.UserEntryPresentationHelper
+import app.aaps.core.interfaces.utils.DateUtil
+import app.aaps.core.interfaces.utils.DecimalFormatter
+import app.aaps.core.interfaces.utils.Translator
+import app.aaps.core.keys.interfaces.Preferences
 import app.aaps.core.ui.activities.TranslatedDaggerAppCompatActivity
-import app.aaps.core.ui.extensions.toVisibility
-import app.aaps.ui.R
-import app.aaps.ui.activities.fragments.TreatmentsBolusCarbsFragment
-import app.aaps.ui.activities.fragments.TreatmentsCareportalFragment
-import app.aaps.ui.activities.fragments.TreatmentsExtendedBolusesFragment
-import app.aaps.ui.activities.fragments.TreatmentsProfileSwitchFragment
-import app.aaps.ui.activities.fragments.TreatmentsRunningModeFragment
-import app.aaps.ui.activities.fragments.TreatmentsTempTargetFragment
-import app.aaps.ui.activities.fragments.TreatmentsTemporaryBasalsFragment
-import app.aaps.ui.activities.fragments.TreatmentsUserEntryFragment
-import app.aaps.ui.databinding.TreatmentsFragmentBinding
-import com.google.android.material.tabs.TabLayout
+import app.aaps.core.ui.compose.AapsTheme
+import app.aaps.core.ui.compose.LocalPreferences
+import app.aaps.core.ui.compose.LocalRxBus
+import app.aaps.ui.compose.TreatmentsScreen
 import javax.inject.Inject
 
+/**
+ * Activity that displays diabetes treatments with tab navigation.
+ *
+ * This Compose-based activity provides a centralized view of various treatment types including:
+ *
+ * 1. **Bolus & Carbs**: Insulin boluses and carbohydrate entries
+ * 2. **Extended Boluses**: Extended/dual-wave bolus deliveries (if pump supports)
+ * 3. **Temporary Basals**: Temporary basal rate adjustments
+ * 4. **Temp Targets**: Temporary blood glucose targets
+ * 5. **Profile Switches**: Profile changes and adjustments
+ * 6. **Careportal**: General careportal entries and notes
+ * 7. **Running Mode**: Running mode changes (closed loop, open loop, etc.)
+ * 8. **User Entry**: User action log entries
+ *
+ * @see app.aaps.ui.compose.TreatmentsScreen
+ */
 class TreatmentsActivity : TranslatedDaggerAppCompatActivity() {
 
-    @Inject lateinit var config: Config
     @Inject lateinit var activePlugin: ActivePlugin
+    @Inject lateinit var preferences: Preferences
+    @Inject lateinit var rxBus: RxBus
+    @Inject lateinit var persistenceLayer: PersistenceLayer
+    @Inject lateinit var profileUtil: ProfileUtil
+    @Inject lateinit var profileFunction: ProfileFunction
     @Inject lateinit var rh: ResourceHelper
+    @Inject lateinit var translator: Translator
+    @Inject lateinit var dateUtil: DateUtil
+    @Inject lateinit var decimalFormatter: DecimalFormatter
+    @Inject lateinit var uiInteraction: UiInteraction
+    @Inject lateinit var userEntryPresentationHelper: UserEntryPresentationHelper
+    @Inject lateinit var importExportPrefs: ImportExportPrefs
+    @Inject lateinit var aapsSchedulers: AapsSchedulers
+    @Inject lateinit var uel: UserEntryLogger
+    @Inject lateinit var aapsLogger: AAPSLogger
 
-    private lateinit var binding: TreatmentsFragmentBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        binding = TreatmentsFragmentBinding.inflate(layoutInflater)
-        setContentView(binding.root)
 
-        // Use index, TabItems crashes with an id
-        val showEbTab = !activePlugin.activePump.isFakingTempsByExtendedBoluses && activePlugin.activePump.pumpDescription.isExtendedBolusCapable
-        binding.treatmentsTabs.getTabAt(1)?.view?.visibility = showEbTab.toVisibility()
+        // Determine if Extended Bolus tab should be shown based on pump capabilities
+        val showExtendedBolusTab = !activePlugin.activePump.isFakingTempsByExtendedBoluses &&
+            activePlugin.activePump.pumpDescription.isExtendedBolusCapable
 
-        setFragment(TreatmentsBolusCarbsFragment())
-        setSupportActionBar(binding.toolbar)
-        supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        supportActionBar?.title = rh.gs(R.string.carbs_and_bolus)
-
-        binding.treatmentsTabs.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
-            override fun onTabSelected(tab: TabLayout.Tab) {
-                val fragment = when (tab.position) {
-                    0    -> TreatmentsBolusCarbsFragment::class.java
-                    1    -> TreatmentsExtendedBolusesFragment::class.java
-                    2    -> TreatmentsTemporaryBasalsFragment::class.java
-                    3    -> TreatmentsTempTargetFragment::class.java
-                    4    -> TreatmentsProfileSwitchFragment::class.java
-                    5    -> TreatmentsCareportalFragment::class.java
-                    6    -> TreatmentsRunningModeFragment::class.java
-                    else -> TreatmentsUserEntryFragment::class.java
+        setContent {
+            CompositionLocalProvider(
+                LocalPreferences provides preferences,
+                LocalRxBus provides rxBus
+            ) {
+                AapsTheme {
+                    TreatmentsScreen(
+                        showExtendedBolusTab = showExtendedBolusTab,
+                        persistenceLayer = persistenceLayer,
+                        profileUtil = profileUtil,
+                        profileFunction = profileFunction,
+                        activePlugin = activePlugin,
+                        rh = rh,
+                        translator = translator,
+                        dateUtil = dateUtil,
+                        decimalFormatter = decimalFormatter,
+                        uiInteraction = uiInteraction,
+                        userEntryPresentationHelper = userEntryPresentationHelper,
+                        importExportPrefs = importExportPrefs,
+                        uel = uel,
+                        rxBus = rxBus,
+                        aapsSchedulers = aapsSchedulers,
+                        aapsLogger = aapsLogger,
+                        onNavigateBack = { finish() }
+                    )
                 }
-                setFragment(fragment.getDeclaredConstructor().newInstance())
-                supportActionBar?.title = tab.contentDescription
             }
-
-            override fun onTabUnselected(tab: TabLayout.Tab) {}
-            override fun onTabReselected(tab: TabLayout.Tab) {}
-        })
-    }
-
-    private fun setFragment(selectedFragment: Fragment) {
-        supportFragmentManager.beginTransaction()
-            .replace(R.id.fragment_container, selectedFragment)
-            .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE)
-            .commit()
+        }
     }
 }
