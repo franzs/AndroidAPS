@@ -8,31 +8,28 @@ import app.aaps.core.data.ue.Action
 import app.aaps.core.data.ue.Sources
 import app.aaps.core.data.ue.ValueWithUnit
 import app.aaps.core.interfaces.db.PersistenceLayer
+import app.aaps.core.interfaces.db.observeChanges
 import app.aaps.core.interfaces.logging.AAPSLogger
 import app.aaps.core.interfaces.logging.LTag
 import app.aaps.core.interfaces.plugin.ActivePlugin
 import app.aaps.core.interfaces.profile.ProfileFunction
 import app.aaps.core.interfaces.resources.ResourceHelper
-import app.aaps.core.interfaces.rx.AapsSchedulers
-import app.aaps.core.interfaces.rx.bus.RxBus
-import app.aaps.core.interfaces.rx.events.EventTempBasalChange
 import app.aaps.core.interfaces.utils.DateUtil
 import app.aaps.core.interfaces.utils.DecimalFormatter
 import app.aaps.core.objects.extensions.toStringFull
 import app.aaps.core.objects.extensions.toTemporaryBasal
 import app.aaps.ui.compose.ToolbarConfig
 import app.aaps.ui.compose.TreatmentScreenToolbar
-import app.aaps.ui.viewmodels.TreatmentConstants.EVENT_DEBOUNCE_SECONDS
 import app.aaps.ui.viewmodels.TreatmentConstants.TREATMENT_HISTORY_DAYS
-import io.reactivex.rxjava3.disposables.CompositeDisposable
-import io.reactivex.rxjava3.kotlin.plusAssign
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
@@ -46,24 +43,15 @@ class TempBasalViewModel @Inject constructor(
     val rh: ResourceHelper,
     val dateUtil: DateUtil,
     val decimalFormatter: DecimalFormatter,
-    private val rxBus: RxBus,
-    private val aapsSchedulers: AapsSchedulers,
     private val aapsLogger: AAPSLogger
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(TempBasalUiState())
     val uiState: StateFlow<TempBasalUiState> = _uiState.asStateFlow()
 
-    private val disposable = CompositeDisposable()
-
     init {
         loadData()
         observeTempBasalChanges()
-    }
-
-    override fun onCleared() {
-        super.onCleared()
-        disposable.clear()
     }
 
     /**
@@ -78,34 +66,32 @@ class TempBasalViewModel @Inject constructor(
             }
 
             try {
-                val tempBasals = withContext(Dispatchers.IO) {
-                    val now = System.currentTimeMillis()
-                    val millsToThePast = T.days(TREATMENT_HISTORY_DAYS).msecs()
-                    val isFakingTempsByExtendedBoluses = activePlugin.activePump.isFakingTempsByExtendedBoluses
+                val now = System.currentTimeMillis()
+                val millsToThePast = T.days(TREATMENT_HISTORY_DAYS).msecs()
+                val isFakingTempsByExtendedBoluses = activePlugin.activePump.isFakingTempsByExtendedBoluses
 
-                    val tempBasalsList = if (currentState.showInvalidated) {
-                        persistenceLayer.getTemporaryBasalsStartingFromTimeIncludingInvalid(now - millsToThePast, false).blockingGet()
+                val tempBasalsList = if (currentState.showInvalidated) {
+                    persistenceLayer.getTemporaryBasalsStartingFromTimeIncludingInvalid(now - millsToThePast, false)
+                } else {
+                    persistenceLayer.getTemporaryBasalsStartingFromTime(now - millsToThePast, false)
+                }
+
+                val tempBasals = if (isFakingTempsByExtendedBoluses) {
+                    val extendedBolusList = if (currentState.showInvalidated) {
+                        persistenceLayer.getExtendedBolusStartingFromTimeIncludingInvalid(now - millsToThePast, false)
                     } else {
-                        persistenceLayer.getTemporaryBasalsStartingFromTime(now - millsToThePast, false).blockingGet()
+                        persistenceLayer.getExtendedBolusesStartingFromTime(now - millsToThePast, false)
                     }
 
-                    if (isFakingTempsByExtendedBoluses) {
-                        val extendedBolusList = if (currentState.showInvalidated) {
-                            persistenceLayer.getExtendedBolusStartingFromTimeIncludingInvalid(now - millsToThePast, false).blockingGet()
-                        } else {
-                            persistenceLayer.getExtendedBolusesStartingFromTime(now - millsToThePast, false).blockingGet()
+                    val convertedExtendedBoluses = extendedBolusList.mapNotNull { eb ->
+                        profileFunction.getProfile(eb.timestamp)?.let { profile ->
+                            eb.toTemporaryBasal(profile)
                         }
-
-                        val convertedExtendedBoluses = extendedBolusList.mapNotNull { eb ->
-                            profileFunction.getProfile(eb.timestamp)?.let { profile ->
-                                eb.toTemporaryBasal(profile)
-                            }
-                        }
-
-                        (tempBasalsList + convertedExtendedBoluses).sortedByDescending { it.timestamp }
-                    } else {
-                        tempBasalsList.sortedByDescending { it.timestamp }
                     }
+
+                    (tempBasalsList + convertedExtendedBoluses).sortedByDescending { it.timestamp }
+                } else {
+                    tempBasalsList.sortedByDescending { it.timestamp }
                 }
 
                 _uiState.update {
@@ -128,16 +114,14 @@ class TempBasalViewModel @Inject constructor(
     }
 
     /**
-     * Subscribe to temp basal change events
+     * Subscribe to temp basal change events using Flow
      */
     private fun observeTempBasalChanges() {
-        disposable += rxBus
-            .toObservable(EventTempBasalChange::class.java)
-            .observeOn(aapsSchedulers.io)
-            .debounce(EVENT_DEBOUNCE_SECONDS, TimeUnit.SECONDS)
-            .subscribe {
-                loadData()
-            }
+        persistenceLayer
+            .observeChanges<TB>()
+            .debounce(1000L) // 1 second debounce
+            .onEach { loadData() }
+            .launchIn(viewModelScope)
     }
 
     /**

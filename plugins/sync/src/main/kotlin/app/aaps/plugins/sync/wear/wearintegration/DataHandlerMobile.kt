@@ -1408,7 +1408,7 @@ class DataHandlerMobile @Inject constructor(
                 temps.add(EventData.TreatmentData.TempBasal(now - 60 * 1000, endBasalValue, runningTime + 5 * 60 * 1000, currentAmount, currentAmount))
             }
         }
-        persistenceLayer.getBolusesFromTimeIncludingInvalid(startTimeWindow, true).blockingGet()
+        persistenceLayer.getBolusesFromTimeIncludingInvalidBlocking(startTimeWindow, true).blockingGet()
             .stream()
             .filter { (_, _, _, _, _, _, _, _, _, type) -> type !== BS.Type.PRIMING }
             .forEach { (_, _, _, isValid, _, _, timestamp, _, amount, type) -> boluses.add(EventData.TreatmentData.Treatment(timestamp, amount, 0.0, type === BS.Type.SMB, isValid)) }

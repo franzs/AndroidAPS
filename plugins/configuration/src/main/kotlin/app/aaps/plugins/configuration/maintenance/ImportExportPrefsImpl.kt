@@ -471,7 +471,7 @@ class ImportExportPrefsImpl @Inject constructor(
         @Inject lateinit var persistenceLayer: PersistenceLayer
 
         override suspend fun doWorkAndLog(): Result {
-            val entries = persistenceLayer.getUserEntryFilteredDataFromTime(MidnightTime.calc() - T.days(90).msecs()).blockingGet()
+            val entries = persistenceLayer.getUserEntryFilteredDataFromTime(MidnightTime.calc() - T.days(90).msecs())
             prefFileList.ensureExportDirExists()
             val newFile = prefFileList.newExportCsvFile() ?: return Result.failure()
             var ret = Result.success()

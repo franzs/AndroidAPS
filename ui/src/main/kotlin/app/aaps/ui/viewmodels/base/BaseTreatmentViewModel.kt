@@ -4,10 +4,7 @@ import androidx.lifecycle.ViewModel
 import app.aaps.core.data.time.T
 import app.aaps.core.interfaces.db.PersistenceLayer
 import app.aaps.core.interfaces.resources.ResourceHelper
-import app.aaps.core.interfaces.rx.AapsSchedulers
-import app.aaps.core.interfaces.rx.bus.RxBus
 import app.aaps.core.interfaces.utils.DateUtil
-import io.reactivex.rxjava3.disposables.CompositeDisposable
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
@@ -20,33 +17,21 @@ import kotlinx.coroutines.flow.StateFlow
 abstract class BaseTreatmentViewModel<T : Any, S : TreatmentUiState<T>>(
     protected val persistenceLayer: PersistenceLayer,
     val rh: ResourceHelper,
-    val dateUtil: DateUtil,
-    protected val rxBus: RxBus,
-    protected val aapsSchedulers: AapsSchedulers
+    val dateUtil: DateUtil
 ) : ViewModel() {
 
     protected abstract val _uiState: MutableStateFlow<S>
     abstract val uiState: StateFlow<S>
 
-    protected val disposable = CompositeDisposable()
-
     companion object {
 
         /** Default time range for treatment history */
         const val TREATMENT_HISTORY_DAYS = 30L
-
-        /** Debounce duration for RxJava events in seconds */
-        const val EVENT_DEBOUNCE_SECONDS = 1L
     }
 
     init {
         loadData()
         observeDataChanges()
-    }
-
-    override fun onCleared() {
-        super.onCleared()
-        disposable.clear()
     }
 
     /**
@@ -55,7 +40,7 @@ abstract class BaseTreatmentViewModel<T : Any, S : TreatmentUiState<T>>(
     abstract fun loadData()
 
     /**
-     * Subscribe to RxJava event changes
+     * Subscribe to Flow event changes
      */
     protected abstract fun observeDataChanges()
 
@@ -80,7 +65,7 @@ interface TreatmentUiState<T : Any> {
  */
 interface SelectableViewModel<T : Any> {
 
-    val uiState: StateFlow<out SelectableTreatmentUiState<T>>
+    val uiState: StateFlow<SelectableTreatmentUiState<T>>
 
     fun toggleInvalidated()
     fun enterSelectionMode(item: T)
@@ -106,10 +91,8 @@ interface SelectableTreatmentUiState<T : Any> : TreatmentUiState<T> {
 abstract class SelectableTreatmentViewModel<T : Any, S : SelectableTreatmentUiState<T>>(
     persistenceLayer: PersistenceLayer,
     rh: ResourceHelper,
-    dateUtil: DateUtil,
-    rxBus: RxBus,
-    aapsSchedulers: AapsSchedulers
-) : BaseTreatmentViewModel<T, S>(persistenceLayer, rh, dateUtil, rxBus, aapsSchedulers),
+    dateUtil: DateUtil
+) : BaseTreatmentViewModel<T, S>(persistenceLayer, rh, dateUtil),
     SelectableViewModel<T> {
 
     /**

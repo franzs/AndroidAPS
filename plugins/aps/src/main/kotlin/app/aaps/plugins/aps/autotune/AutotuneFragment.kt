@@ -164,7 +164,6 @@ class AutotuneFragment : DaggerFragment() {
                     ok = {
                         val profilePlugin = activePlugin.activeProfileSource
                         profilePlugin.addProfile(profilePlugin.copyFrom(tunedProfile.getProfile(circadian), localName))
-                        rxBus.send(EventLocalProfileChanged())
                         uel.log(
                             action = Action.NEW_PROFILE,
                             source = Sources.Autotune,

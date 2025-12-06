@@ -69,7 +69,7 @@ class SensitivityAAPSPlugin @Inject constructor(
             return AutosensResult()
         }
         val siteChanges = persistenceLayer.getTherapyEventDataFromTime(fromTime, TE.Type.CANNULA_CHANGE, true)
-        val profileSwitches = persistenceLayer.getProfileSwitchesFromTime(fromTime, true).blockingGet()
+        val profileSwitches = persistenceLayer.getProfileSwitchesFromTimeBlocking(fromTime, true).blockingGet()
         val deviationsArray: MutableList<Double> = ArrayList()
         var pastSensitivity = ""
         var index = 0

@@ -11,7 +11,6 @@ import app.aaps.core.interfaces.plugin.ActivePlugin
 import app.aaps.core.interfaces.profile.ProfileFunction
 import app.aaps.core.interfaces.profile.ProfileUtil
 import app.aaps.core.interfaces.resources.ResourceHelper
-import app.aaps.core.interfaces.rx.AapsSchedulers
 import app.aaps.core.interfaces.rx.bus.RxBus
 import app.aaps.core.interfaces.ui.UiInteraction
 import app.aaps.core.interfaces.userEntry.UserEntryPresentationHelper
@@ -57,7 +56,6 @@ class TreatmentsActivity : TranslatedDaggerAppCompatActivity() {
     @Inject lateinit var uiInteraction: UiInteraction
     @Inject lateinit var userEntryPresentationHelper: UserEntryPresentationHelper
     @Inject lateinit var importExportPrefs: ImportExportPrefs
-    @Inject lateinit var aapsSchedulers: AapsSchedulers
     @Inject lateinit var uel: UserEntryLogger
     @Inject lateinit var aapsLogger: AAPSLogger
 
@@ -89,8 +87,6 @@ class TreatmentsActivity : TranslatedDaggerAppCompatActivity() {
                         userEntryPresentationHelper = userEntryPresentationHelper,
                         importExportPrefs = importExportPrefs,
                         uel = uel,
-                        rxBus = rxBus,
-                        aapsSchedulers = aapsSchedulers,
                         aapsLogger = aapsLogger,
                         onNavigateBack = { finish() }
                     )

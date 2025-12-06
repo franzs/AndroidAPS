@@ -5,29 +5,25 @@ import androidx.lifecycle.viewModelScope
 import app.aaps.core.data.model.UE
 import app.aaps.core.data.time.T
 import app.aaps.core.interfaces.db.PersistenceLayer
+import app.aaps.core.interfaces.db.observeChanges
 import app.aaps.core.interfaces.logging.AAPSLogger
 import app.aaps.core.interfaces.logging.LTag
 import app.aaps.core.interfaces.resources.ResourceHelper
-import app.aaps.core.interfaces.rx.AapsSchedulers
-import app.aaps.core.interfaces.rx.bus.RxBus
-import app.aaps.core.interfaces.rx.events.EventNewHistoryData
 import app.aaps.core.interfaces.utils.DateUtil
 import app.aaps.ui.compose.MenuItemData
 import app.aaps.ui.compose.ToolbarConfig
 import app.aaps.ui.compose.TreatmentScreenToolbar
-import app.aaps.ui.viewmodels.TreatmentConstants.EVENT_DEBOUNCE_SECONDS
 import app.aaps.ui.viewmodels.TreatmentConstants.USER_ENTRY_FILTERED_DAYS
 import app.aaps.ui.viewmodels.TreatmentConstants.USER_ENTRY_UNFILTERED_DAYS
-import io.reactivex.rxjava3.disposables.CompositeDisposable
-import io.reactivex.rxjava3.kotlin.plusAssign
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 /**
@@ -37,27 +33,18 @@ class UserEntryViewModel @Inject constructor(
     private val persistenceLayer: PersistenceLayer,
     val rh: ResourceHelper,
     val dateUtil: DateUtil,
-    private val rxBus: RxBus,
-    private val aapsSchedulers: AapsSchedulers,
     private val aapsLogger: AAPSLogger
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(UserEntryUiState())
     val uiState: StateFlow<UserEntryUiState> = _uiState.asStateFlow()
 
-    private val disposable = CompositeDisposable()
-
     private val millsToThePastFiltered = T.days(USER_ENTRY_FILTERED_DAYS).msecs()
     private val millsToThePastUnFiltered = T.days(USER_ENTRY_UNFILTERED_DAYS).msecs()
 
     init {
         loadData()
-        observeHistoryDataChanges()
-    }
-
-    override fun onCleared() {
-        super.onCleared()
-        disposable.clear()
+        observeUserEntryChanges()
     }
 
     /**
@@ -72,13 +59,11 @@ class UserEntryViewModel @Inject constructor(
             }
 
             try {
-                val userEntries = withContext(Dispatchers.IO) {
-                    val now = System.currentTimeMillis()
-                    if (currentState.showLoop) {
-                        persistenceLayer.getUserEntryDataFromTime(now - millsToThePastUnFiltered).blockingGet()
-                    } else {
-                        persistenceLayer.getUserEntryFilteredDataFromTime(now - millsToThePastFiltered).blockingGet()
-                    }
+                val now = System.currentTimeMillis()
+                val userEntries = if (currentState.showLoop) {
+                    persistenceLayer.getUserEntryDataFromTime(now - millsToThePastUnFiltered)
+                } else {
+                    persistenceLayer.getUserEntryFilteredDataFromTime(now - millsToThePastFiltered)
                 }
 
                 _uiState.update {
@@ -101,16 +86,15 @@ class UserEntryViewModel @Inject constructor(
     }
 
     /**
-     * Subscribe to history data change events
+     * Subscribe to user entry change events using Flow
      */
-    private fun observeHistoryDataChanges() {
-        disposable += rxBus
-            .toObservable(EventNewHistoryData::class.java)
-            .observeOn(aapsSchedulers.io)
-            .debounce(EVENT_DEBOUNCE_SECONDS, TimeUnit.SECONDS)
-            .subscribe {
-                loadData()
-            }
+    @OptIn(FlowPreview::class)
+    private fun observeUserEntryChanges() {
+        persistenceLayer
+            .observeChanges<UE>()
+            .debounce(1000L) // 1 second debounce
+            .onEach { loadData() }
+            .launchIn(viewModelScope)
     }
 
     /**

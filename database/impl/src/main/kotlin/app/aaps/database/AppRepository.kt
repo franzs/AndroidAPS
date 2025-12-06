@@ -29,9 +29,20 @@ import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.core.Single
 import io.reactivex.rxjava3.schedulers.Schedulers
 import io.reactivex.rxjava3.subjects.PublishSubject
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.rx3.rxMaybe
 import kotlinx.coroutines.rx3.rxSingle
+import java.io.Closeable
 import java.util.concurrent.Callable
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
@@ -41,15 +52,51 @@ import kotlin.math.roundToInt
 @Singleton
 class AppRepository @Inject internal constructor(
     internal val database: AppDatabase
-) {
+) : Closeable {
 
+    // ========== RXJAVA SUPPORT (EXISTING) ==========
     private val changeSubject = PublishSubject.create<List<DBEntry>>()
 
     fun changeObservable(): Observable<List<DBEntry>> = changeSubject.subscribeOn(Schedulers.io())
 
+    // ========== FLOW SUPPORT (NEW) ==========
+
+    /**
+     * Coroutine scope for Flow emissions
+     * Using SupervisorJob so failures don't cancel the entire scope
+     */
+    private val repositoryScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
+    /**
+     * SharedFlow for broadcasting database changes
+     * - replay = 0: No replay, only new changes
+     * - extraBufferCapacity = 64: Buffer fast emissions
+     * - onBufferOverflow = DROP_OLDEST: Drop old events if buffer full
+     */
+    private val _changeFlow = MutableSharedFlow<List<DBEntry>>(
+        replay = 0,
+        extraBufferCapacity = 64,
+        onBufferOverflow = kotlinx.coroutines.channels.BufferOverflow.DROP_OLDEST
+    )
+
+    /**
+     * Observe ALL database changes as Flow
+     */
+    fun changeFlow(): Flow<List<DBEntry>> = _changeFlow.asSharedFlow()
+
+    /**
+     * Observe database changes filtered by entity type
+     * Example: repository.changesOfType<TemporaryBasal>()
+     */
+    inline fun <reified T : DBEntry> changesOfType(): Flow<List<T>> =
+        changeFlow()
+            .map { changes -> changes.filterIsInstance<T>() }
+            .filter { it.isNotEmpty() }
+
     /**
      * Executes a transaction ignoring its result (coroutine version)
      * Uses Room's suspend withTransaction API for proper coroutine support
+     * Emits to BOTH RxJava (existing) AND Flow (new)
      */
     suspend fun <T> runTransactionSuspend(transaction: Transaction<T>) {
         val changes = mutableListOf<DBEntry>()
@@ -57,12 +104,19 @@ class AppRepository @Inject internal constructor(
             transaction.database = DelegatedAppDatabase(changes, database)
             transaction.run()
         }
+        // Emit to RxJava (existing) - for backwards compatibility
         changeSubject.onNext(changes)
+
+        // Emit to Flow (new)
+        if (changes.isNotEmpty()) {
+            _changeFlow.emit(changes)
+        }
     }
 
     /**
      * Executes a transaction and returns its result (coroutine version)
      * Uses Room's suspend withTransaction API for proper coroutine support
+     * Emits to BOTH RxJava (existing) AND Flow (new)
      */
     suspend fun <T : Any> runTransactionForResultSuspend(transaction: Transaction<T>): T {
         val changes = mutableListOf<DBEntry>()
@@ -70,13 +124,20 @@ class AppRepository @Inject internal constructor(
             transaction.database = DelegatedAppDatabase(changes, database)
             transaction.run()
         }
+        // Emit to RxJava (existing) - for backwards compatibility
         changeSubject.onNext(changes)
+
+        // Emit to Flow (new)
+        if (changes.isNotEmpty()) {
+            _changeFlow.emit(changes)
+        }
         return result
     }
 
     /**
      * Executes a transaction ignoring its result (RxJava version)
      * Runs on IO scheduler
+     * Emits to BOTH RxJava (existing) AND Flow (new)
      */
     fun <T> runTransaction(transaction: Transaction<T>): Completable {
         val changes = mutableListOf<DBEntry>()
@@ -86,13 +147,22 @@ class AppRepository @Inject internal constructor(
                 runBlocking { transaction.run() }
             }
         }.subscribeOn(Schedulers.io()).doOnComplete {
+            // Emit to RxJava (existing) - for backwards compatibility
             changeSubject.onNext(changes)
+
+            // Emit to Flow (new)
+            if (changes.isNotEmpty()) {
+                repositoryScope.launch {
+                    _changeFlow.emit(changes)
+                }
+            }
         }
     }
 
     /**
      * Executes a transaction and returns its result (RxJava version)
      * Runs on IO scheduler
+     * Emits to BOTH RxJava (existing) AND Flow (new)
      */
     fun <T : Any> runTransactionForResult(transaction: Transaction<T>): Single<T> {
         val changes = mutableListOf<DBEntry>()
@@ -102,7 +172,15 @@ class AppRepository @Inject internal constructor(
                 runBlocking { transaction.run() }
             })
         }.subscribeOn(Schedulers.io()).doOnSuccess {
+            // Emit to RxJava (existing) - for backwards compatibility
             changeSubject.onNext(changes)
+
+            // Emit to Flow (new)
+            if (changes.isNotEmpty()) {
+                repositoryScope.launch {
+                    _changeFlow.emit(changes)
+                }
+            }
         }
     }
 
@@ -848,6 +926,26 @@ class AppRepository @Inject internal constructor(
 
     fun getApsResults(start: Long, end: Long): Single<List<APSResult>> = rxSingle {
         database.apsResultDao.getApsResults(start, end)
+    }
+
+    /**
+     * Clean up Flow scope and release resources
+     *
+     * NOTE: AppRepository is a singleton that typically lives for the entire app lifecycle.
+     * This method is primarily useful for:
+     * - Unit/integration tests to properly clean up between test runs
+     * - Explicit app shutdown scenarios
+     *
+     * The scope will be automatically cleaned up when the app process terminates.
+     *   @Test
+     *   fun myTest() {
+     *       repository.use { repo ->
+     *           // test code
+     *       } // automatically calls close()
+     *   }
+     */
+    override fun close() {
+        repositoryScope.cancel()
     }
 
 }

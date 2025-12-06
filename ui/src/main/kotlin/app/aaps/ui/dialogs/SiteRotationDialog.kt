@@ -299,7 +299,7 @@ class SiteRotationDialog : DialogFragmentWithDate() {
         val now = System.currentTimeMillis()
         binding.recyclerview.isLoading = true
         disposable += persistenceLayer
-            .getTherapyEventDataFromTime(now - millsToThePast, false)
+            .getTherapyEventDataFromTimeBlocking(now - millsToThePast, false)
             .observeOn(aapsSchedulers.main)
             .subscribe { list ->
                 listTE = list.filter { te -> te.type == TE.Type.CANNULA_CHANGE || te.type == TE.Type.SENSOR_CHANGE }

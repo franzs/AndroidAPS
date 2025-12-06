@@ -2,33 +2,32 @@ package app.aaps.ui.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import app.aaps.core.data.model.EPS
+import app.aaps.core.data.model.PS
 import app.aaps.core.data.time.T
 import app.aaps.core.data.ue.Action
 import app.aaps.core.data.ue.Sources
 import app.aaps.core.data.ue.ValueWithUnit
 import app.aaps.core.interfaces.db.PersistenceLayer
+import app.aaps.core.interfaces.db.observeChanges
 import app.aaps.core.interfaces.logging.AAPSLogger
 import app.aaps.core.interfaces.logging.LTag
 import app.aaps.core.interfaces.resources.ResourceHelper
-import app.aaps.core.interfaces.rx.AapsSchedulers
-import app.aaps.core.interfaces.rx.bus.RxBus
-import app.aaps.core.interfaces.rx.events.EventEffectiveProfileSwitchChanged
 import app.aaps.core.interfaces.utils.DateUtil
 import app.aaps.core.objects.profile.ProfileSealed
 import app.aaps.ui.compose.ToolbarConfig
 import app.aaps.ui.compose.TreatmentScreenToolbar
-import app.aaps.ui.viewmodels.TreatmentConstants.EVENT_DEBOUNCE_SECONDS
 import app.aaps.ui.viewmodels.TreatmentConstants.TREATMENT_HISTORY_DAYS
-import io.reactivex.rxjava3.disposables.CompositeDisposable
-import io.reactivex.rxjava3.kotlin.plusAssign
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 /**
@@ -38,24 +37,15 @@ class ProfileSwitchViewModel @Inject constructor(
     private val persistenceLayer: PersistenceLayer,
     val rh: ResourceHelper,
     val dateUtil: DateUtil,
-    private val rxBus: RxBus,
-    private val aapsSchedulers: AapsSchedulers,
     private val aapsLogger: AAPSLogger
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ProfileSwitchUiState())
     val uiState: StateFlow<ProfileSwitchUiState> = _uiState.asStateFlow()
 
-    private val disposable = CompositeDisposable()
-
     init {
         loadData()
         observeProfileSwitchChanges()
-    }
-
-    override fun onCleared() {
-        super.onCleared()
-        disposable.clear()
     }
 
     /**
@@ -70,26 +60,24 @@ class ProfileSwitchViewModel @Inject constructor(
             }
 
             try {
-                val profileSwitches = withContext(Dispatchers.IO) {
-                    val now = System.currentTimeMillis()
-                    val millsToThePast = T.days(TREATMENT_HISTORY_DAYS).msecs()
+                val now = System.currentTimeMillis()
+                val millsToThePast = T.days(TREATMENT_HISTORY_DAYS).msecs()
 
-                    val ps = if (currentState.showInvalidated) {
-                        persistenceLayer.getProfileSwitchesIncludingInvalidFromTime(now - millsToThePast, false).blockingGet()
-                    } else {
-                        persistenceLayer.getProfileSwitchesFromTime(now - millsToThePast, false).blockingGet()
-                    }
-
-                    val eps = if (currentState.showInvalidated) {
-                        persistenceLayer.getEffectiveProfileSwitchesIncludingInvalidFromTime(now - millsToThePast, false).blockingGet()
-                    } else {
-                        persistenceLayer.getEffectiveProfileSwitchesFromTime(now - millsToThePast, false).blockingGet()
-                    }
-
-                    (ps.map { ProfileSealed.PS(value = it, activePlugin = null) } +
-                        eps.map { ProfileSealed.EPS(value = it, activePlugin = null) })
-                        .sortedByDescending { it.timestamp }
+                val ps = if (currentState.showInvalidated) {
+                    persistenceLayer.getProfileSwitchesIncludingInvalidFromTime(now - millsToThePast, false)
+                } else {
+                    persistenceLayer.getProfileSwitchesFromTime(now - millsToThePast, false)
                 }
+
+                val eps = if (currentState.showInvalidated) {
+                    persistenceLayer.getEffectiveProfileSwitchesIncludingInvalidFromTime(now - millsToThePast, false)
+                } else {
+                    persistenceLayer.getEffectiveProfileSwitchesFromTime(now - millsToThePast, false)
+                }
+
+                val profileSwitches = (ps.map { ProfileSealed.PS(value = it, activePlugin = null) } +
+                    eps.map { ProfileSealed.EPS(value = it, activePlugin = null) })
+                    .sortedByDescending { it.timestamp }
 
                 _uiState.update {
                     it.copy(
@@ -111,16 +99,17 @@ class ProfileSwitchViewModel @Inject constructor(
     }
 
     /**
-     * Subscribe to profile switch change events
+     * Subscribe to profile switch change events using Flow
+     * Observes both ProfileSwitch and EffectiveProfileSwitch changes
      */
     private fun observeProfileSwitchChanges() {
-        disposable += rxBus
-            .toObservable(EventEffectiveProfileSwitchChanged::class.java)
-            .observeOn(aapsSchedulers.io)
-            .debounce(EVENT_DEBOUNCE_SECONDS, TimeUnit.SECONDS)
-            .subscribe {
-                loadData()
-            }
+        merge(
+            persistenceLayer.observeChanges<PS>(),
+            persistenceLayer.observeChanges<EPS>()
+        )
+            .debounce(1000L) // 1 second debounce
+            .onEach { loadData() }
+            .launchIn(viewModelScope)
     }
 
     /**

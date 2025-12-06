@@ -177,7 +177,6 @@ class ProfileHelperActivity : DaggerAppCompatActivity() {
                                                 "DefaultProfile " + dateUtil.dateAndTimeAndSecondsString(dateUtil.now()).replace(".", "/")
                                             )
                                         )
-                                        rxBus.send(EventLocalProfileChanged())
                                     }
                                 )
                             }
@@ -197,7 +196,7 @@ class ProfileHelperActivity : DaggerAppCompatActivity() {
                                     }
 
                                     ProfileType.PROFILE_SWITCH    -> {
-                                        val switches = persistenceLayer.getEffectiveProfileSwitchesFromTime(
+                                        val switches = persistenceLayer.getEffectiveProfileSwitchesFromTimeBlocking(
                                             dateUtil.now() - T.months(2).msecs(),
                                             true
                                         ).blockingGet()
@@ -225,7 +224,7 @@ class ProfileHelperActivity : DaggerAppCompatActivity() {
                                 }
 
                                 ProfileType.PROFILE_SWITCH    -> {
-                                    val switches = persistenceLayer.getEffectiveProfileSwitchesFromTime(
+                                    val switches = persistenceLayer.getEffectiveProfileSwitchesFromTimeBlocking(
                                         dateUtil.now() - T.months(2).msecs(),
                                         true
                                     ).blockingGet()
@@ -251,7 +250,7 @@ class ProfileHelperActivity : DaggerAppCompatActivity() {
                         dateUtil = dateUtil,
                         currentProfile = profileFunction.getProfileName(),
                         availableProfiles = activePlugin.activeProfileSource.profile?.getProfileList() ?: ArrayList(),
-                        profileSwitches = persistenceLayer.getEffectiveProfileSwitchesFromTime(
+                        profileSwitches = persistenceLayer.getEffectiveProfileSwitchesFromTimeBlocking(
                             dateUtil.now() - T.months(2).msecs(),
                             true
                         ).blockingGet(),

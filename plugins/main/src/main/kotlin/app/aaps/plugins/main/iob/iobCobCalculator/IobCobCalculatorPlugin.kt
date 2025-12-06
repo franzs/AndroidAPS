@@ -522,7 +522,7 @@ class IobCobCalculatorPlugin @Inject constructor(
         val divisor = preferences.get(DoubleKey.ApsAmaBolusSnoozeDivisor)
         assert(divisor > 0)
 
-        val boluses = persistenceLayer.getBolusesFromTime(toTime - range(), true).blockingGet()
+        val boluses = persistenceLayer.getBolusesFromTimeBlocking(toTime - range(), true).blockingGet()
 
         boluses.forEach { t ->
             if (t.isValid && t.timestamp < toTime) {

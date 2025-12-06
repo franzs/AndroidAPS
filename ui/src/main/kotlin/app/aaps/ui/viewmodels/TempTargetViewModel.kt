@@ -8,28 +8,25 @@ import app.aaps.core.data.ue.Action
 import app.aaps.core.data.ue.Sources
 import app.aaps.core.data.ue.ValueWithUnit
 import app.aaps.core.interfaces.db.PersistenceLayer
+import app.aaps.core.interfaces.db.observeChanges
 import app.aaps.core.interfaces.logging.AAPSLogger
 import app.aaps.core.interfaces.logging.LTag
 import app.aaps.core.interfaces.profile.ProfileUtil
 import app.aaps.core.interfaces.resources.ResourceHelper
-import app.aaps.core.interfaces.rx.AapsSchedulers
-import app.aaps.core.interfaces.rx.bus.RxBus
-import app.aaps.core.interfaces.rx.events.EventTempTargetChange
 import app.aaps.core.interfaces.utils.DateUtil
 import app.aaps.core.objects.extensions.friendlyDescription
 import app.aaps.ui.compose.ToolbarConfig
 import app.aaps.ui.compose.TreatmentScreenToolbar
-import app.aaps.ui.viewmodels.TreatmentConstants.EVENT_DEBOUNCE_SECONDS
 import app.aaps.ui.viewmodels.TreatmentConstants.TREATMENT_HISTORY_DAYS
-import io.reactivex.rxjava3.disposables.CompositeDisposable
-import io.reactivex.rxjava3.kotlin.plusAssign
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
@@ -41,24 +38,15 @@ class TempTargetViewModel @Inject constructor(
     private val profileUtil: ProfileUtil,
     val rh: ResourceHelper,
     val dateUtil: DateUtil,
-    private val rxBus: RxBus,
-    private val aapsSchedulers: AapsSchedulers,
     private val aapsLogger: AAPSLogger
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(TempTargetUiState())
     val uiState: StateFlow<TempTargetUiState> = _uiState.asStateFlow()
 
-    private val disposable = CompositeDisposable()
-
     init {
         loadData()
         observeTempTargetChanges()
-    }
-
-    override fun onCleared() {
-        super.onCleared()
-        disposable.clear()
     }
 
     /**
@@ -73,15 +61,13 @@ class TempTargetViewModel @Inject constructor(
             }
 
             try {
-                val tempTargets = withContext(Dispatchers.IO) {
-                    val now = System.currentTimeMillis()
-                    val millsToThePast = T.days(TREATMENT_HISTORY_DAYS).msecs()
+                val now = System.currentTimeMillis()
+                val millsToThePast = T.days(TREATMENT_HISTORY_DAYS).msecs()
 
-                    if (currentState.showInvalidated) {
-                        persistenceLayer.getTemporaryTargetDataIncludingInvalidFromTime(now - millsToThePast, false).blockingGet()
-                    } else {
-                        persistenceLayer.getTemporaryTargetDataFromTime(now - millsToThePast, false).blockingGet()
-                    }
+                val tempTargets = if (currentState.showInvalidated) {
+                    persistenceLayer.getTemporaryTargetDataIncludingInvalidFromTime(now - millsToThePast, false)
+                } else {
+                    persistenceLayer.getTemporaryTargetDataFromTime(now - millsToThePast, false)
                 }
 
                 _uiState.update {
@@ -104,16 +90,14 @@ class TempTargetViewModel @Inject constructor(
     }
 
     /**
-     * Subscribe to temp target change events
+     * Subscribe to temp target change events using Flow
      */
     private fun observeTempTargetChanges() {
-        disposable += rxBus
-            .toObservable(EventTempTargetChange::class.java)
-            .observeOn(aapsSchedulers.io)
-            .debounce(EVENT_DEBOUNCE_SECONDS, TimeUnit.SECONDS)
-            .subscribe {
-                loadData()
-            }
+        persistenceLayer
+            .observeChanges<TT>()
+            .debounce(1000L) // 1 second debounce
+            .onEach { loadData() }
+            .launchIn(viewModelScope)
     }
 
     /**

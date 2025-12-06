@@ -40,8 +40,6 @@ import app.aaps.core.data.ue.Sources
 import app.aaps.core.data.ue.ValueWithUnit
 import app.aaps.core.interfaces.logging.UserEntryLogger
 import app.aaps.core.interfaces.resources.ResourceHelper
-import app.aaps.core.interfaces.rx.bus.RxBus
-import app.aaps.core.interfaces.rx.events.EventLocalProfileChanged
 import app.aaps.core.interfaces.ui.UiInteraction
 import app.aaps.core.interfaces.utils.DateUtil
 import app.aaps.core.interfaces.utils.DecimalFormatter
@@ -74,7 +72,6 @@ fun ProfileSwitchScreen(
     decimalFormatter: DecimalFormatter,
     uiInteraction: UiInteraction,
     uel: UserEntryLogger,
-    rxBus: RxBus,
     setToolbarConfig: (ToolbarConfig) -> Unit,
     onNavigateBack: () -> Unit = { }
 ) {
@@ -168,7 +165,6 @@ fun ProfileSwitchScreen(
                                                 "$profileName ${timestampStr.replace(".", "_")}"
                                             )
                                         )
-                                        rxBus.send(EventLocalProfileChanged())
                                     }
                                 )
                             },

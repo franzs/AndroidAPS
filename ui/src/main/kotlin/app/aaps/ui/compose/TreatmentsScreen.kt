@@ -38,7 +38,6 @@ import app.aaps.core.interfaces.profile.ProfileFunction
 import app.aaps.core.interfaces.profile.ProfileUtil
 import app.aaps.core.interfaces.resources.ResourceHelper
 import app.aaps.core.interfaces.rx.AapsSchedulers
-import app.aaps.core.interfaces.rx.bus.RxBus
 import app.aaps.core.interfaces.ui.UiInteraction
 import app.aaps.core.interfaces.userEntry.UserEntryPresentationHelper
 import app.aaps.core.interfaces.utils.DateUtil
@@ -94,8 +93,7 @@ data class ToolbarConfig(
  * @param userEntryPresentationHelper Helper for formatting user entry display
  * @param importExportPrefs Import/export preferences helper
  * @param uel User entry logger
- * @param rxBus RxBus for observing treatment changes
- * @param aapsSchedulers Schedulers for RxJava operations
+ * @param aapsLogger Logger for error and debug messages
  * @param onNavigateBack Callback when back navigation is requested
  */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
@@ -114,8 +112,6 @@ fun TreatmentsScreen(
     userEntryPresentationHelper: UserEntryPresentationHelper,
     importExportPrefs: ImportExportPrefs,
     uel: UserEntryLogger,
-    rxBus: RxBus,
-    aapsSchedulers: AapsSchedulers,
     aapsLogger: AAPSLogger,
     onNavigateBack: () -> Unit
 ) {
@@ -158,8 +154,6 @@ fun TreatmentsScreen(
                                 rh = rh,
                                 dateUtil = dateUtil,
                                 decimalFormatter = decimalFormatter,
-                                rxBus = rxBus,
-                                aapsSchedulers = aapsSchedulers,
                                 aapsLogger = aapsLogger
                             )
                         }
@@ -188,8 +182,6 @@ fun TreatmentsScreen(
                                     persistenceLayer = persistenceLayer,
                                     rh = rh,
                                     dateUtil = dateUtil,
-                                    rxBus = rxBus,
-                                    aapsSchedulers = aapsSchedulers,
                                     aapsLogger = aapsLogger
                                 )
                             }
@@ -222,8 +214,6 @@ fun TreatmentsScreen(
                                 rh = rh,
                                 dateUtil = dateUtil,
                                 decimalFormatter = decimalFormatter,
-                                rxBus = rxBus,
-                                aapsSchedulers = aapsSchedulers,
                                 aapsLogger = aapsLogger
                             )
                         }
@@ -253,8 +243,6 @@ fun TreatmentsScreen(
                                 profileUtil = profileUtil,
                                 rh = rh,
                                 dateUtil = dateUtil,
-                                rxBus = rxBus,
-                                aapsSchedulers = aapsSchedulers,
                                 aapsLogger = aapsLogger
                             )
                         }
@@ -284,8 +272,6 @@ fun TreatmentsScreen(
                                 persistenceLayer = persistenceLayer,
                                 rh = rh,
                                 dateUtil = dateUtil,
-                                rxBus = rxBus,
-                                aapsSchedulers = aapsSchedulers,
                                 aapsLogger = aapsLogger
                             )
                         }
@@ -295,7 +281,6 @@ fun TreatmentsScreen(
                             decimalFormatter = decimalFormatter,
                             uiInteraction = uiInteraction,
                             uel = uel,
-                            rxBus = rxBus,
                             setToolbarConfig = { config ->
                                 if (allowedToolbarPage == pageIndex4) toolbarConfig = config
                             },
@@ -317,8 +302,6 @@ fun TreatmentsScreen(
                                 rh = rh,
                                 translator = translator,
                                 dateUtil = dateUtil,
-                                rxBus = rxBus,
-                                aapsSchedulers = aapsSchedulers,
                                 aapsLogger = aapsLogger
                             )
                         }
@@ -348,8 +331,6 @@ fun TreatmentsScreen(
                                 persistenceLayer = persistenceLayer,
                                 rh = rh,
                                 dateUtil = dateUtil,
-                                rxBus = rxBus,
-                                aapsSchedulers = aapsSchedulers,
                                 aapsLogger = aapsLogger
                             )
                         }
@@ -377,8 +358,6 @@ fun TreatmentsScreen(
                                 persistenceLayer = persistenceLayer,
                                 rh = rh,
                                 dateUtil = dateUtil,
-                                rxBus = rxBus,
-                                aapsSchedulers = aapsSchedulers,
                                 aapsLogger = aapsLogger
                             )
                         }

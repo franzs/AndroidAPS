@@ -67,7 +67,7 @@ class SensitivityWeightedAveragePlugin @Inject constructor(
             return AutosensResult()
         }
         val siteChanges = persistenceLayer.getTherapyEventDataFromTime(fromTime, TE.Type.CANNULA_CHANGE, true)
-        val profileSwitches = persistenceLayer.getProfileSwitchesFromTime(fromTime, true).blockingGet()
+        val profileSwitches = persistenceLayer.getProfileSwitchesFromTimeBlocking(fromTime, true).blockingGet()
         var pastSensitivity = ""
         var index = 0
         val data = LongSparseArray<Double>()

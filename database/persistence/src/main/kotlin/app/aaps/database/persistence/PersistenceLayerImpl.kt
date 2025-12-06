@@ -110,6 +110,9 @@ import io.reactivex.rxjava3.core.Maybe
 import io.reactivex.rxjava3.core.Single
 import io.reactivex.rxjava3.disposables.CompositeDisposable
 import io.reactivex.rxjava3.kotlin.plusAssign
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.withContext
 import java.util.Collections.emptyList
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
@@ -146,6 +149,39 @@ class PersistenceLayerImpl @Inject constructor(
     override fun clearApsResults() = repository.clearApsResults()
     override fun cleanupDatabase(keepDays: Long, deleteTrackedChanges: Boolean): String = repository.cleanupDatabase(keepDays, deleteTrackedChanges)
 
+    // Flow-based change observation
+    @Suppress("UNCHECKED_CAST")
+    override fun <T : Any> observeChanges(type: Class<T>): kotlinx.coroutines.flow.Flow<List<T>> {
+        // Map database entity changes to domain types
+        return when (type) {
+            BS::class.java  -> repository.changesOfType<app.aaps.database.entities.Bolus>()
+                .map { list -> list.map { it.fromDb() } }
+            CA::class.java  -> repository.changesOfType<app.aaps.database.entities.Carbs>()
+                .map { list -> list.map { it.fromDb() } }
+            BCR::class.java -> repository.changesOfType<app.aaps.database.entities.BolusCalculatorResult>()
+                .map { list -> list.map { it.fromDb() } }
+            EB::class.java  -> repository.changesOfType<app.aaps.database.entities.ExtendedBolus>()
+                .map { list -> list.map { it.fromDb() } }
+            TB::class.java  -> repository.changesOfType<app.aaps.database.entities.TemporaryBasal>()
+                .map { list -> list.map { it.fromDb() } }
+            TT::class.java  -> repository.changesOfType<app.aaps.database.entities.TemporaryTarget>()
+                .map { list -> list.map { it.fromDb() } }
+            TE::class.java  -> repository.changesOfType<TherapyEvent>()
+                .map { list -> list.map { it.fromDb() } }
+            PS::class.java  -> repository.changesOfType<app.aaps.database.entities.ProfileSwitch>()
+                .map { list -> list.map { it.fromDb() } }
+            EPS::class.java -> repository.changesOfType<app.aaps.database.entities.EffectiveProfileSwitch>()
+                .map { list -> list.map { it.fromDb() } }
+            GV::class.java  -> repository.changesOfType<app.aaps.database.entities.GlucoseValue>()
+                .map { list -> list.map { it.fromDb() } }
+            UE::class.java  -> repository.changesOfType<app.aaps.database.entities.UserEntry>()
+                .map { list -> list.map { it.fromDb() } }
+            RM::class.java  -> repository.changesOfType<app.aaps.database.entities.RunningMode>()
+                .map { list -> list.map { it.fromDb() } }
+            else            -> throw IllegalArgumentException("Unsupported observation type: ${type.simpleName}")
+        } as kotlinx.coroutines.flow.Flow<List<T>>
+    }
+
     // BS
     override fun getNewestBolus(): BS? = repository.getNewestBolus().blockingGet()?.fromDb()
     override fun getOldestBolus(): BS? = repository.getOldestBolus().blockingGet()?.fromDb()
@@ -156,18 +192,30 @@ class PersistenceLayerImpl @Inject constructor(
     override fun getLastBolusId(): Long? = repository.getLastBolusId()
     override fun getBolusByNSId(nsId: String): BS? = repository.getBolusByNSId(nsId)?.fromDb()
 
-    override fun getBolusesFromTime(startTime: Long, ascending: Boolean): Single<List<BS>> =
+    override fun getBolusesFromTimeBlocking(startTime: Long, ascending: Boolean): Single<List<BS>> =
         repository.getBolusesDataFromTime(startTime, ascending)
             .map { list -> list.asSequence().map { it.fromDb() }.toList() }
+
+    override suspend fun getBolusesFromTime(startTime: Long, ascending: Boolean): List<BS> = withContext(Dispatchers.IO) {
+        repository.getBolusesDataFromTime(startTime, ascending)
+            .map { list -> list.asSequence().map { it.fromDb() }.toList() }
+            .blockingGet()
+    }
 
     override fun getBolusesFromTimeToTime(startTime: Long, endTime: Long, ascending: Boolean): List<BS> =
         repository.getBolusesDataFromTimeToTime(startTime, endTime, ascending)
             .map { list -> list.asSequence().map { it.fromDb() }.toList() }
             .blockingGet()
 
-    override fun getBolusesFromTimeIncludingInvalid(startTime: Long, ascending: Boolean): Single<List<BS>> =
+    override fun getBolusesFromTimeIncludingInvalidBlocking(startTime: Long, ascending: Boolean): Single<List<BS>> =
         repository.getBolusesIncludingInvalidFromTime(startTime, ascending)
             .map { list -> list.asSequence().map { it.fromDb() }.toList() }
+
+    override suspend fun getBolusesFromTimeIncludingInvalid(startTime: Long, ascending: Boolean): List<BS> = withContext(Dispatchers.IO) {
+        repository.getBolusesIncludingInvalidFromTime(startTime, ascending)
+            .map { list -> list.asSequence().map { it.fromDb() }.toList() }
+            .blockingGet()
+    }
 
     override fun getNextSyncElementBolus(id: Long): Maybe<Pair<BS, BS>> =
         repository.getNextSyncElementBolus(id)
@@ -327,13 +375,25 @@ class PersistenceLayerImpl @Inject constructor(
     override fun getLastCarbsId(): Long? = repository.getLastCarbsId()
     override fun getCarbsByNSId(nsId: String): CA? = repository.getCarbsByNSId(nsId)?.fromDb()
 
-    override fun getCarbsFromTime(startTime: Long, ascending: Boolean): Single<List<CA>> =
+    override fun getCarbsFromTimeBlocking(startTime: Long, ascending: Boolean): Single<List<CA>> =
         repository.getCarbsDataFromTime(startTime, ascending)
             .map { list -> list.asSequence().map { it.fromDb() }.toList() }
 
-    override fun getCarbsFromTimeIncludingInvalid(startTime: Long, ascending: Boolean): Single<List<CA>> =
+    override suspend fun getCarbsFromTime(startTime: Long, ascending: Boolean): List<CA> = withContext(Dispatchers.IO) {
+        repository.getCarbsDataFromTime(startTime, ascending)
+            .map { list -> list.asSequence().map { it.fromDb() }.toList() }
+            .blockingGet()
+    }
+
+    override fun getCarbsFromTimeIncludingInvalidBlocking(startTime: Long, ascending: Boolean): Single<List<CA>> =
         repository.getCarbsIncludingInvalidFromTime(startTime, ascending)
             .map { list -> list.asSequence().map { it.fromDb() }.toList() }
+
+    override suspend fun getCarbsFromTimeIncludingInvalid(startTime: Long, ascending: Boolean): List<CA> = withContext(Dispatchers.IO) {
+        repository.getCarbsIncludingInvalidFromTime(startTime, ascending)
+            .map { list -> list.asSequence().map { it.fromDb() }.toList() }
+            .blockingGet()
+    }
 
     override fun getCarbsFromTimeExpanded(startTime: Long, ascending: Boolean): List<CA> =
         repository.getCarbsDataFromTimeExpanded(startTime, ascending)
@@ -500,11 +560,19 @@ class PersistenceLayerImpl @Inject constructor(
     override fun getBolusCalculatorResultByNSId(nsId: String): BCR? = repository.findBolusCalculatorResultByNSId(nsId)?.fromDb()
 
     // BCR
-    override fun getBolusCalculatorResultsFromTime(startTime: Long, ascending: Boolean): Single<List<BCR>> =
+    override fun getBolusCalculatorResultsFromTimeBlocking(startTime: Long, ascending: Boolean): Single<List<BCR>> =
         repository.getBolusCalculatorResultsDataFromTime(startTime, ascending).map { list -> list.asSequence().map { it.fromDb() }.toList() }
 
-    override fun getBolusCalculatorResultsIncludingInvalidFromTime(startTime: Long, ascending: Boolean): Single<List<BCR>> =
+    override suspend fun getBolusCalculatorResultsFromTime(startTime: Long, ascending: Boolean): List<BCR> = withContext(Dispatchers.IO) {
+        repository.getBolusCalculatorResultsDataFromTime(startTime, ascending).map { list -> list.asSequence().map { it.fromDb() }.toList() }.blockingGet()
+    }
+
+    override fun getBolusCalculatorResultsIncludingInvalidFromTimeBlocking(startTime: Long, ascending: Boolean): Single<List<BCR>> =
         repository.getBolusCalculatorResultsIncludingInvalidFromTime(startTime, ascending).map { list -> list.asSequence().map { it.fromDb() }.toList() }
+
+    override suspend fun getBolusCalculatorResultsIncludingInvalidFromTime(startTime: Long, ascending: Boolean): List<BCR> = withContext(Dispatchers.IO) {
+        repository.getBolusCalculatorResultsIncludingInvalidFromTime(startTime, ascending).map { list -> list.asSequence().map { it.fromDb() }.toList() }.blockingGet()
+    }
 
     override fun getNextSyncElementBolusCalculatorResult(id: Long): Maybe<Pair<BCR, BCR>> =
         repository.getNextSyncElementBolusCalculatorResult(id)
@@ -727,13 +795,25 @@ class PersistenceLayerImpl @Inject constructor(
 
     override fun getEffectiveProfileSwitchByNSId(nsId: String): EPS? = repository.findEffectiveProfileSwitchByNSId(nsId)?.fromDb()
 
-    override fun getEffectiveProfileSwitchesFromTime(startTime: Long, ascending: Boolean): Single<List<EPS>> =
+    override fun getEffectiveProfileSwitchesFromTimeBlocking(startTime: Long, ascending: Boolean): Single<List<EPS>> =
         repository.getEffectiveProfileSwitchesFromTime(startTime, ascending)
             .map { list -> list.asSequence().map { it.fromDb() }.toList() }
 
-    override fun getEffectiveProfileSwitchesIncludingInvalidFromTime(startTime: Long, ascending: Boolean): Single<List<EPS>> =
+    override suspend fun getEffectiveProfileSwitchesFromTime(startTime: Long, ascending: Boolean): List<EPS> = withContext(Dispatchers.IO) {
+        repository.getEffectiveProfileSwitchesFromTime(startTime, ascending)
+            .map { list -> list.asSequence().map { it.fromDb() }.toList() }
+            .blockingGet()
+    }
+
+    override fun getEffectiveProfileSwitchesIncludingInvalidFromTimeBlocking(startTime: Long, ascending: Boolean): Single<List<EPS>> =
         repository.getEffectiveProfileSwitchesIncludingInvalidFromTime(startTime, ascending)
             .map { list -> list.asSequence().map { it.fromDb() }.toList() }
+
+    override suspend fun getEffectiveProfileSwitchesIncludingInvalidFromTime(startTime: Long, ascending: Boolean): List<EPS> = withContext(Dispatchers.IO) {
+        repository.getEffectiveProfileSwitchesIncludingInvalidFromTime(startTime, ascending)
+            .map { list -> list.asSequence().map { it.fromDb() }.toList() }
+            .blockingGet()
+    }
 
     override fun getEffectiveProfileSwitchesFromTimeToTime(startTime: Long, endTime: Long, ascending: Boolean): List<EPS> =
         repository.getEffectiveProfileSwitchesFromTimeToTime(startTime, endTime, ascending)
@@ -838,18 +918,30 @@ class PersistenceLayerImpl @Inject constructor(
             .blockingGet()
 
     // RUNNING MODE
-    override fun getRunningModesFromTime(startTime: Long, ascending: Boolean): Single<List<RM>> =
+    override fun getRunningModesFromTimeBlocking(startTime: Long, ascending: Boolean): Single<List<RM>> =
         repository.getRunningModesFromTime(startTime, ascending)
             .map { list -> list.asSequence().map { it.fromDb() }.toList() }
+
+    override suspend fun getRunningModesFromTime(startTime: Long, ascending: Boolean): List<RM> = withContext(Dispatchers.IO) {
+        repository.getRunningModesFromTime(startTime, ascending)
+            .map { list -> list.asSequence().map { it.fromDb() }.toList() }
+            .blockingGet()
+    }
 
     override fun getRunningModesFromTimeToTime(startTime: Long, endTime: Long, ascending: Boolean): List<RM> =
         repository.getRunningModesFromTimeToTime(startTime, endTime, ascending)
             .map { list -> list.asSequence().map { it.fromDb() }.toList() }
             .blockingGet()
 
-    override fun getRunningModesIncludingInvalidFromTime(startTime: Long, ascending: Boolean): Single<List<RM>> =
+    override fun getRunningModesIncludingInvalidFromTimeBlocking(startTime: Long, ascending: Boolean): Single<List<RM>> =
         repository.getRunningModesIncludingInvalidFromTime(startTime, ascending)
             .map { list -> list.asSequence().map { it.fromDb() }.toList() }
+
+    override suspend fun getRunningModesIncludingInvalidFromTime(startTime: Long, ascending: Boolean): List<RM> = withContext(Dispatchers.IO) {
+        repository.getRunningModesIncludingInvalidFromTime(startTime, ascending)
+            .map { list -> list.asSequence().map { it.fromDb() }.toList() }
+            .blockingGet()
+    }
 
     override fun getNextSyncElementRunningMode(id: Long): Maybe<Pair<RM, RM>> =
         repository.getNextSyncElementRunningMode(id)
@@ -987,13 +1079,25 @@ class PersistenceLayerImpl @Inject constructor(
             .blockingGet()
 
     // PS
-    override fun getProfileSwitchesFromTime(startTime: Long, ascending: Boolean): Single<List<PS>> =
+    override fun getProfileSwitchesFromTimeBlocking(startTime: Long, ascending: Boolean): Single<List<PS>> =
         repository.getProfileSwitchesFromTime(startTime, ascending)
             .map { list -> list.asSequence().map { it.fromDb() }.toList() }
 
-    override fun getProfileSwitchesIncludingInvalidFromTime(startTime: Long, ascending: Boolean): Single<List<PS>> =
+    override suspend fun getProfileSwitchesFromTime(startTime: Long, ascending: Boolean): List<PS> = withContext(Dispatchers.IO) {
+        repository.getProfileSwitchesFromTime(startTime, ascending)
+            .map { list -> list.asSequence().map { it.fromDb() }.toList() }
+            .blockingGet()
+    }
+
+    override fun getProfileSwitchesIncludingInvalidFromTimeBlocking(startTime: Long, ascending: Boolean): Single<List<PS>> =
         repository.getProfileSwitchesIncludingInvalidFromTime(startTime, ascending)
             .map { list -> list.asSequence().map { it.fromDb() }.toList() }
+
+    override suspend fun getProfileSwitchesIncludingInvalidFromTime(startTime: Long, ascending: Boolean): List<PS> = withContext(Dispatchers.IO) {
+        repository.getProfileSwitchesIncludingInvalidFromTime(startTime, ascending)
+            .map { list -> list.asSequence().map { it.fromDb() }.toList() }
+            .blockingGet()
+    }
 
     override fun getNextSyncElementProfileSwitch(id: Long): Maybe<Pair<PS, PS>> =
         repository.getNextSyncElementProfileSwitch(id)
@@ -1107,13 +1211,25 @@ class PersistenceLayerImpl @Inject constructor(
             .map { list -> list.asSequence().map { it.fromDb() }.toList() }
             .blockingGet()
 
-    override fun getTemporaryBasalsStartingFromTime(startTime: Long, ascending: Boolean): Single<List<TB>> =
+    override fun getTemporaryBasalsStartingFromTimeBlocking(startTime: Long, ascending: Boolean): Single<List<TB>> =
         repository.getTemporaryBasalsStartingFromTime(startTime, ascending)
             .map { list -> list.asSequence().map { it.fromDb() }.toList() }
 
-    override fun getTemporaryBasalsStartingFromTimeIncludingInvalid(startTime: Long, ascending: Boolean): Single<List<TB>> =
+    override suspend fun getTemporaryBasalsStartingFromTime(startTime: Long, ascending: Boolean): List<TB> = withContext(Dispatchers.IO) {
+        repository.getTemporaryBasalsStartingFromTime(startTime, ascending)
+            .map { list -> list.asSequence().map { it.fromDb() }.toList() }
+            .blockingGet()
+    }
+
+    override fun getTemporaryBasalsStartingFromTimeIncludingInvalidBlocking(startTime: Long, ascending: Boolean): Single<List<TB>> =
         repository.getTemporaryBasalsStartingFromTimeIncludingInvalid(startTime, ascending)
             .map { list -> list.asSequence().map { it.fromDb() }.toList() }
+
+    override suspend fun getTemporaryBasalsStartingFromTimeIncludingInvalid(startTime: Long, ascending: Boolean): List<TB> = withContext(Dispatchers.IO) {
+        repository.getTemporaryBasalsStartingFromTimeIncludingInvalid(startTime, ascending)
+            .map { list -> list.asSequence().map { it.fromDb() }.toList() }
+            .blockingGet()
+    }
 
     override fun getNextSyncElementTemporaryBasal(id: Long): Maybe<Pair<TB, TB>> =
         repository.getNextSyncElementTemporaryBasal(id)
@@ -1306,13 +1422,25 @@ class PersistenceLayerImpl @Inject constructor(
             .map { list -> list.asSequence().map { it.fromDb() }.toList() }
             .blockingGet()
 
-    override fun getExtendedBolusesStartingFromTime(startTime: Long, ascending: Boolean): Single<List<EB>> =
+    override fun getExtendedBolusesStartingFromTimeBlocking(startTime: Long, ascending: Boolean): Single<List<EB>> =
         repository.getExtendedBolusesStartingFromTime(startTime, ascending)
             .map { list -> list.asSequence().map { it.fromDb() }.toList() }
 
-    override fun getExtendedBolusStartingFromTimeIncludingInvalid(startTime: Long, ascending: Boolean): Single<List<EB>> =
+    override suspend fun getExtendedBolusesStartingFromTime(startTime: Long, ascending: Boolean): List<EB> = withContext(Dispatchers.IO) {
+        repository.getExtendedBolusesStartingFromTime(startTime, ascending)
+            .map { list -> list.asSequence().map { it.fromDb() }.toList() }
+            .blockingGet()
+    }
+
+    override fun getExtendedBolusStartingFromTimeIncludingInvalidBlocking(startTime: Long, ascending: Boolean): Single<List<EB>> =
         repository.getExtendedBolusStartingFromTimeIncludingInvalid(startTime, ascending)
             .map { list -> list.asSequence().map { it.fromDb() }.toList() }
+
+    override suspend fun getExtendedBolusStartingFromTimeIncludingInvalid(startTime: Long, ascending: Boolean): List<EB> = withContext(Dispatchers.IO) {
+        repository.getExtendedBolusStartingFromTimeIncludingInvalid(startTime, ascending)
+            .map { list -> list.asSequence().map { it.fromDb() }.toList() }
+            .blockingGet()
+    }
 
     override fun getNextSyncElementExtendedBolus(id: Long): Maybe<Pair<EB, EB>> =
         repository.getNextSyncElementExtendedBolus(id)
@@ -1412,11 +1540,23 @@ class PersistenceLayerImpl @Inject constructor(
     override fun getLastTemporaryTargetId(): Long? = repository.getLastTempTargetId()
     override fun getTemporaryTargetByNSId(nsId: String): TT? = repository.findTemporaryTargetByNSId(nsId)?.fromDb()
 
-    override fun getTemporaryTargetDataFromTime(timestamp: Long, ascending: Boolean): Single<List<TT>> =
+    override fun getTemporaryTargetDataFromTimeBlocking(timestamp: Long, ascending: Boolean): Single<List<TT>> =
         repository.getTemporaryTargetDataFromTime(timestamp, ascending).map { list -> list.asSequence().map { it.fromDb() }.toList() }
 
-    override fun getTemporaryTargetDataIncludingInvalidFromTime(timestamp: Long, ascending: Boolean): Single<List<TT>> =
+    override suspend fun getTemporaryTargetDataFromTime(timestamp: Long, ascending: Boolean): List<TT> = withContext(Dispatchers.IO) {
+        repository.getTemporaryTargetDataFromTime(timestamp, ascending)
+            .map { list -> list.asSequence().map { it.fromDb() }.toList() }
+            .blockingGet()
+    }
+
+    override fun getTemporaryTargetDataIncludingInvalidFromTimeBlocking(timestamp: Long, ascending: Boolean): Single<List<TT>> =
         repository.getTemporaryTargetDataIncludingInvalidFromTime(timestamp, ascending).map { list -> list.asSequence().map { it.fromDb() }.toList() }
+
+    override suspend fun getTemporaryTargetDataIncludingInvalidFromTime(timestamp: Long, ascending: Boolean): List<TT> = withContext(Dispatchers.IO) {
+        repository.getTemporaryTargetDataIncludingInvalidFromTime(timestamp, ascending)
+            .map { list -> list.asSequence().map { it.fromDb() }.toList() }
+            .blockingGet()
+    }
 
     override fun getNextSyncElementTemporaryTarget(id: Long): Maybe<Pair<TT, TT>> =
         repository.getNextSyncElementTemporaryTarget(id)
@@ -1565,11 +1705,23 @@ class PersistenceLayerImpl @Inject constructor(
     override fun getTherapyEventDataFromToTime(from: Long, to: Long): Single<List<TE>> =
         repository.compatGetTherapyEventDataFromToTime(from, to).map { list -> list.asSequence().map { it.fromDb() }.toList() }
 
-    override fun getTherapyEventDataIncludingInvalidFromTime(timestamp: Long, ascending: Boolean): Single<List<TE>> =
+    override fun getTherapyEventDataIncludingInvalidFromTimeBlocking(timestamp: Long, ascending: Boolean): Single<List<TE>> =
         repository.getTherapyEventDataIncludingInvalidFromTime(timestamp, ascending).map { list -> list.asSequence().map { it.fromDb() }.toList() }
 
-    override fun getTherapyEventDataFromTime(timestamp: Long, ascending: Boolean): Single<List<TE>> =
+    override suspend fun getTherapyEventDataIncludingInvalidFromTime(timestamp: Long, ascending: Boolean): List<TE> = withContext(Dispatchers.IO) {
+        repository.getTherapyEventDataIncludingInvalidFromTime(timestamp, ascending)
+            .map { list -> list.asSequence().map { it.fromDb() }.toList() }
+            .blockingGet()
+    }
+
+    override fun getTherapyEventDataFromTimeBlocking(timestamp: Long, ascending: Boolean): Single<List<TE>> =
         repository.getTherapyEventDataFromTime(timestamp, ascending).map { list -> list.asSequence().map { it.fromDb() }.toList() }
+
+    override suspend fun getTherapyEventDataFromTime(timestamp: Long, ascending: Boolean): List<TE> = withContext(Dispatchers.IO) {
+        repository.getTherapyEventDataFromTime(timestamp, ascending)
+            .map { list -> list.asSequence().map { it.fromDb() }.toList() }
+            .blockingGet()
+    }
 
     override fun getTherapyEventDataFromTime(timestamp: Long, type: TE.Type, ascending: Boolean): List<TE> =
         repository.getTherapyEventDataFromTime(timestamp, type.toDb(), ascending)
@@ -1853,11 +2005,19 @@ class PersistenceLayerImpl @Inject constructor(
                 transactionResult
             }
 
-    override fun getUserEntryDataFromTime(timestamp: Long): Single<List<UE>> =
+    override fun getUserEntryDataFromTimeBlocking(timestamp: Long): Single<List<UE>> =
         repository.getUserEntryDataFromTime(timestamp).map { list -> list.asSequence().map { it.fromDb() }.toList() }
 
-    override fun getUserEntryFilteredDataFromTime(timestamp: Long): Single<List<UE>> =
+    override suspend fun getUserEntryDataFromTime(timestamp: Long): List<UE> = withContext(Dispatchers.IO) {
+        repository.getUserEntryDataFromTime(timestamp).map { list -> list.asSequence().map { it.fromDb() }.toList() }.blockingGet()
+    }
+
+    override fun getUserEntryFilteredDataFromTimeBlocking(timestamp: Long): Single<List<UE>> =
         repository.getUserEntryFilteredDataFromTime(timestamp).map { list -> list.asSequence().map { it.fromDb() }.toList() }
+
+    override suspend fun getUserEntryFilteredDataFromTime(timestamp: Long): List<UE> = withContext(Dispatchers.IO) {
+        repository.getUserEntryFilteredDataFromTime(timestamp).map { list -> list.asSequence().map { it.fromDb() }.toList() }.blockingGet()
+    }
 
     // TDD
     override fun clearCachedTddData(timestamp: Long) = repository.clearCachedTddData(timestamp)

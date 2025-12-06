@@ -8,28 +8,25 @@ import app.aaps.core.data.ue.Action
 import app.aaps.core.data.ue.Sources
 import app.aaps.core.data.ue.ValueWithUnit
 import app.aaps.core.interfaces.db.PersistenceLayer
+import app.aaps.core.interfaces.db.observeChanges
 import app.aaps.core.interfaces.logging.AAPSLogger
 import app.aaps.core.interfaces.logging.LTag
 import app.aaps.core.interfaces.resources.ResourceHelper
-import app.aaps.core.interfaces.rx.AapsSchedulers
-import app.aaps.core.interfaces.rx.bus.RxBus
-import app.aaps.core.interfaces.rx.events.EventTherapyEventChange
 import app.aaps.core.interfaces.utils.DateUtil
 import app.aaps.core.interfaces.utils.Translator
 import app.aaps.ui.compose.ToolbarConfig
 import app.aaps.ui.compose.TreatmentScreenToolbar
-import app.aaps.ui.viewmodels.TreatmentConstants.EVENT_DEBOUNCE_SECONDS
 import app.aaps.ui.viewmodels.TreatmentConstants.TREATMENT_HISTORY_DAYS
-import io.reactivex.rxjava3.disposables.CompositeDisposable
-import io.reactivex.rxjava3.kotlin.plusAssign
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 /**
@@ -40,24 +37,15 @@ class CareportalViewModel @Inject constructor(
     val rh: ResourceHelper,
     private val translator: Translator,
     val dateUtil: DateUtil,
-    private val rxBus: RxBus,
-    private val aapsSchedulers: AapsSchedulers,
     private val aapsLogger: AAPSLogger
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(CareportalUiState())
     val uiState: StateFlow<CareportalUiState> = _uiState.asStateFlow()
 
-    private val disposable = CompositeDisposable()
-
     init {
         loadData()
         observeTherapyEventChanges()
-    }
-
-    override fun onCleared() {
-        super.onCleared()
-        disposable.clear()
     }
 
     /**
@@ -72,15 +60,13 @@ class CareportalViewModel @Inject constructor(
             }
 
             try {
-                val therapyEvents = withContext(Dispatchers.IO) {
-                    val now = System.currentTimeMillis()
-                    val millsToThePast = T.days(TREATMENT_HISTORY_DAYS).msecs()
+                val now = System.currentTimeMillis()
+                val millsToThePast = T.days(TREATMENT_HISTORY_DAYS).msecs()
 
-                    if (currentState.showInvalidated) {
-                        persistenceLayer.getTherapyEventDataIncludingInvalidFromTime(now - millsToThePast, false).blockingGet()
-                    } else {
-                        persistenceLayer.getTherapyEventDataFromTime(now - millsToThePast, false).blockingGet()
-                    }
+                val therapyEvents = if (currentState.showInvalidated) {
+                    persistenceLayer.getTherapyEventDataIncludingInvalidFromTime(now - millsToThePast, false)
+                } else {
+                    persistenceLayer.getTherapyEventDataFromTime(now - millsToThePast, false)
                 }
 
                 _uiState.update {
@@ -103,16 +89,15 @@ class CareportalViewModel @Inject constructor(
     }
 
     /**
-     * Subscribe to therapy event change events
+     * Subscribe to therapy event change events using Flow
      */
+    @OptIn(FlowPreview::class)
     private fun observeTherapyEventChanges() {
-        disposable += rxBus
-            .toObservable(EventTherapyEventChange::class.java)
-            .observeOn(aapsSchedulers.io)
-            .debounce(EVENT_DEBOUNCE_SECONDS, TimeUnit.SECONDS)
-            .subscribe {
-                loadData()
-            }
+        persistenceLayer
+            .observeChanges<TE>()
+            .debounce(1000L) // 1 second debounce
+            .onEach { loadData() }
+            .launchIn(viewModelScope)
     }
 
     /**

@@ -72,7 +72,7 @@ class SensitivityOref1Plugin @Inject constructor(
             return AutosensResult()
         }
         val siteChanges = persistenceLayer.getTherapyEventDataFromTime(fromTime, TE.Type.CANNULA_CHANGE, true)
-        val profileSwitches = persistenceLayer.getProfileSwitchesFromTime(fromTime, true).blockingGet()
+        val profileSwitches = persistenceLayer.getProfileSwitchesFromTimeBlocking(fromTime, true).blockingGet()
 
         //[0] = 8 hour
         //[1] = 24 hour

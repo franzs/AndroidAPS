@@ -2,33 +2,33 @@ package app.aaps.ui.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import app.aaps.core.data.model.BCR
+import app.aaps.core.data.model.BS
+import app.aaps.core.data.model.CA
 import app.aaps.core.data.time.T
 import app.aaps.core.data.ue.Action
 import app.aaps.core.data.ue.Sources
 import app.aaps.core.data.ue.ValueWithUnit
 import app.aaps.core.interfaces.db.PersistenceLayer
+import app.aaps.core.interfaces.db.observeChanges
 import app.aaps.core.interfaces.logging.AAPSLogger
 import app.aaps.core.interfaces.logging.LTag
 import app.aaps.core.interfaces.profile.ProfileFunction
 import app.aaps.core.interfaces.resources.ResourceHelper
-import app.aaps.core.interfaces.rx.AapsSchedulers
-import app.aaps.core.interfaces.rx.bus.RxBus
-import app.aaps.core.interfaces.rx.events.EventTreatmentChange
 import app.aaps.core.interfaces.utils.DateUtil
 import app.aaps.core.interfaces.utils.DecimalFormatter
 import app.aaps.ui.compose.MealLink
-import app.aaps.ui.viewmodels.TreatmentConstants.EVENT_DEBOUNCE_SECONDS
 import app.aaps.ui.viewmodels.TreatmentConstants.TREATMENT_HISTORY_DAYS
-import io.reactivex.rxjava3.disposables.CompositeDisposable
-import io.reactivex.rxjava3.kotlin.plusAssign
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 /**
@@ -40,24 +40,15 @@ class BolusCarbsViewModel @Inject constructor(
     val rh: ResourceHelper,
     val dateUtil: DateUtil,
     val decimalFormatter: DecimalFormatter,
-    private val rxBus: RxBus,
-    private val aapsSchedulers: AapsSchedulers,
     private val aapsLogger: AAPSLogger
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(BolusCarbsUiState())
     val uiState: StateFlow<BolusCarbsUiState> = _uiState.asStateFlow()
 
-    private val disposable = CompositeDisposable()
-
     init {
         loadData()
         observeTreatmentChanges()
-    }
-
-    override fun onCleared() {
-        super.onCleared()
-        disposable.clear()
     }
 
     /**
@@ -72,37 +63,35 @@ class BolusCarbsViewModel @Inject constructor(
             }
 
             try {
-                val mealLinks = withContext(Dispatchers.IO) {
-                    val now = System.currentTimeMillis()
-                    val millsToThePast = T.days(TREATMENT_HISTORY_DAYS).msecs()
+                val now = System.currentTimeMillis()
+                val millsToThePast = T.days(TREATMENT_HISTORY_DAYS).msecs()
 
-                    val boluses = if (currentState.showInvalidated) {
-                        persistenceLayer.getBolusesFromTimeIncludingInvalid(now - millsToThePast, false).blockingGet()
-                            .map { MealLink(bolus = it) }
-                    } else {
-                        persistenceLayer.getBolusesFromTime(now - millsToThePast, false).blockingGet()
-                            .map { MealLink(bolus = it) }
-                    }
+                val boluses = if (currentState.showInvalidated) {
+                    persistenceLayer.getBolusesFromTimeIncludingInvalid(now - millsToThePast, false)
+                        .map { MealLink(bolus = it) }
+                } else {
+                    persistenceLayer.getBolusesFromTime(now - millsToThePast, false)
+                        .map { MealLink(bolus = it) }
+                }
 
-                    val carbs = if (currentState.showInvalidated) {
-                        persistenceLayer.getCarbsFromTimeIncludingInvalid(now - millsToThePast, false).blockingGet()
-                            .map { MealLink(carbs = it) }
-                    } else {
-                        persistenceLayer.getCarbsFromTime(now - millsToThePast, false).blockingGet()
-                            .map { MealLink(carbs = it) }
-                    }
+                val carbs = if (currentState.showInvalidated) {
+                    persistenceLayer.getCarbsFromTimeIncludingInvalid(now - millsToThePast, false)
+                        .map { MealLink(carbs = it) }
+                } else {
+                    persistenceLayer.getCarbsFromTime(now - millsToThePast, false)
+                        .map { MealLink(carbs = it) }
+                }
 
-                    val calcs = if (currentState.showInvalidated) {
-                        persistenceLayer.getBolusCalculatorResultsIncludingInvalidFromTime(now - millsToThePast, false).blockingGet()
-                            .map { MealLink(bolusCalculatorResult = it) }
-                    } else {
-                        persistenceLayer.getBolusCalculatorResultsFromTime(now - millsToThePast, false).blockingGet()
-                            .map { MealLink(bolusCalculatorResult = it) }
-                    }
+                val calcs = if (currentState.showInvalidated) {
+                    persistenceLayer.getBolusCalculatorResultsIncludingInvalidFromTime(now - millsToThePast, false)
+                        .map { MealLink(bolusCalculatorResult = it) }
+                } else {
+                    persistenceLayer.getBolusCalculatorResultsFromTime(now - millsToThePast, false)
+                        .map { MealLink(bolusCalculatorResult = it) }
+                }
 
-                    (boluses + carbs + calcs).sortedByDescending {
-                        it.bolusCalculatorResult?.timestamp ?: it.bolus?.timestamp ?: it.carbs?.timestamp ?: 0L
-                    }
+                val mealLinks = (boluses + carbs + calcs).sortedByDescending {
+                    it.bolusCalculatorResult?.timestamp ?: it.bolus?.timestamp ?: it.carbs?.timestamp ?: 0L
                 }
 
                 _uiState.update {
@@ -125,16 +114,18 @@ class BolusCarbsViewModel @Inject constructor(
     }
 
     /**
-     * Subscribe to treatment change events
+     * Subscribe to treatment change events using Flow
+     * Observes Bolus, Carbs, and BolusCalculatorResult changes
      */
     private fun observeTreatmentChanges() {
-        disposable += rxBus
-            .toObservable(EventTreatmentChange::class.java)
-            .observeOn(aapsSchedulers.io)
-            .debounce(EVENT_DEBOUNCE_SECONDS, TimeUnit.SECONDS)
-            .subscribe {
-                loadData()
-            }
+        merge(
+            persistenceLayer.observeChanges<BS>(),
+            persistenceLayer.observeChanges<CA>(),
+            persistenceLayer.observeChanges<BCR>()
+        )
+            .debounce(1000L) // 1 second debounce
+            .onEach { loadData() }
+            .launchIn(viewModelScope)
     }
 
     /**

@@ -94,7 +94,7 @@ class ProcessedDeviceStatusDataImpl @Inject constructor(
             return string.toString()
         }
 
-    override val openApsStatus: Spanned = HtmlHelper.fromHtml(openApsStatusHtml)
+    override val openApsStatus: Spanned get() = HtmlHelper.fromHtml(openApsStatusHtml)
     override val openApsStatusHtml: String
         get() {
             val string = StringBuilder()
@@ -133,7 +133,7 @@ class ProcessedDeviceStatusDataImpl @Inject constructor(
             return "$minBattery%"
         }
 
-    override val uploaderStatusSpanned: Spanned = HtmlHelper.fromHtml(uploaderStatusHtml)
+    override val uploaderStatusSpanned: Spanned get() = HtmlHelper.fromHtml(uploaderStatusHtml)
     override val uploaderStatusHtml: String
         get() {
             var isCharging = false
