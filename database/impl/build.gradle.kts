@@ -29,6 +29,7 @@ dependencies {
 
     api(libs.io.reactivex.rxjava3.rxandroid)
     api(libs.io.reactivex.rxjava3.rxkotlin)
+    api(libs.kotlinx.coroutines.rx3)
 
     api(libs.com.google.code.gson)
 

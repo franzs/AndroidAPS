@@ -14,6 +14,7 @@ import org.mockito.Mockito.verify
 import org.mockito.kotlin.any
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
+import kotlinx.coroutines.runBlocking
 
 class InsertOrUpdateProfileSwitchTransactionTest {
 
@@ -28,7 +29,7 @@ class InsertOrUpdateProfileSwitchTransactionTest {
     }
 
     @Test
-    fun `inserts new profile switch when id not found`() {
+    fun `inserts new profile switch when id not found`() = runBlocking {
         val profileSwitch = createProfileSwitch(id = 1, percentage = 100)
 
         whenever(profileSwitchDao.findById(1)).thenReturn(null)
@@ -46,7 +47,7 @@ class InsertOrUpdateProfileSwitchTransactionTest {
     }
 
     @Test
-    fun `updates existing profile switch when id found`() {
+    fun `updates existing profile switch when id found`() = runBlocking {
         val profileSwitch = createProfileSwitch(id = 1, percentage = 120)
         val existing = createProfileSwitch(id = 1, percentage = 100)
 
@@ -65,7 +66,7 @@ class InsertOrUpdateProfileSwitchTransactionTest {
     }
 
     @Test
-    fun `updates profile switch percentage`() {
+    fun `updates profile switch percentage`() = runBlocking {
         val existing = createProfileSwitch(id = 1, percentage = 100)
         val updated = createProfileSwitch(id = 1, percentage = 150)
 
@@ -80,7 +81,7 @@ class InsertOrUpdateProfileSwitchTransactionTest {
     }
 
     @Test
-    fun `inserts profile switch with timeshift`() {
+    fun `inserts profile switch with timeshift`() = runBlocking {
         val profileSwitch = createProfileSwitch(id = 1, percentage = 100, timeshift = 2)
 
         whenever(profileSwitchDao.findById(1)).thenReturn(null)

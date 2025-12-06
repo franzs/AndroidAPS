@@ -13,6 +13,7 @@ import org.mockito.Mockito.verify
 import org.mockito.kotlin.any
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
+import kotlinx.coroutines.runBlocking
 
 class SyncNsTherapyEventTransactionTest {
 
@@ -27,7 +28,7 @@ class SyncNsTherapyEventTransactionTest {
     }
 
     @Test
-    fun `inserts new therapy event when nsId not found and no timestamp match`() {
+    fun `inserts new therapy event when nsId not found and no timestamp match`() = runBlocking {
         val therapyEvent = createTherapyEvent(id = 0, nsId = "ns-123", timestamp = 1000L)
 
         whenever(therapyEventDao.findByNSId("ns-123")).thenReturn(null)
@@ -47,7 +48,7 @@ class SyncNsTherapyEventTransactionTest {
     }
 
     @Test
-    fun `updates nsId when timestamp matches but nsId is null`() {
+    fun `updates nsId when timestamp matches but nsId is null`() = runBlocking {
         val therapyEvent = createTherapyEvent(id = 0, nsId = "ns-123", timestamp = 1000L)
         val existing = createTherapyEvent(id = 1, nsId = null, timestamp = 1000L)
 
@@ -69,7 +70,7 @@ class SyncNsTherapyEventTransactionTest {
     }
 
     @Test
-    fun `inserts new when timestamp matches but existing has different nsId`() {
+    fun `inserts new when timestamp matches but existing has different nsId`() = runBlocking {
         val therapyEvent = createTherapyEvent(id = 0, nsId = "ns-123", timestamp = 1000L)
         val existing = createTherapyEvent(id = 1, nsId = "other-ns", timestamp = 1000L)
 
@@ -88,7 +89,7 @@ class SyncNsTherapyEventTransactionTest {
     }
 
     @Test
-    fun `invalidates therapy event when valid becomes invalid`() {
+    fun `invalidates therapy event when valid becomes invalid`() = runBlocking {
         val therapyEvent = createTherapyEvent(id = 0, nsId = "ns-123", isValid = false)
         val existing = createTherapyEvent(id = 1, nsId = "ns-123", isValid = true)
 
@@ -109,7 +110,7 @@ class SyncNsTherapyEventTransactionTest {
     }
 
     @Test
-    fun `does not invalidate already invalid therapy event`() {
+    fun `does not invalidate already invalid therapy event`() = runBlocking {
         val therapyEvent = createTherapyEvent(id = 0, nsId = "ns-123", isValid = false)
         val existing = createTherapyEvent(id = 1, nsId = "ns-123", isValid = false)
 
@@ -129,7 +130,7 @@ class SyncNsTherapyEventTransactionTest {
     }
 
     @Test
-    fun `updates duration to shorter in NS client mode when duration changes`() {
+    fun `updates duration to shorter in NS client mode when duration changes`() = runBlocking {
         val therapyEvent = createTherapyEvent(id = 0, nsId = "ns-123", duration = 30_000L)
         val existing = createTherapyEvent(id = 1, nsId = "ns-123", duration = 60_000L)
 
@@ -149,7 +150,7 @@ class SyncNsTherapyEventTransactionTest {
     }
 
     @Test
-    fun `does not update duration to longer in NS client mode`() {
+    fun `does not update duration to longer in NS client mode`() = runBlocking {
         val therapyEvent = createTherapyEvent(id = 0, nsId = "ns-123", duration = 120_000L)
         val existing = createTherapyEvent(id = 1, nsId = "ns-123", duration = 60_000L)
 
@@ -168,7 +169,7 @@ class SyncNsTherapyEventTransactionTest {
     }
 
     @Test
-    fun `does not update duration in non-NS client mode`() {
+    fun `does not update duration in non-NS client mode`() = runBlocking {
         val therapyEvent = createTherapyEvent(id = 0, nsId = "ns-123", duration = 120_000L)
         val existing = createTherapyEvent(id = 1, nsId = "ns-123", duration = 60_000L)
 
@@ -186,7 +187,7 @@ class SyncNsTherapyEventTransactionTest {
     }
 
     @Test
-    fun `handles multiple therapy events`() {
+    fun `handles multiple therapy events`() = runBlocking {
         val therapyEvent1 = createTherapyEvent(id = 0, nsId = "ns-1", timestamp = 1000L)
         val therapyEvent2 = createTherapyEvent(id = 0, nsId = "ns-2", timestamp = 2000L)
 
@@ -203,7 +204,7 @@ class SyncNsTherapyEventTransactionTest {
     }
 
     @Test
-    fun `updates valid flag when updating nsId`() {
+    fun `updates valid flag when updating nsId`() = runBlocking {
         val therapyEvent = createTherapyEvent(id = 0, nsId = "ns-123", timestamp = 1000L, isValid = false)
         val existing = createTherapyEvent(id = 1, nsId = null, timestamp = 1000L, isValid = true)
 

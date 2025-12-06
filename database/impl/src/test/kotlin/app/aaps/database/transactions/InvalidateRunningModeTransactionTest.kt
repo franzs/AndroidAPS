@@ -12,6 +12,7 @@ import org.mockito.Mockito.verify
 import org.mockito.kotlin.any
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
+import kotlinx.coroutines.runBlocking
 
 class InvalidateRunningModeTransactionTest {
 
@@ -26,7 +27,7 @@ class InvalidateRunningModeTransactionTest {
     }
 
     @Test
-    fun `invalidates valid running mode`() {
+    fun `invalidates valid running mode`() = runBlocking {
         val rm = createRunningMode(id = 1, isValid = true)
 
         whenever(runningModeDao.findById(1)).thenReturn(rm)
@@ -42,7 +43,7 @@ class InvalidateRunningModeTransactionTest {
     }
 
     @Test
-    fun `does not update already invalid running mode`() {
+    fun `does not update already invalid running mode`() = runBlocking {
         val rm = createRunningMode(id = 1, isValid = false)
 
         whenever(runningModeDao.findById(1)).thenReturn(rm)
@@ -57,7 +58,7 @@ class InvalidateRunningModeTransactionTest {
     }
 
     @Test
-    fun `throws exception when running mode not found`() {
+    fun `throws exception when running mode not found`() = runBlocking {
         whenever(runningModeDao.findById(999)).thenReturn(null)
 
         val transaction = InvalidateRunningModeTransaction(id = 999)

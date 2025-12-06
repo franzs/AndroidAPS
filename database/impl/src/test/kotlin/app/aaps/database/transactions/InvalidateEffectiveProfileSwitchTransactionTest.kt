@@ -14,6 +14,7 @@ import org.mockito.Mockito.verify
 import org.mockito.kotlin.any
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
+import kotlinx.coroutines.runBlocking
 
 class InvalidateEffectiveProfileSwitchTransactionTest {
 
@@ -28,7 +29,7 @@ class InvalidateEffectiveProfileSwitchTransactionTest {
     }
 
     @Test
-    fun `invalidates valid effective profile switch`() {
+    fun `invalidates valid effective profile switch`() = runBlocking {
         val eps = createEffectiveProfileSwitch(id = 1, isValid = true)
 
         whenever(effectiveProfileSwitchDao.findById(1)).thenReturn(eps)
@@ -44,7 +45,7 @@ class InvalidateEffectiveProfileSwitchTransactionTest {
     }
 
     @Test
-    fun `does not update already invalid effective profile switch`() {
+    fun `does not update already invalid effective profile switch`() = runBlocking {
         val eps = createEffectiveProfileSwitch(id = 1, isValid = false)
 
         whenever(effectiveProfileSwitchDao.findById(1)).thenReturn(eps)
@@ -59,7 +60,7 @@ class InvalidateEffectiveProfileSwitchTransactionTest {
     }
 
     @Test
-    fun `throws exception when effective profile switch not found`() {
+    fun `throws exception when effective profile switch not found`() = runBlocking {
         whenever(effectiveProfileSwitchDao.findById(999)).thenReturn(null)
 
         val transaction = InvalidateEffectiveProfileSwitchTransaction(id = 999)

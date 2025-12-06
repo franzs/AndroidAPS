@@ -12,6 +12,7 @@ import org.mockito.Mockito.verify
 import org.mockito.kotlin.any
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
+import kotlinx.coroutines.runBlocking
 
 class InsertOrUpdateCarbsTransactionTest {
 
@@ -26,7 +27,7 @@ class InsertOrUpdateCarbsTransactionTest {
     }
 
     @Test
-    fun `inserts new carbs when id not found`() {
+    fun `inserts new carbs when id not found`() = runBlocking {
         val carbs = createCarbs(id = 1, amount = 50.0)
 
         whenever(carbsDao.findById(1)).thenReturn(null)
@@ -44,7 +45,7 @@ class InsertOrUpdateCarbsTransactionTest {
     }
 
     @Test
-    fun `updates existing carbs when id found`() {
+    fun `updates existing carbs when id found`() = runBlocking {
         val carbs = createCarbs(id = 1, amount = 50.0)
         val existing = createCarbs(id = 1, amount = 30.0)
 
@@ -63,7 +64,7 @@ class InsertOrUpdateCarbsTransactionTest {
     }
 
     @Test
-    fun `handles carbs with zero amount`() {
+    fun `handles carbs with zero amount`() = runBlocking {
         val carbs = createCarbs(id = 1, amount = 0.0)
 
         whenever(carbsDao.findById(1)).thenReturn(null)
@@ -77,7 +78,7 @@ class InsertOrUpdateCarbsTransactionTest {
     }
 
     @Test
-    fun `handles carbs with extended duration`() {
+    fun `handles carbs with extended duration`() = runBlocking {
         val carbs = createCarbs(id = 1, amount = 50.0, duration = 120_000L)
 
         whenever(carbsDao.findById(1)).thenReturn(null)
@@ -91,7 +92,7 @@ class InsertOrUpdateCarbsTransactionTest {
     }
 
     @Test
-    fun `handles carbs without duration`() {
+    fun `handles carbs without duration`() = runBlocking {
         val carbs = createCarbs(id = 1, amount = 50.0, duration = 0L)
 
         whenever(carbsDao.findById(1)).thenReturn(null)
@@ -105,7 +106,7 @@ class InsertOrUpdateCarbsTransactionTest {
     }
 
     @Test
-    fun `updates invalid carbs`() {
+    fun `updates invalid carbs`() = runBlocking {
         val carbs = createCarbs(id = 1, amount = 50.0, isValid = false)
         val existing = createCarbs(id = 1, amount = 30.0, isValid = true)
 
@@ -120,7 +121,7 @@ class InsertOrUpdateCarbsTransactionTest {
     }
 
     @Test
-    fun `transaction result has correct structure`() {
+    fun `transaction result has correct structure`() = runBlocking {
         val result = InsertOrUpdateCarbsTransaction.TransactionResult()
 
         assertThat(result.inserted).isEmpty()
@@ -130,7 +131,7 @@ class InsertOrUpdateCarbsTransactionTest {
     }
 
     @Test
-    fun `preserves carbs timestamp on update`() {
+    fun `preserves carbs timestamp on update`() = runBlocking {
         val timestamp = 123456789L
         val carbs = createCarbs(id = 1, amount = 50.0, timestamp = timestamp)
         val existing = createCarbs(id = 1, amount = 30.0, timestamp = timestamp)
@@ -145,7 +146,7 @@ class InsertOrUpdateCarbsTransactionTest {
     }
 
     @Test
-    fun `inserts carbs with notes`() {
+    fun `inserts carbs with notes`() = runBlocking {
         val carbs = createCarbs(id = 1, amount = 50.0, notes = "Test meal")
 
         whenever(carbsDao.findById(1)).thenReturn(null)
@@ -159,7 +160,7 @@ class InsertOrUpdateCarbsTransactionTest {
     }
 
     @Test
-    fun `updates carbs with different amounts`() {
+    fun `updates carbs with different amounts`() = runBlocking {
         val existing = createCarbs(id = 1, amount = 30.0)
         val updated = createCarbs(id = 1, amount = 75.0)
 

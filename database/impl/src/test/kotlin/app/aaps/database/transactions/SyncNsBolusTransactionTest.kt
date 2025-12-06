@@ -5,6 +5,7 @@ import app.aaps.database.daos.BolusDao
 import app.aaps.database.entities.Bolus
 import app.aaps.database.entities.embedments.InterfaceIDs
 import com.google.common.truth.Truth.assertThat
+import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.never
@@ -27,7 +28,7 @@ class SyncNsBolusTransactionTest {
     }
 
     @Test
-    fun `inserts new bolus when nsId not found and no timestamp match`() {
+    fun `inserts new bolus when nsId not found and no timestamp match`() = runBlocking {
         val bolus = createBolus(id = 0, nsId = "ns-123", amount = 5.0, timestamp = 1000L)
 
         whenever(bolusDao.getByNSId("ns-123")).thenReturn(null)
@@ -47,7 +48,7 @@ class SyncNsBolusTransactionTest {
     }
 
     @Test
-    fun `updates nsId when timestamp matches but nsId is null`() {
+    fun `updates nsId when timestamp matches but nsId is null`() = runBlocking {
         val nsId = "ns-123"
         val timestamp = 1000L
         val existing = createBolus(id = 1, nsId = null, amount = 5.0, timestamp = timestamp)
@@ -70,7 +71,7 @@ class SyncNsBolusTransactionTest {
     }
 
     @Test
-    fun `invalidates bolus when nsId exists and incoming is invalid`() {
+    fun `invalidates bolus when nsId exists and incoming is invalid`() = runBlocking {
         val nsId = "ns-123"
         val existing = createBolus(id = 1, nsId = nsId, amount = 5.0, isValid = true)
         val incoming = createBolus(id = 0, nsId = nsId, amount = 5.0, isValid = false)
@@ -89,7 +90,7 @@ class SyncNsBolusTransactionTest {
     }
 
     @Test
-    fun `does not invalidate already invalid bolus`() {
+    fun `does not invalidate already invalid bolus`() = runBlocking {
         val nsId = "ns-123"
         val existing = createBolus(id = 1, nsId = nsId, amount = 5.0, isValid = false)
         val incoming = createBolus(id = 0, nsId = nsId, amount = 5.0, isValid = false)
@@ -105,7 +106,7 @@ class SyncNsBolusTransactionTest {
     }
 
     @Test
-    fun `updates amount when nsId exists and amount differs`() {
+    fun `updates amount when nsId exists and amount differs`() = runBlocking {
         val nsId = "ns-123"
         val existing = createBolus(id = 1, nsId = nsId, amount = 5.0)
         val incoming = createBolus(id = 0, nsId = nsId, amount = 7.5)
@@ -124,7 +125,7 @@ class SyncNsBolusTransactionTest {
     }
 
     @Test
-    fun `does not update when nsId exists and amount is same`() {
+    fun `does not update when nsId exists and amount is same`() = runBlocking {
         val nsId = "ns-123"
         val existing = createBolus(id = 1, nsId = nsId, amount = 5.0)
         val incoming = createBolus(id = 0, nsId = nsId, amount = 5.0)
@@ -140,7 +141,7 @@ class SyncNsBolusTransactionTest {
     }
 
     @Test
-    fun `handles both invalidation and amount update`() {
+    fun `handles both invalidation and amount update`() = runBlocking {
         val nsId = "ns-123"
         val existing = createBolus(id = 1, nsId = nsId, amount = 5.0, isValid = true)
         val incoming = createBolus(id = 0, nsId = nsId, amount = 7.5, isValid = false)
@@ -160,7 +161,7 @@ class SyncNsBolusTransactionTest {
     }
 
     @Test
-    fun `syncs multiple boluses`() {
+    fun `syncs multiple boluses`() = runBlocking {
         val bolus1 = createBolus(id = 0, nsId = "ns-1", amount = 5.0, timestamp = 1000L)
         val bolus2 = createBolus(id = 0, nsId = "ns-2", amount = 3.0, timestamp = 2000L)
 
@@ -180,7 +181,7 @@ class SyncNsBolusTransactionTest {
     }
 
     @Test
-    fun `handles empty bolus list`() {
+    fun `handles empty bolus list`() = runBlocking {
         val transaction = SyncNsBolusTransaction(emptyList())
         transaction.database = database
         val result = transaction.run()
@@ -195,7 +196,7 @@ class SyncNsBolusTransactionTest {
     }
 
     @Test
-    fun `updates both amount and validity when timestamp matches`() {
+    fun `updates both amount and validity when timestamp matches`() = runBlocking {
         val nsId = "ns-123"
         val timestamp = 1000L
         val existing = createBolus(id = 1, nsId = null, amount = 5.0, timestamp = timestamp, isValid = true)
@@ -217,7 +218,7 @@ class SyncNsBolusTransactionTest {
     }
 
     @Test
-    fun `skips bolus with null nsId when no timestamp match`() {
+    fun `skips bolus with null nsId when no timestamp match`() = runBlocking {
         val bolus = createBolus(id = 0, nsId = null, amount = 5.0, timestamp = 1000L)
 
         whenever(bolusDao.findByTimestamp(1000L)).thenReturn(null)

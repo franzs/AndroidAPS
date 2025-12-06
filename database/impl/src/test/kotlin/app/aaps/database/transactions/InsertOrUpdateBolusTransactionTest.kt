@@ -12,6 +12,7 @@ import org.mockito.Mockito.verify
 import org.mockito.kotlin.any
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
+import kotlinx.coroutines.runBlocking
 
 class InsertOrUpdateBolusTransactionTest {
 
@@ -26,7 +27,7 @@ class InsertOrUpdateBolusTransactionTest {
     }
 
     @Test
-    fun `inserts new bolus when id not found`() {
+    fun `inserts new bolus when id not found`() = runBlocking {
         val bolus = createBolus(id = 1, amount = 5.0)
 
         whenever(bolusDao.findById(1)).thenReturn(null)
@@ -44,7 +45,7 @@ class InsertOrUpdateBolusTransactionTest {
     }
 
     @Test
-    fun `updates existing bolus when id found`() {
+    fun `updates existing bolus when id found`() = runBlocking {
         val bolus = createBolus(id = 1, amount = 5.0)
         val existing = createBolus(id = 1, amount = 3.0)
 
@@ -63,7 +64,7 @@ class InsertOrUpdateBolusTransactionTest {
     }
 
     @Test
-    fun `inserts SMB bolus`() {
+    fun `inserts SMB bolus`() = runBlocking {
         val bolus = createBolus(id = 1, amount = 0.5, type = Bolus.Type.SMB)
 
         whenever(bolusDao.findById(1)).thenReturn(null)
@@ -77,7 +78,7 @@ class InsertOrUpdateBolusTransactionTest {
     }
 
     @Test
-    fun `updates bolus amount`() {
+    fun `updates bolus amount`() = runBlocking {
         val existing = createBolus(id = 1, amount = 3.0)
         val updated = createBolus(id = 1, amount = 7.5)
 
@@ -92,7 +93,7 @@ class InsertOrUpdateBolusTransactionTest {
     }
 
     @Test
-    fun `inserts invalid bolus`() {
+    fun `inserts invalid bolus`() = runBlocking {
         val bolus = createBolus(id = 1, amount = 5.0, isValid = false)
 
         whenever(bolusDao.findById(1)).thenReturn(null)
@@ -106,7 +107,7 @@ class InsertOrUpdateBolusTransactionTest {
     }
 
     @Test
-    fun `transaction result has correct structure`() {
+    fun `transaction result has correct structure`() = runBlocking {
         val result = InsertOrUpdateBolusTransaction.TransactionResult()
 
         assertThat(result.inserted).isEmpty()

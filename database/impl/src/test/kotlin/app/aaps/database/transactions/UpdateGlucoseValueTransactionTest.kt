@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test
 import org.mockito.Mockito.verify
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
+import kotlinx.coroutines.runBlocking
 
 class UpdateGlucoseValueTransactionTest {
 
@@ -23,7 +24,7 @@ class UpdateGlucoseValueTransactionTest {
     }
 
     @Test
-    fun `updates glucose value`() {
+    fun `updates glucose value`() = runBlocking {
         val glucoseValue = createGlucoseValue(value = 120.0)
 
         val transaction = UpdateGlucoseValueTransaction(glucoseValue)

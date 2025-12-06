@@ -12,6 +12,7 @@ import org.mockito.Mockito.verify
 import org.mockito.kotlin.any
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
+import kotlinx.coroutines.runBlocking
 
 class UpdateNsIdExtendedBolusTransactionTest {
 
@@ -26,7 +27,7 @@ class UpdateNsIdExtendedBolusTransactionTest {
     }
 
     @Test
-    fun `updates NS ID when different`() {
+    fun `updates NS ID when different`() = runBlocking {
         val newNsId = "new-ns-123"
         val current = createExtendedBolus(id = 1, nsId = "old-ns")
         val update = createExtendedBolus(id = 1, nsId = newNsId)
@@ -44,7 +45,7 @@ class UpdateNsIdExtendedBolusTransactionTest {
     }
 
     @Test
-    fun `does not update when NS ID is same`() {
+    fun `does not update when NS ID is same`() = runBlocking {
         val sameNsId = "same-ns"
         val current = createExtendedBolus(id = 1, nsId = sameNsId)
         val update = createExtendedBolus(id = 1, nsId = sameNsId)
@@ -61,7 +62,7 @@ class UpdateNsIdExtendedBolusTransactionTest {
     }
 
     @Test
-    fun `skips when extended bolus not found`() {
+    fun `skips when extended bolus not found`() = runBlocking {
         val update = createExtendedBolus(id = 999, nsId = "new-ns")
 
         whenever(extendedBolusDao.findById(999)).thenReturn(null)

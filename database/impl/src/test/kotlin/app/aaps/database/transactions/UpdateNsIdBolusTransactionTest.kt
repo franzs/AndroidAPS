@@ -5,6 +5,7 @@ import app.aaps.database.daos.BolusDao
 import app.aaps.database.entities.Bolus
 import app.aaps.database.entities.embedments.InterfaceIDs
 import com.google.common.truth.Truth.assertThat
+import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.never
@@ -26,7 +27,7 @@ class UpdateNsIdBolusTransactionTest {
     }
 
     @Test
-    fun `updates NS ID when different`() {
+    fun `updates NS ID when different`() = runBlocking {
         val newNsId = "new-ns-id-123"
         val currentBolus = createBolus(id = 1, nsId = "old-ns-id")
         val updateBolus = createBolus(id = 1, nsId = newNsId)
@@ -45,7 +46,7 @@ class UpdateNsIdBolusTransactionTest {
     }
 
     @Test
-    fun `does not update when NS ID is the same`() {
+    fun `does not update when NS ID is the same`() = runBlocking {
         val sameNsId = "same-ns-id"
         val currentBolus = createBolus(id = 1, nsId = sameNsId)
         val updateBolus = createBolus(id = 1, nsId = sameNsId)
@@ -62,7 +63,7 @@ class UpdateNsIdBolusTransactionTest {
     }
 
     @Test
-    fun `skips when bolus not found`() {
+    fun `skips when bolus not found`() = runBlocking {
         val updateBolus = createBolus(id = 999, nsId = "new-ns-id")
 
         whenever(bolusDao.findById(999)).thenReturn(null)
@@ -77,7 +78,7 @@ class UpdateNsIdBolusTransactionTest {
     }
 
     @Test
-    fun `updates multiple boluses`() {
+    fun `updates multiple boluses`() = runBlocking {
         val bolus1 = createBolus(id = 1, nsId = "old-1")
         val bolus2 = createBolus(id = 2, nsId = "old-2")
         val update1 = createBolus(id = 1, nsId = "new-1")
@@ -99,7 +100,7 @@ class UpdateNsIdBolusTransactionTest {
     }
 
     @Test
-    fun `handles mix of found and not found boluses`() {
+    fun `handles mix of found and not found boluses`() = runBlocking {
         val currentBolus = createBolus(id = 1, nsId = "old")
         val update1 = createBolus(id = 1, nsId = "new")
         val update2 = createBolus(id = 999, nsId = "new-missing")
@@ -116,7 +117,7 @@ class UpdateNsIdBolusTransactionTest {
     }
 
     @Test
-    fun `handles empty bolus list`() {
+    fun `handles empty bolus list`() = runBlocking {
         val transaction = UpdateNsIdBolusTransaction(emptyList())
         transaction.database = database
         val result = transaction.run()
@@ -127,7 +128,7 @@ class UpdateNsIdBolusTransactionTest {
     }
 
     @Test
-    fun `preserves other bolus fields when updating NS ID`() {
+    fun `preserves other bolus fields when updating NS ID`() = runBlocking {
         val amount = 5.5
         val timestamp = 123456789L
         val type = Bolus.Type.NORMAL
@@ -152,7 +153,7 @@ class UpdateNsIdBolusTransactionTest {
     }
 
     @Test
-    fun `updates from null NS ID to actual value`() {
+    fun `updates from null NS ID to actual value`() = runBlocking {
         val currentBolus = createBolus(id = 1, nsId = null)
         val updateBolus = createBolus(id = 1, nsId = "new-ns-id")
 
@@ -169,7 +170,7 @@ class UpdateNsIdBolusTransactionTest {
     }
 
     @Test
-    fun `updates from actual NS ID to null`() {
+    fun `updates from actual NS ID to null`() = runBlocking {
         val currentBolus = createBolus(id = 1, nsId = "existing-id")
         val updateBolus = createBolus(id = 1, nsId = null)
 

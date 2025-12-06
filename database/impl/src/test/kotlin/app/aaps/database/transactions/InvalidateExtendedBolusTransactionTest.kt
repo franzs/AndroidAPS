@@ -12,6 +12,7 @@ import org.mockito.Mockito.verify
 import org.mockito.kotlin.any
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
+import kotlinx.coroutines.runBlocking
 
 class InvalidateExtendedBolusTransactionTest {
 
@@ -26,7 +27,7 @@ class InvalidateExtendedBolusTransactionTest {
     }
 
     @Test
-    fun `invalidates valid extended bolus`() {
+    fun `invalidates valid extended bolus`() = runBlocking {
         val eb = createExtendedBolus(id = 1, isValid = true)
 
         whenever(extendedBolusDao.findById(1)).thenReturn(eb)
@@ -42,7 +43,7 @@ class InvalidateExtendedBolusTransactionTest {
     }
 
     @Test
-    fun `does not update already invalid extended bolus`() {
+    fun `does not update already invalid extended bolus`() = runBlocking {
         val eb = createExtendedBolus(id = 1, isValid = false)
 
         whenever(extendedBolusDao.findById(1)).thenReturn(eb)
@@ -57,7 +58,7 @@ class InvalidateExtendedBolusTransactionTest {
     }
 
     @Test
-    fun `throws exception when extended bolus not found`() {
+    fun `throws exception when extended bolus not found`() = runBlocking {
         whenever(extendedBolusDao.findById(999)).thenReturn(null)
 
         val transaction = InvalidateExtendedBolusTransaction(id = 999)

@@ -5,6 +5,7 @@ import app.aaps.database.daos.BolusDao
 import app.aaps.database.entities.Bolus
 import app.aaps.database.entities.embedments.InterfaceIDs
 import com.google.common.truth.Truth.assertThat
+import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.never
@@ -26,7 +27,7 @@ class InvalidateBolusTransactionTest {
     }
 
     @Test
-    fun `invalidates valid bolus`() {
+    fun `invalidates valid bolus`() = runBlocking {
         val bolus = createBolus(id = 1, isValid = true)
 
         whenever(bolusDao.findById(1)).thenReturn(bolus)
@@ -43,7 +44,7 @@ class InvalidateBolusTransactionTest {
     }
 
     @Test
-    fun `does not update already invalid bolus`() {
+    fun `does not update already invalid bolus`() = runBlocking {
         val bolus = createBolus(id = 1, isValid = false)
 
         whenever(bolusDao.findById(1)).thenReturn(bolus)
@@ -59,7 +60,7 @@ class InvalidateBolusTransactionTest {
     }
 
     @Test
-    fun `throws exception when bolus not found`() {
+    fun `throws exception when bolus not found`() = runBlocking {
         whenever(bolusDao.findById(999)).thenReturn(null)
 
         val transaction = InvalidateBolusTransaction(id = 999)
@@ -74,7 +75,7 @@ class InvalidateBolusTransactionTest {
     }
 
     @Test
-    fun `preserves bolus amount when invalidating`() {
+    fun `preserves bolus amount when invalidating`() = runBlocking {
         val amount = 5.5
         val bolus = createBolus(id = 1, isValid = true, amount = amount)
 
@@ -89,7 +90,7 @@ class InvalidateBolusTransactionTest {
     }
 
     @Test
-    fun `invalidates normal bolus`() {
+    fun `invalidates normal bolus`() = runBlocking {
         val bolus = createBolus(id = 1, type = Bolus.Type.NORMAL, isValid = true)
 
         whenever(bolusDao.findById(1)).thenReturn(bolus)
@@ -103,7 +104,7 @@ class InvalidateBolusTransactionTest {
     }
 
     @Test
-    fun `invalidates SMB bolus`() {
+    fun `invalidates SMB bolus`() = runBlocking {
         val bolus = createBolus(id = 2, type = Bolus.Type.SMB, isValid = true)
 
         whenever(bolusDao.findById(2)).thenReturn(bolus)

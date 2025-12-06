@@ -12,6 +12,7 @@ import org.mockito.Mockito.verify
 import org.mockito.kotlin.any
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
+import kotlinx.coroutines.runBlocking
 
 class SyncNsRunningModeTransactionTest {
 
@@ -26,7 +27,7 @@ class SyncNsRunningModeTransactionTest {
     }
 
     @Test
-    fun `inserts new when nsId not found and no timestamp match`() {
+    fun `inserts new when nsId not found and no timestamp match`() = runBlocking {
         val runningMode = createRunningMode(id = 0, nsId = "ns-123", timestamp = 1000L)
 
         whenever(runningModeDao.findByNSId("ns-123")).thenReturn(null)
@@ -44,7 +45,7 @@ class SyncNsRunningModeTransactionTest {
     }
 
     @Test
-    fun `updates nsId when timestamp matches but nsId is null`() {
+    fun `updates nsId when timestamp matches but nsId is null`() = runBlocking {
         val runningMode = createRunningMode(id = 0, nsId = "ns-123", timestamp = 1000L)
         val existing = createRunningMode(id = 1, nsId = null, timestamp = 1000L)
 
@@ -62,7 +63,7 @@ class SyncNsRunningModeTransactionTest {
     }
 
     @Test
-    fun `invalidates when valid becomes invalid`() {
+    fun `invalidates when valid becomes invalid`() = runBlocking {
         val runningMode = createRunningMode(id = 0, nsId = "ns-123", isValid = false)
         val existing = createRunningMode(id = 1, nsId = "ns-123", isValid = true)
 
@@ -79,7 +80,7 @@ class SyncNsRunningModeTransactionTest {
     }
 
     @Test
-    fun `updates duration to shorter when duration changes`() {
+    fun `updates duration to shorter when duration changes`() = runBlocking {
         val runningMode = createRunningMode(id = 0, nsId = "ns-123", duration = 30_000L)
         val existing = createRunningMode(id = 1, nsId = "ns-123", duration = 60_000L)
 
@@ -96,7 +97,7 @@ class SyncNsRunningModeTransactionTest {
     }
 
     @Test
-    fun `does not update duration to longer`() {
+    fun `does not update duration to longer`() = runBlocking {
         val runningMode = createRunningMode(id = 0, nsId = "ns-123", duration = 120_000L)
         val existing = createRunningMode(id = 1, nsId = "ns-123", duration = 60_000L)
 

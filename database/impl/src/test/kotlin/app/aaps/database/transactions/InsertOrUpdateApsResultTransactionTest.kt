@@ -12,6 +12,7 @@ import org.mockito.Mockito.verify
 import org.mockito.kotlin.any
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
+import kotlinx.coroutines.runBlocking
 
 class InsertOrUpdateApsResultTransactionTest {
 
@@ -26,7 +27,7 @@ class InsertOrUpdateApsResultTransactionTest {
     }
 
     @Test
-    fun `inserts new APS result when id not found`() {
+    fun `inserts new APS result when id not found`() = runBlocking {
         val apsResult = createApsResult(id = 1, targetBG = 100.0)
 
         whenever(apsResultDao.findById(1)).thenReturn(null)
@@ -44,7 +45,7 @@ class InsertOrUpdateApsResultTransactionTest {
     }
 
     @Test
-    fun `updates existing APS result when id found`() {
+    fun `updates existing APS result when id found`() = runBlocking {
         val apsResult = createApsResult(id = 1, targetBG = 110.0)
         val existing = createApsResult(id = 1, targetBG = 100.0)
 
@@ -63,7 +64,7 @@ class InsertOrUpdateApsResultTransactionTest {
     }
 
     @Test
-    fun `updates target BG value`() {
+    fun `updates target BG value`() = runBlocking {
         val existing = createApsResult(id = 1, targetBG = 90.0)
         val updated = createApsResult(id = 1, targetBG = 120.0)
 
@@ -80,7 +81,7 @@ class InsertOrUpdateApsResultTransactionTest {
     }
 
     @Test
-    fun `inserts APS result with rate`() {
+    fun `inserts APS result with rate`() = runBlocking {
         val apsResult = createApsResult(id = 1, targetBG = 100.0, rate = 0.85)
 
         whenever(apsResultDao.findById(1)).thenReturn(null)

@@ -12,6 +12,7 @@ import org.mockito.Mockito.verify
 import org.mockito.kotlin.any
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
+import kotlinx.coroutines.runBlocking
 
 class UpdateNsIdGlucoseValueTransactionTest {
 
@@ -26,7 +27,7 @@ class UpdateNsIdGlucoseValueTransactionTest {
     }
 
     @Test
-    fun `updates NS ID when different`() {
+    fun `updates NS ID when different`() = runBlocking {
         val newNsId = "new-ns-123"
         val current = createGlucoseValue(id = 1, nsId = "old-ns")
         val update = createGlucoseValue(id = 1, nsId = newNsId)
@@ -44,7 +45,7 @@ class UpdateNsIdGlucoseValueTransactionTest {
     }
 
     @Test
-    fun `does not update when NS ID is same`() {
+    fun `does not update when NS ID is same`() = runBlocking {
         val sameNsId = "same-ns"
         val current = createGlucoseValue(id = 1, nsId = sameNsId)
         val update = createGlucoseValue(id = 1, nsId = sameNsId)
@@ -61,7 +62,7 @@ class UpdateNsIdGlucoseValueTransactionTest {
     }
 
     @Test
-    fun `skips when glucose value not found`() {
+    fun `skips when glucose value not found`() = runBlocking {
         val update = createGlucoseValue(id = 999, nsId = "new-ns")
 
         whenever(glucoseValueDao.findById(999)).thenReturn(null)

@@ -14,6 +14,7 @@ import org.mockito.Mockito.verify
 import org.mockito.kotlin.any
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
+import kotlinx.coroutines.runBlocking
 
 class UpdateNsIdProfileSwitchTransactionTest {
 
@@ -28,7 +29,7 @@ class UpdateNsIdProfileSwitchTransactionTest {
     }
 
     @Test
-    fun `updates NS ID when different`() {
+    fun `updates NS ID when different`() = runBlocking {
         val newNsId = "new-ns-123"
         val current = createProfileSwitch(id = 1, nsId = "old-ns")
         val update = createProfileSwitch(id = 1, nsId = newNsId)
@@ -46,7 +47,7 @@ class UpdateNsIdProfileSwitchTransactionTest {
     }
 
     @Test
-    fun `does not update when NS ID is same`() {
+    fun `does not update when NS ID is same`() = runBlocking {
         val sameNsId = "same-ns"
         val current = createProfileSwitch(id = 1, nsId = sameNsId)
         val update = createProfileSwitch(id = 1, nsId = sameNsId)
@@ -63,7 +64,7 @@ class UpdateNsIdProfileSwitchTransactionTest {
     }
 
     @Test
-    fun `skips when profile switch not found`() {
+    fun `skips when profile switch not found`() = runBlocking {
         val update = createProfileSwitch(id = 999, nsId = "new-ns")
 
         whenever(profileSwitchDao.findById(999)).thenReturn(null)

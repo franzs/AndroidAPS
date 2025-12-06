@@ -14,6 +14,7 @@ import org.mockito.Mockito.verify
 import org.mockito.kotlin.any
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
+import kotlinx.coroutines.runBlocking
 
 class SyncNsTemporaryTargetTransactionTest {
 
@@ -28,11 +29,11 @@ class SyncNsTemporaryTargetTransactionTest {
     }
 
     @Test
-    fun `inserts new temporary target when nsId not found and no active target`() {
+    fun `inserts new temporary target when nsId not found and no active target`() = runBlocking {
         val tempTarget = createTemporaryTarget(id = 0, nsId = "ns-123", timestamp = 1000L, duration = 60_000L)
 
         whenever(temporaryTargetDao.findByNSId("ns-123")).thenReturn(null)
-        whenever(temporaryTargetDao.getTemporaryTargetActiveAt(1000L)).thenReturn(Maybe.empty())
+        whenever(temporaryTargetDao.getTemporaryTargetActiveAt(1000L)).thenReturn(null)
 
         val transaction = SyncNsTemporaryTargetTransaction(listOf(tempTarget))
         transaction.database = database
@@ -48,12 +49,12 @@ class SyncNsTemporaryTargetTransactionTest {
     }
 
     @Test
-    fun `updates nsId when active target at same timestamp`() {
+    fun `updates nsId when active target at same timestamp`() = runBlocking {
         val tempTarget = createTemporaryTarget(id = 0, nsId = "ns-123", timestamp = 1000L, duration = 60_000L)
         val existing = createTemporaryTarget(id = 1, nsId = null, timestamp = 999L, duration = 60_000L)
 
         whenever(temporaryTargetDao.findByNSId("ns-123")).thenReturn(null)
-        whenever(temporaryTargetDao.getTemporaryTargetActiveAt(1000L)).thenReturn(Maybe.just(existing))
+        whenever(temporaryTargetDao.getTemporaryTargetActiveAt(1000L)).thenReturn(existing)
 
         val transaction = SyncNsTemporaryTargetTransaction(listOf(tempTarget))
         transaction.database = database
@@ -70,12 +71,12 @@ class SyncNsTemporaryTargetTransactionTest {
     }
 
     @Test
-    fun `ends running target and inserts new when timestamps differ significantly`() {
+    fun `ends running target and inserts new when timestamps differ significantly`() = runBlocking {
         val tempTarget = createTemporaryTarget(id = 0, nsId = "ns-123", timestamp = 5000L, duration = 60_000L)
         val existing = createTemporaryTarget(id = 1, nsId = null, timestamp = 1000L, duration = 60_000L)
 
         whenever(temporaryTargetDao.findByNSId("ns-123")).thenReturn(null)
-        whenever(temporaryTargetDao.getTemporaryTargetActiveAt(5000L)).thenReturn(Maybe.just(existing))
+        whenever(temporaryTargetDao.getTemporaryTargetActiveAt(5000L)).thenReturn(existing)
 
         val transaction = SyncNsTemporaryTargetTransaction(listOf(tempTarget))
         transaction.database = database
@@ -92,7 +93,7 @@ class SyncNsTemporaryTargetTransactionTest {
     }
 
     @Test
-    fun `invalidates temporary target when valid becomes invalid`() {
+    fun `invalidates temporary target when valid becomes invalid`() = runBlocking {
         val tempTarget = createTemporaryTarget(id = 0, nsId = "ns-123", duration = 60_000L, isValid = false)
         val existing = createTemporaryTarget(id = 1, nsId = "ns-123", duration = 60_000L, isValid = true)
 
@@ -112,7 +113,7 @@ class SyncNsTemporaryTargetTransactionTest {
     }
 
     @Test
-    fun `updates duration to shorter when duration changes`() {
+    fun `updates duration to shorter when duration changes`() = runBlocking {
         val tempTarget = createTemporaryTarget(id = 0, nsId = "ns-123", duration = 30_000L)
         val existing = createTemporaryTarget(id = 1, nsId = "ns-123", duration = 60_000L)
 
@@ -131,7 +132,7 @@ class SyncNsTemporaryTargetTransactionTest {
     }
 
     @Test
-    fun `does not update duration to longer`() {
+    fun `does not update duration to longer`() = runBlocking {
         val tempTarget = createTemporaryTarget(id = 0, nsId = "ns-123", duration = 120_000L)
         val existing = createTemporaryTarget(id = 1, nsId = "ns-123", duration = 60_000L)
 
@@ -149,7 +150,7 @@ class SyncNsTemporaryTargetTransactionTest {
     }
 
     @Test
-    fun `does not update when duration is same`() {
+    fun `does not update when duration is same`() = runBlocking {
         val tempTarget = createTemporaryTarget(id = 0, nsId = "ns-123", duration = 60_000L)
         val existing = createTemporaryTarget(id = 1, nsId = "ns-123", duration = 60_000L)
 
@@ -167,11 +168,11 @@ class SyncNsTemporaryTargetTransactionTest {
     }
 
     @Test
-    fun `ends running target when receiving ending event`() {
+    fun `ends running target when receiving ending event`() = runBlocking {
         val tempTarget = createTemporaryTarget(id = 0, nsId = "ns-123", timestamp = 61_000L, duration = 0L)
         val existing = createTemporaryTarget(id = 1, nsId = null, timestamp = 1000L, duration = 60_000L)
 
-        whenever(temporaryTargetDao.getTemporaryTargetActiveAt(61_000L)).thenReturn(Maybe.just(existing))
+        whenever(temporaryTargetDao.getTemporaryTargetActiveAt(61_000L)).thenReturn(existing)
 
         val transaction = SyncNsTemporaryTargetTransaction(listOf(tempTarget))
         transaction.database = database
@@ -187,10 +188,10 @@ class SyncNsTemporaryTargetTransactionTest {
     }
 
     @Test
-    fun `does nothing when ending event but no running target`() {
+    fun `does nothing when ending event but no running target`() = runBlocking {
         val tempTarget = createTemporaryTarget(id = 0, nsId = "ns-123", timestamp = 61_000L, duration = 0L)
 
-        whenever(temporaryTargetDao.getTemporaryTargetActiveAt(61_000L)).thenReturn(Maybe.empty())
+        whenever(temporaryTargetDao.getTemporaryTargetActiveAt(61_000L)).thenReturn(null)
 
         val transaction = SyncNsTemporaryTargetTransaction(listOf(tempTarget))
         transaction.database = database
@@ -204,14 +205,14 @@ class SyncNsTemporaryTargetTransactionTest {
     }
 
     @Test
-    fun `handles multiple temporary targets`() {
+    fun `handles multiple temporary targets`() = runBlocking {
         val tempTarget1 = createTemporaryTarget(id = 0, nsId = "ns-1", timestamp = 1000L, duration = 60_000L)
         val tempTarget2 = createTemporaryTarget(id = 0, nsId = "ns-2", timestamp = 2000L, duration = 60_000L)
 
         whenever(temporaryTargetDao.findByNSId("ns-1")).thenReturn(null)
         whenever(temporaryTargetDao.findByNSId("ns-2")).thenReturn(null)
-        whenever(temporaryTargetDao.getTemporaryTargetActiveAt(1000L)).thenReturn(Maybe.empty())
-        whenever(temporaryTargetDao.getTemporaryTargetActiveAt(2000L)).thenReturn(Maybe.empty())
+        whenever(temporaryTargetDao.getTemporaryTargetActiveAt(1000L)).thenReturn(null)
+        whenever(temporaryTargetDao.getTemporaryTargetActiveAt(2000L)).thenReturn(null)
 
         val transaction = SyncNsTemporaryTargetTransaction(listOf(tempTarget1, tempTarget2))
         transaction.database = database

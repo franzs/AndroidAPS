@@ -13,6 +13,7 @@ import org.mockito.Mockito.verify
 import org.mockito.kotlin.any
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
+import kotlinx.coroutines.runBlocking
 
 class InsertAndCancelCurrentTemporaryTargetTransactionTest {
 
@@ -27,7 +28,7 @@ class InsertAndCancelCurrentTemporaryTargetTransactionTest {
     }
 
     @Test
-    fun `inserts new target and cancels active target`() {
+    fun `inserts new target and cancels active target`() = runBlocking {
         val timestamp = 10000L
         val activeTarget = createTemporaryTarget(id = 1, timestamp = 5000L, duration = 30_000L)
         val newTarget = createTemporaryTarget(id = 0, timestamp = timestamp, duration = 60_000L)
@@ -49,7 +50,7 @@ class InsertAndCancelCurrentTemporaryTargetTransactionTest {
     }
 
     @Test
-    fun `inserts new target when no active target`() {
+    fun `inserts new target when no active target`() = runBlocking {
         val timestamp = 10000L
         val newTarget = createTemporaryTarget(id = 0, timestamp = timestamp, duration = 60_000L)
 
@@ -68,7 +69,7 @@ class InsertAndCancelCurrentTemporaryTargetTransactionTest {
     }
 
     @Test
-    fun `sets end time exactly to new target timestamp`() {
+    fun `sets end time exactly to new target timestamp`() = runBlocking {
         val timestamp = 15000L
         val activeTarget = createTemporaryTarget(id = 1, timestamp = 10000L, duration = 20_000L)
         val newTarget = createTemporaryTarget(id = 0, timestamp = timestamp, duration = 30_000L)
@@ -83,7 +84,7 @@ class InsertAndCancelCurrentTemporaryTargetTransactionTest {
     }
 
     @Test
-    fun `preserves new target properties`() {
+    fun `preserves new target properties`() = runBlocking {
         val timestamp = 10000L
         val lowTarget = 80.0
         val highTarget = 120.0
@@ -113,7 +114,7 @@ class InsertAndCancelCurrentTemporaryTargetTransactionTest {
     }
 
     @Test
-    fun `transaction result has correct structure`() {
+    fun `transaction result has correct structure`() = runBlocking {
         val result = InsertAndCancelCurrentTemporaryTargetTransaction.TransactionResult()
 
         assertThat(result.inserted).isEmpty()
@@ -123,7 +124,7 @@ class InsertAndCancelCurrentTemporaryTargetTransactionTest {
     }
 
     @Test
-    fun `handles overlapping targets correctly`() {
+    fun `handles overlapping targets correctly`() = runBlocking {
         val timestamp = 10000L
         val activeTarget = createTemporaryTarget(
             id = 1,

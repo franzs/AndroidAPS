@@ -12,6 +12,7 @@ import org.mockito.Mockito.verify
 import org.mockito.kotlin.any
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
+import kotlinx.coroutines.runBlocking
 
 class InsertOrUpdateRunningModeTransactionTest {
 
@@ -26,7 +27,7 @@ class InsertOrUpdateRunningModeTransactionTest {
     }
 
     @Test
-    fun `inserts new running mode when id not found`() {
+    fun `inserts new running mode when id not found`() = runBlocking {
         val runningMode = createRunningMode(id = 1, mode = RunningMode.Mode.OPEN_LOOP)
 
         whenever(runningModeDao.findById(1)).thenReturn(null)
@@ -44,7 +45,7 @@ class InsertOrUpdateRunningModeTransactionTest {
     }
 
     @Test
-    fun `updates existing running mode when id found`() {
+    fun `updates existing running mode when id found`() = runBlocking {
         val runningMode = createRunningMode(id = 1, mode = RunningMode.Mode.CLOSED_LOOP)
         val existing = createRunningMode(id = 1, mode = RunningMode.Mode.OPEN_LOOP)
 
@@ -63,7 +64,7 @@ class InsertOrUpdateRunningModeTransactionTest {
     }
 
     @Test
-    fun `updates running mode type`() {
+    fun `updates running mode type`() = runBlocking {
         val existing = createRunningMode(id = 1, mode = RunningMode.Mode.OPEN_LOOP)
         val updated = createRunningMode(id = 1, mode = RunningMode.Mode.CLOSED_LOOP)
 
@@ -78,7 +79,7 @@ class InsertOrUpdateRunningModeTransactionTest {
     }
 
     @Test
-    fun `inserts running mode with duration`() {
+    fun `inserts running mode with duration`() = runBlocking {
         val runningMode = createRunningMode(id = 1, mode = RunningMode.Mode.OPEN_LOOP, duration = 60_000L)
 
         whenever(runningModeDao.findById(1)).thenReturn(null)

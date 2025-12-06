@@ -12,6 +12,7 @@ import org.mockito.Mockito.verify
 import org.mockito.kotlin.any
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
+import kotlinx.coroutines.runBlocking
 
 class InvalidateTemporaryTargetTransactionTest {
 
@@ -26,7 +27,7 @@ class InvalidateTemporaryTargetTransactionTest {
     }
 
     @Test
-    fun `invalidates valid temporary target`() {
+    fun `invalidates valid temporary target`() = runBlocking {
         val target = createTemporaryTarget(id = 1, isValid = true)
 
         whenever(temporaryTargetDao.findById(1)).thenReturn(target)
@@ -43,7 +44,7 @@ class InvalidateTemporaryTargetTransactionTest {
     }
 
     @Test
-    fun `does not update already invalid temporary target`() {
+    fun `does not update already invalid temporary target`() = runBlocking {
         val target = createTemporaryTarget(id = 1, isValid = false)
 
         whenever(temporaryTargetDao.findById(1)).thenReturn(target)
@@ -59,7 +60,7 @@ class InvalidateTemporaryTargetTransactionTest {
     }
 
     @Test
-    fun `throws exception when temporary target not found`() {
+    fun `throws exception when temporary target not found`() = runBlocking {
         whenever(temporaryTargetDao.findById(999)).thenReturn(null)
 
         val transaction = InvalidateTemporaryTargetTransaction(id = 999)
@@ -74,7 +75,7 @@ class InvalidateTemporaryTargetTransactionTest {
     }
 
     @Test
-    fun `preserves target values when invalidating`() {
+    fun `preserves target values when invalidating`() = runBlocking {
         val lowTarget = 80.0
         val highTarget = 120.0
         val target = createTemporaryTarget(id = 1, isValid = true, lowTarget = lowTarget, highTarget = highTarget)

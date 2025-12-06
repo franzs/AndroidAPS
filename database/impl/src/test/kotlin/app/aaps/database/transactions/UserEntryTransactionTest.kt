@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test
 import org.mockito.Mockito.verify
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
+import kotlinx.coroutines.runBlocking
 
 class UserEntryTransactionTest {
 
@@ -23,7 +24,7 @@ class UserEntryTransactionTest {
     }
 
     @Test
-    fun `inserts single user entry`() {
+    fun `inserts single user entry`() = runBlocking {
         val entry = createUserEntry("Test action")
 
         val transaction = UserEntryTransaction(listOf(entry))
@@ -37,7 +38,7 @@ class UserEntryTransactionTest {
     }
 
     @Test
-    fun `inserts multiple user entries`() {
+    fun `inserts multiple user entries`() = runBlocking {
         val entry1 = createUserEntry("Action 1")
         val entry2 = createUserEntry("Action 2")
 

@@ -11,6 +11,7 @@ import org.mockito.Mockito.verify
 import org.mockito.kotlin.any
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
+import kotlinx.coroutines.runBlocking
 
 class InsertOrUpdateStepsCountTransactionTest {
 
@@ -25,7 +26,7 @@ class InsertOrUpdateStepsCountTransactionTest {
     }
 
     @Test
-    fun `inserts new steps count when id is 0`() {
+    fun `inserts new steps count when id is 0`() = runBlocking {
         val stepsCount = createStepsCount(id = 0, steps5min = 100, steps10min = 200)
 
         val transaction = InsertOrUpdateStepsCountTransaction(stepsCount)
@@ -41,7 +42,7 @@ class InsertOrUpdateStepsCountTransactionTest {
     }
 
     @Test
-    fun `inserts new steps count when id not found`() {
+    fun `inserts new steps count when id not found`() = runBlocking {
         val stepsCount = createStepsCount(id = 1, steps5min = 100, steps10min = 200)
 
         whenever(stepsCountDao.findById(1)).thenReturn(null)
@@ -59,7 +60,7 @@ class InsertOrUpdateStepsCountTransactionTest {
     }
 
     @Test
-    fun `updates existing steps count when id found`() {
+    fun `updates existing steps count when id found`() = runBlocking {
         val stepsCount = createStepsCount(id = 1, steps5min = 150, steps10min = 300)
         val existing = createStepsCount(id = 1, steps5min = 100, steps10min = 200)
 
@@ -78,7 +79,7 @@ class InsertOrUpdateStepsCountTransactionTest {
     }
 
     @Test
-    fun `updates steps count values`() {
+    fun `updates steps count values`() = runBlocking {
         val existing = createStepsCount(id = 1, steps5min = 50, steps10min = 100)
         val updated = createStepsCount(id = 1, steps5min = 200, steps10min = 400)
 

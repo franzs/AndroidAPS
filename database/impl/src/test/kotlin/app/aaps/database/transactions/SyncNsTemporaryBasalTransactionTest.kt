@@ -14,6 +14,7 @@ import org.mockito.kotlin.any
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.never
 import org.mockito.kotlin.whenever
+import kotlinx.coroutines.runBlocking
 
 class SyncNsTemporaryBasalTransactionTest {
 
@@ -28,11 +29,11 @@ class SyncNsTemporaryBasalTransactionTest {
     }
 
     @Test
-    fun `inserts new when nsId not found and no active basal`() {
+    fun `inserts new when nsId not found and no active basal`() = runBlocking {
         val tb = createTemporaryBasal(id = 0, nsId = "ns-123", timestamp = 1000L, duration = 60_000L)
 
         whenever(temporaryBasalDao.findByNSId("ns-123")).thenReturn(null)
-        whenever(temporaryBasalDao.getTemporaryBasalActiveAt(1000L)).thenReturn(Maybe.empty())
+        whenever(temporaryBasalDao.getTemporaryBasalActiveAt(1000L)).thenReturn(null)
 
         val transaction = SyncNsTemporaryBasalTransaction(listOf(tb), nsClientMode = false)
         transaction.database = database
@@ -45,12 +46,12 @@ class SyncNsTemporaryBasalTransactionTest {
     }
 
     @Test
-    fun `updates nsId when active basal at same timestamp`() {
+    fun `updates nsId when active basal at same timestamp`() = runBlocking {
         val tb = createTemporaryBasal(id = 0, nsId = "ns-123", timestamp = 1000L, duration = 60_000L)
         val existing = createTemporaryBasal(id = 1, nsId = null, timestamp = 999L, duration = 60_000L)
 
         whenever(temporaryBasalDao.findByNSId("ns-123")).thenReturn(null)
-        whenever(temporaryBasalDao.getTemporaryBasalActiveAt(1000L)).thenReturn(Maybe.just(existing))
+        whenever(temporaryBasalDao.getTemporaryBasalActiveAt(1000L)).thenReturn(existing)
 
         val transaction = SyncNsTemporaryBasalTransaction(listOf(tb), nsClientMode = false)
         transaction.database = database
@@ -63,12 +64,12 @@ class SyncNsTemporaryBasalTransactionTest {
     }
 
     @Test
-    fun `ends running basal and inserts new when timestamps differ`() {
+    fun `ends running basal and inserts new when timestamps differ`() = runBlocking {
         val tb = createTemporaryBasal(id = 0, nsId = "ns-123", timestamp = 5000L, duration = 60_000L)
         val existing = createTemporaryBasal(id = 1, nsId = null, timestamp = 1000L, duration = 60_000L)
 
         whenever(temporaryBasalDao.findByNSId("ns-123")).thenReturn(null)
-        whenever(temporaryBasalDao.getTemporaryBasalActiveAt(5000L)).thenReturn(Maybe.just(existing))
+        whenever(temporaryBasalDao.getTemporaryBasalActiveAt(5000L)).thenReturn(existing)
 
         val transaction = SyncNsTemporaryBasalTransaction(listOf(tb), nsClientMode = false)
         transaction.database = database
@@ -83,7 +84,7 @@ class SyncNsTemporaryBasalTransactionTest {
     }
 
     @Test
-    fun `invalidates when valid becomes invalid`() {
+    fun `invalidates when valid becomes invalid`() = runBlocking {
         val tb = createTemporaryBasal(id = 0, nsId = "ns-123", duration = 60_000L, isValid = false)
         val existing = createTemporaryBasal(id = 1, nsId = "ns-123", duration = 60_000L, isValid = true)
 
@@ -98,7 +99,7 @@ class SyncNsTemporaryBasalTransactionTest {
     }
 
     @Test
-    fun `updates duration to shorter in NS client mode`() {
+    fun `updates duration to shorter in NS client mode`() = runBlocking {
         val tb = createTemporaryBasal(id = 0, nsId = "ns-123", duration = 30_000L)
         val existing = createTemporaryBasal(id = 1, nsId = "ns-123", duration = 60_000L)
 
@@ -113,7 +114,7 @@ class SyncNsTemporaryBasalTransactionTest {
     }
 
     @Test
-    fun `does not update duration to longer in NS client mode`() {
+    fun `does not update duration to longer in NS client mode`() = runBlocking {
         val tb = createTemporaryBasal(id = 0, nsId = "ns-123", duration = 120_000L)
         val existing = createTemporaryBasal(id = 1, nsId = "ns-123", duration = 60_000L)
 
@@ -128,7 +129,7 @@ class SyncNsTemporaryBasalTransactionTest {
     }
 
     @Test
-    fun `finds by pump ids when nsId not found`() {
+    fun `finds by pump ids when nsId not found`() = runBlocking {
         val tb = createTemporaryBasal(
             id = 0,
             nsId = "ns-123",

@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test
 import org.mockito.Mockito.verify
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
+import kotlinx.coroutines.runBlocking
 
 class InsertEffectiveProfileSwitchTransactionTest {
 
@@ -26,7 +27,7 @@ class InsertEffectiveProfileSwitchTransactionTest {
     }
 
     @Test
-    fun `inserts effective profile switch`() {
+    fun `inserts effective profile switch`() = runBlocking {
         val eps = createEffectiveProfileSwitch()
 
         val transaction = InsertEffectiveProfileSwitchTransaction(eps)

@@ -12,6 +12,7 @@ import org.mockito.Mockito.verify
 import org.mockito.kotlin.any
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
+import kotlinx.coroutines.runBlocking
 
 class InsertBolusWithTempIdTransactionTest {
 
@@ -26,7 +27,7 @@ class InsertBolusWithTempIdTransactionTest {
     }
 
     @Test
-    fun `inserts new bolus when not found by temp id`() {
+    fun `inserts new bolus when not found by temp id`() = runBlocking {
         val bolus = createBolus(tempId = 500L, amount = 5.0)
 
         whenever(bolusDao.findByPumpTempIds(500L, InterfaceIDs.PumpType.DANA_I, "ABC123")).thenReturn(null)
@@ -43,7 +44,7 @@ class InsertBolusWithTempIdTransactionTest {
     }
 
     @Test
-    fun `does not insert when bolus already exists by temp id`() {
+    fun `does not insert when bolus already exists by temp id`() = runBlocking {
         val bolus = createBolus(tempId = 500L, amount = 5.0)
         val existing = createBolus(tempId = 500L, amount = 5.0)
 

@@ -12,6 +12,7 @@ import org.mockito.Mockito.verify
 import org.mockito.kotlin.any
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
+import kotlinx.coroutines.runBlocking
 
 class InvalidateGlucoseValueTransactionTest {
 
@@ -26,7 +27,7 @@ class InvalidateGlucoseValueTransactionTest {
     }
 
     @Test
-    fun `invalidates valid glucose value`() {
+    fun `invalidates valid glucose value`() = runBlocking {
         val gv = createGlucoseValue(id = 1, isValid = true)
 
         whenever(glucoseValueDao.findById(1)).thenReturn(gv)
@@ -42,7 +43,7 @@ class InvalidateGlucoseValueTransactionTest {
     }
 
     @Test
-    fun `does not update already invalid glucose value`() {
+    fun `does not update already invalid glucose value`() = runBlocking {
         val gv = createGlucoseValue(id = 1, isValid = false)
 
         whenever(glucoseValueDao.findById(1)).thenReturn(gv)
@@ -57,7 +58,7 @@ class InvalidateGlucoseValueTransactionTest {
     }
 
     @Test
-    fun `throws exception when glucose value not found`() {
+    fun `throws exception when glucose value not found`() = runBlocking {
         whenever(glucoseValueDao.findById(999)).thenReturn(null)
 
         val transaction = InvalidateGlucoseValueTransaction(id = 999)

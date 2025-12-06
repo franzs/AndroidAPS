@@ -12,6 +12,7 @@ import org.mockito.Mockito.verify
 import org.mockito.kotlin.any
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
+import kotlinx.coroutines.runBlocking
 
 class InvalidateTemporaryBasalTransactionWithPumpIdTest {
 
@@ -26,7 +27,7 @@ class InvalidateTemporaryBasalTransactionWithPumpIdTest {
     }
 
     @Test
-    fun `invalidates valid temporary basal by pump ids`() {
+    fun `invalidates valid temporary basal by pump ids`() = runBlocking {
         val pumpId = 12345L
         val pumpType = InterfaceIDs.PumpType.DANA_I
         val pumpSerial = "ABC123"
@@ -45,7 +46,7 @@ class InvalidateTemporaryBasalTransactionWithPumpIdTest {
     }
 
     @Test
-    fun `does not update already invalid temporary basal`() {
+    fun `does not update already invalid temporary basal`() = runBlocking {
         val pumpId = 12345L
         val pumpType = InterfaceIDs.PumpType.DANA_I
         val pumpSerial = "ABC123"
@@ -63,7 +64,7 @@ class InvalidateTemporaryBasalTransactionWithPumpIdTest {
     }
 
     @Test
-    fun `throws exception when temporary basal not found`() {
+    fun `throws exception when temporary basal not found`() = runBlocking {
         val pumpId = 999L
         val pumpType = InterfaceIDs.PumpType.DANA_I
         val pumpSerial = "ABC123"

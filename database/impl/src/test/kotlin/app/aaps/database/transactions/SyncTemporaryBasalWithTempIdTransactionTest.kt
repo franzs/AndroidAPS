@@ -12,6 +12,7 @@ import org.mockito.Mockito.verify
 import org.mockito.kotlin.any
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
+import kotlinx.coroutines.runBlocking
 
 class SyncTemporaryBasalWithTempIdTransactionTest {
 
@@ -26,7 +27,7 @@ class SyncTemporaryBasalWithTempIdTransactionTest {
     }
 
     @Test
-    fun `updates existing temporary basal when found by temp id`() {
+    fun `updates existing temporary basal when found by temp id`() = runBlocking {
         val tb = createTemporaryBasal(tempId = 500L, pumpId = 100L, rate = 2.0, duration = 30_000L, timestamp = 2000L)
         val existing = createTemporaryBasal(tempId = 500L, pumpId = null, rate = 1.5, duration = 60_000L, timestamp = 1000L)
 
@@ -47,7 +48,7 @@ class SyncTemporaryBasalWithTempIdTransactionTest {
     }
 
     @Test
-    fun `does not update when not found by temp id`() {
+    fun `does not update when not found by temp id`() = runBlocking {
         val tb = createTemporaryBasal(tempId = 500L, pumpId = 100L, rate = 2.0, duration = 30_000L, timestamp = 2000L)
 
         whenever(temporaryBasalDao.findByPumpTempIds(500L, InterfaceIDs.PumpType.DANA_I, "ABC123")).thenReturn(null)
@@ -62,7 +63,7 @@ class SyncTemporaryBasalWithTempIdTransactionTest {
     }
 
     @Test
-    fun `updates type when provided`() {
+    fun `updates type when provided`() = runBlocking {
         val tb = createTemporaryBasal(tempId = 500L, pumpId = 100L, rate = 1.5, duration = 60_000L, timestamp = 1000L, type = TemporaryBasal.Type.NORMAL)
         val existing = createTemporaryBasal(tempId = 500L, pumpId = null, rate = 1.5, duration = 60_000L, timestamp = 1000L, type = TemporaryBasal.Type.NORMAL)
 

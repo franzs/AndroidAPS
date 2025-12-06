@@ -13,6 +13,7 @@ import org.mockito.Mockito.verify
 import org.mockito.kotlin.any
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
+import kotlinx.coroutines.runBlocking
 
 class UpdateNsIdTherapyEventTransactionTest {
 
@@ -27,7 +28,7 @@ class UpdateNsIdTherapyEventTransactionTest {
     }
 
     @Test
-    fun `updates NS ID when different`() {
+    fun `updates NS ID when different`() = runBlocking {
         val newNsId = "new-ns-123"
         val current = createTherapyEvent(id = 1, nsId = "old-ns")
         val update = createTherapyEvent(id = 1, nsId = newNsId)
@@ -45,7 +46,7 @@ class UpdateNsIdTherapyEventTransactionTest {
     }
 
     @Test
-    fun `does not update when NS ID is same`() {
+    fun `does not update when NS ID is same`() = runBlocking {
         val sameNsId = "same-ns"
         val current = createTherapyEvent(id = 1, nsId = sameNsId)
         val update = createTherapyEvent(id = 1, nsId = sameNsId)
@@ -62,7 +63,7 @@ class UpdateNsIdTherapyEventTransactionTest {
     }
 
     @Test
-    fun `skips when therapy event not found`() {
+    fun `skips when therapy event not found`() = runBlocking {
         val update = createTherapyEvent(id = 999, nsId = "new-ns")
 
         whenever(therapyEventDao.findById(999)).thenReturn(null)
@@ -77,7 +78,7 @@ class UpdateNsIdTherapyEventTransactionTest {
     }
 
     @Test
-    fun `handles empty list`() {
+    fun `handles empty list`() = runBlocking {
         val transaction = UpdateNsIdTherapyEventTransaction(emptyList())
         transaction.database = database
         val result = transaction.run()

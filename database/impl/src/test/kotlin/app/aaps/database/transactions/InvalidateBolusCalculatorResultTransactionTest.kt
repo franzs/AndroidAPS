@@ -12,6 +12,7 @@ import org.mockito.Mockito.verify
 import org.mockito.kotlin.any
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
+import kotlinx.coroutines.runBlocking
 
 class InvalidateBolusCalculatorResultTransactionTest {
 
@@ -26,7 +27,7 @@ class InvalidateBolusCalculatorResultTransactionTest {
     }
 
     @Test
-    fun `invalidates valid bolus calculator result`() {
+    fun `invalidates valid bolus calculator result`() = runBlocking {
         val bcr = createBolusCalculatorResult(id = 1, isValid = true)
 
         whenever(bolusCalculatorResultDao.findById(1)).thenReturn(bcr)
@@ -42,7 +43,7 @@ class InvalidateBolusCalculatorResultTransactionTest {
     }
 
     @Test
-    fun `does not update already invalid bolus calculator result`() {
+    fun `does not update already invalid bolus calculator result`() = runBlocking {
         val bcr = createBolusCalculatorResult(id = 1, isValid = false)
 
         whenever(bolusCalculatorResultDao.findById(1)).thenReturn(bcr)
@@ -57,7 +58,7 @@ class InvalidateBolusCalculatorResultTransactionTest {
     }
 
     @Test
-    fun `throws exception when bolus calculator result not found`() {
+    fun `throws exception when bolus calculator result not found`() = runBlocking {
         whenever(bolusCalculatorResultDao.findById(999)).thenReturn(null)
 
         val transaction = InvalidateBolusCalculatorResultTransaction(id = 999)

@@ -14,6 +14,7 @@ import org.mockito.kotlin.any
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.never
 import org.mockito.kotlin.whenever
+import kotlinx.coroutines.runBlocking
 
 class SyncNsExtendedBolusTransactionTest {
 
@@ -28,11 +29,11 @@ class SyncNsExtendedBolusTransactionTest {
     }
 
     @Test
-    fun `inserts new when nsId not found and no active bolus`() {
+    fun `inserts new when nsId not found and no active bolus`() = runBlocking {
         val eb = createExtendedBolus(id = 0, nsId = "ns-123", timestamp = 1000L, duration = 60_000L, amount = 1.0)
 
         whenever(extendedBolusDao.findByNSId("ns-123")).thenReturn(null)
-        whenever(extendedBolusDao.getExtendedBolusActiveAt(1000L)).thenReturn(Maybe.empty())
+        whenever(extendedBolusDao.getExtendedBolusActiveAt(1000L)).thenReturn(null)
 
         val transaction = SyncNsExtendedBolusTransaction(listOf(eb), nsClientMode = false)
         transaction.database = database
@@ -45,12 +46,12 @@ class SyncNsExtendedBolusTransactionTest {
     }
 
     @Test
-    fun `updates nsId when active bolus at same timestamp`() {
+    fun `updates nsId when active bolus at same timestamp`() = runBlocking {
         val eb = createExtendedBolus(id = 0, nsId = "ns-123", timestamp = 1000L, duration = 60_000L, amount = 5.0)
         val existing = createExtendedBolus(id = 1, nsId = null, timestamp = 999L, duration = 60_000L, amount = 5.0)
 
         whenever(extendedBolusDao.findByNSId("ns-123")).thenReturn(null)
-        whenever(extendedBolusDao.getExtendedBolusActiveAt(1000L)).thenReturn(Maybe.just(existing))
+        whenever(extendedBolusDao.getExtendedBolusActiveAt(1000L)).thenReturn(existing)
 
         val transaction = SyncNsExtendedBolusTransaction(listOf(eb), nsClientMode = false)
         transaction.database = database
@@ -63,12 +64,12 @@ class SyncNsExtendedBolusTransactionTest {
     }
 
     @Test
-    fun `ends running bolus with proportional amount and inserts new`() {
+    fun `ends running bolus with proportional amount and inserts new`() = runBlocking {
         val eb = createExtendedBolus(id = 0, nsId = "ns-123", timestamp = 31_000L, duration = 60_000L, amount = 5.0)
         val existing = createExtendedBolus(id = 1, nsId = null, timestamp = 1000L, duration = 60_000L, amount = 6.0)
 
         whenever(extendedBolusDao.findByNSId("ns-123")).thenReturn(null)
-        whenever(extendedBolusDao.getExtendedBolusActiveAt(31_000L)).thenReturn(Maybe.just(existing))
+        whenever(extendedBolusDao.getExtendedBolusActiveAt(31_000L)).thenReturn(existing)
 
         val transaction = SyncNsExtendedBolusTransaction(listOf(eb), nsClientMode = false)
         transaction.database = database
@@ -85,7 +86,7 @@ class SyncNsExtendedBolusTransactionTest {
     }
 
     @Test
-    fun `invalidates when valid becomes invalid`() {
+    fun `invalidates when valid becomes invalid`() = runBlocking {
         val eb = createExtendedBolus(id = 0, nsId = "ns-123", duration = 60_000L, amount = 5.0, isValid = false)
         val existing = createExtendedBolus(id = 1, nsId = "ns-123", duration = 60_000L, amount = 5.0, isValid = true)
 
@@ -100,7 +101,7 @@ class SyncNsExtendedBolusTransactionTest {
     }
 
     @Test
-    fun `updates duration to shorter and amount in NS client mode`() {
+    fun `updates duration to shorter and amount in NS client mode`() = runBlocking {
         val eb = createExtendedBolus(id = 0, nsId = "ns-123", duration = 30_000L, amount = 10.0)
         val existing = createExtendedBolus(id = 1, nsId = "ns-123", duration = 60_000L, amount = 5.0)
 
@@ -116,7 +117,7 @@ class SyncNsExtendedBolusTransactionTest {
     }
 
     @Test
-    fun `does not update duration to longer in NS client mode`() {
+    fun `does not update duration to longer in NS client mode`() = runBlocking {
         val eb = createExtendedBolus(id = 0, nsId = "ns-123", duration = 120_000L, amount = 10.0)
         val existing = createExtendedBolus(id = 1, nsId = "ns-123", duration = 60_000L, amount = 5.0)
 

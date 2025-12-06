@@ -12,6 +12,7 @@ import org.mockito.Mockito.verify
 import org.mockito.kotlin.any
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
+import kotlinx.coroutines.runBlocking
 
 class UpdateNsIdTemporaryBasalTransactionTest {
 
@@ -26,7 +27,7 @@ class UpdateNsIdTemporaryBasalTransactionTest {
     }
 
     @Test
-    fun `updates NS ID when different`() {
+    fun `updates NS ID when different`() = runBlocking {
         val newNsId = "new-ns-123"
         val current = createTemporaryBasal(id = 1, nsId = "old-ns")
         val update = createTemporaryBasal(id = 1, nsId = newNsId)
@@ -44,7 +45,7 @@ class UpdateNsIdTemporaryBasalTransactionTest {
     }
 
     @Test
-    fun `does not update when NS ID is same`() {
+    fun `does not update when NS ID is same`() = runBlocking {
         val sameNsId = "same-ns"
         val current = createTemporaryBasal(id = 1, nsId = sameNsId)
         val update = createTemporaryBasal(id = 1, nsId = sameNsId)
@@ -61,7 +62,7 @@ class UpdateNsIdTemporaryBasalTransactionTest {
     }
 
     @Test
-    fun `skips when temporary basal not found`() {
+    fun `skips when temporary basal not found`() = runBlocking {
         val update = createTemporaryBasal(id = 999, nsId = "new-ns")
 
         whenever(temporaryBasalDao.findById(999)).thenReturn(null)

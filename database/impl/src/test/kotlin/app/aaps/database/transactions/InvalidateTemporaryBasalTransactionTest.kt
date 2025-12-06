@@ -12,6 +12,7 @@ import org.mockito.Mockito.verify
 import org.mockito.kotlin.any
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
+import kotlinx.coroutines.runBlocking
 
 class InvalidateTemporaryBasalTransactionTest {
 
@@ -26,7 +27,7 @@ class InvalidateTemporaryBasalTransactionTest {
     }
 
     @Test
-    fun `invalidates valid temporary basal`() {
+    fun `invalidates valid temporary basal`() = runBlocking {
         val tb = createTemporaryBasal(id = 1, isValid = true)
 
         whenever(temporaryBasalDao.findById(1)).thenReturn(tb)
@@ -42,7 +43,7 @@ class InvalidateTemporaryBasalTransactionTest {
     }
 
     @Test
-    fun `does not update already invalid temporary basal`() {
+    fun `does not update already invalid temporary basal`() = runBlocking {
         val tb = createTemporaryBasal(id = 1, isValid = false)
 
         whenever(temporaryBasalDao.findById(1)).thenReturn(tb)
@@ -57,7 +58,7 @@ class InvalidateTemporaryBasalTransactionTest {
     }
 
     @Test
-    fun `throws exception when temporary basal not found`() {
+    fun `throws exception when temporary basal not found`() = runBlocking {
         whenever(temporaryBasalDao.findById(999)).thenReturn(null)
 
         val transaction = InvalidateTemporaryBasalTransaction(id = 999)

@@ -14,6 +14,7 @@ import org.mockito.Mockito.verify
 import org.mockito.kotlin.any
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
+import kotlinx.coroutines.runBlocking
 
 class SyncPumpCancelExtendedBolusIfAnyTransactionTest {
 
@@ -28,13 +29,13 @@ class SyncPumpCancelExtendedBolusIfAnyTransactionTest {
     }
 
     @Test
-    fun `cancels running extended bolus with proportional amount`() {
+    fun `cancels running extended bolus with proportional amount`() = runBlocking {
         val timestamp = 31_000L
         val endPumpId = 200L
         val running = createExtendedBolus(timestamp = 1000L, duration = 60_000L, amount = 6.0, endId = null)
 
         whenever(extendedBolusDao.findByPumpEndIds(200L, InterfaceIDs.PumpType.DANA_I, "ABC123")).thenReturn(null)
-        whenever(extendedBolusDao.getExtendedBolusActiveAt(31_000L)).thenReturn(Maybe.just(running))
+        whenever(extendedBolusDao.getExtendedBolusActiveAt(31_000L)).thenReturn(running)
 
         val transaction = SyncPumpCancelExtendedBolusIfAnyTransaction(
             timestamp, endPumpId, InterfaceIDs.PumpType.DANA_I, "ABC123"
@@ -52,7 +53,7 @@ class SyncPumpCancelExtendedBolusIfAnyTransactionTest {
     }
 
     @Test
-    fun `does not cancel if already cancelled by end id`() {
+    fun `does not cancel if already cancelled by end id`() = runBlocking {
         val timestamp = 31_000L
         val endPumpId = 200L
 
@@ -72,12 +73,12 @@ class SyncPumpCancelExtendedBolusIfAnyTransactionTest {
     }
 
     @Test
-    fun `does not cancel if no running extended bolus`() {
+    fun `does not cancel if no running extended bolus`() = runBlocking {
         val timestamp = 31_000L
         val endPumpId = 200L
 
         whenever(extendedBolusDao.findByPumpEndIds(200L, InterfaceIDs.PumpType.DANA_I, "ABC123")).thenReturn(null)
-        whenever(extendedBolusDao.getExtendedBolusActiveAt(31_000L)).thenReturn(Maybe.empty())
+        whenever(extendedBolusDao.getExtendedBolusActiveAt(31_000L)).thenReturn(null)
 
         val transaction = SyncPumpCancelExtendedBolusIfAnyTransaction(
             timestamp, endPumpId, InterfaceIDs.PumpType.DANA_I, "ABC123"
@@ -91,13 +92,13 @@ class SyncPumpCancelExtendedBolusIfAnyTransactionTest {
     }
 
     @Test
-    fun `does not cancel if running already has end id`() {
+    fun `does not cancel if running already has end id`() = runBlocking {
         val timestamp = 31_000L
         val endPumpId = 200L
         val running = createExtendedBolus(timestamp = 1000L, duration = 60_000L, amount = 6.0, endId = 150L)
 
         whenever(extendedBolusDao.findByPumpEndIds(200L, InterfaceIDs.PumpType.DANA_I, "ABC123")).thenReturn(null)
-        whenever(extendedBolusDao.getExtendedBolusActiveAt(31_000L)).thenReturn(Maybe.just(running))
+        whenever(extendedBolusDao.getExtendedBolusActiveAt(31_000L)).thenReturn(running)
 
         val transaction = SyncPumpCancelExtendedBolusIfAnyTransaction(
             timestamp, endPumpId, InterfaceIDs.PumpType.DANA_I, "ABC123"

@@ -12,6 +12,7 @@ import org.mockito.Mockito.verify
 import org.mockito.kotlin.any
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
+import kotlinx.coroutines.runBlocking
 
 class UpdateNsIdDeviceStatusTransactionTest {
 
@@ -26,7 +27,7 @@ class UpdateNsIdDeviceStatusTransactionTest {
     }
 
     @Test
-    fun `updates NS ID when different`() {
+    fun `updates NS ID when different`() = runBlocking {
         val newNsId = "new-ns-123"
         val current = createDeviceStatus(id = 1, nsId = "old-ns")
         val update = createDeviceStatus(id = 1, nsId = newNsId)
@@ -44,7 +45,7 @@ class UpdateNsIdDeviceStatusTransactionTest {
     }
 
     @Test
-    fun `does not update when NS ID is same`() {
+    fun `does not update when NS ID is same`() = runBlocking {
         val sameNsId = "same-ns"
         val current = createDeviceStatus(id = 1, nsId = sameNsId)
         val update = createDeviceStatus(id = 1, nsId = sameNsId)
@@ -61,7 +62,7 @@ class UpdateNsIdDeviceStatusTransactionTest {
     }
 
     @Test
-    fun `skips when device status not found`() {
+    fun `skips when device status not found`() = runBlocking {
         val update = createDeviceStatus(id = 999, nsId = "new-ns")
 
         whenever(deviceStatusDao.findById(999)).thenReturn(null)

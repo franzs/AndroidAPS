@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test
 import org.mockito.Mockito.verify
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
+import kotlinx.coroutines.runBlocking
 
 class SyncNsBolusCalculatorResultTransactionTest {
 
@@ -24,7 +25,7 @@ class SyncNsBolusCalculatorResultTransactionTest {
     }
 
     @Test
-    fun `inserts new when nsId not found and no timestamp match`() {
+    fun `inserts new when nsId not found and no timestamp match`() = runBlocking {
         val bcr = createBolusCalculatorResult(id = 0, nsId = "ns-123", timestamp = 1000L)
 
         whenever(bolusCalculatorResultDao.findByNSId("ns-123")).thenReturn(null)
@@ -42,7 +43,7 @@ class SyncNsBolusCalculatorResultTransactionTest {
     }
 
     @Test
-    fun `updates nsId when timestamp matches but nsId is null`() {
+    fun `updates nsId when timestamp matches but nsId is null`() = runBlocking {
         val bcr = createBolusCalculatorResult(id = 0, nsId = "ns-123", timestamp = 1000L)
         val existing = createBolusCalculatorResult(id = 1, nsId = null, timestamp = 1000L)
 
@@ -60,7 +61,7 @@ class SyncNsBolusCalculatorResultTransactionTest {
     }
 
     @Test
-    fun `invalidates when valid becomes invalid`() {
+    fun `invalidates when valid becomes invalid`() = runBlocking {
         val bcr = createBolusCalculatorResult(id = 0, nsId = "ns-123", isValid = false)
         val existing = createBolusCalculatorResult(id = 1, nsId = "ns-123", isValid = true)
 

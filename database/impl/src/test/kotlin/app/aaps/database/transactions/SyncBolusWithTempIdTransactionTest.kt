@@ -12,6 +12,7 @@ import org.mockito.Mockito.verify
 import org.mockito.kotlin.any
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
+import kotlinx.coroutines.runBlocking
 
 class SyncBolusWithTempIdTransactionTest {
 
@@ -26,7 +27,7 @@ class SyncBolusWithTempIdTransactionTest {
     }
 
     @Test
-    fun `updates existing bolus when found by temp id`() {
+    fun `updates existing bolus when found by temp id`() = runBlocking {
         val bolus = createBolus(tempId = 500L, pumpId = 100L, amount = 7.0, timestamp = 2000L)
         val existing = createBolus(tempId = 500L, pumpId = null, amount = 5.0, timestamp = 1000L)
 
@@ -45,7 +46,7 @@ class SyncBolusWithTempIdTransactionTest {
     }
 
     @Test
-    fun `does not update when not found by temp id`() {
+    fun `does not update when not found by temp id`() = runBlocking {
         val bolus = createBolus(tempId = 500L, pumpId = 100L, amount = 7.0, timestamp = 2000L)
 
         whenever(bolusDao.findByPumpTempIds(500L, InterfaceIDs.PumpType.DANA_I, "ABC123")).thenReturn(null)
@@ -60,7 +61,7 @@ class SyncBolusWithTempIdTransactionTest {
     }
 
     @Test
-    fun `updates type when provided`() {
+    fun `updates type when provided`() = runBlocking {
         val bolus = createBolus(tempId = 500L, pumpId = 100L, amount = 5.0, timestamp = 1000L, type = Bolus.Type.NORMAL)
         val existing = createBolus(tempId = 500L, pumpId = null, amount = 5.0, timestamp = 1000L, type = Bolus.Type.NORMAL)
 

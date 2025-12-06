@@ -1741,7 +1741,7 @@ class PersistenceLayerImpl @Inject constructor(
 
     // HR
     override fun getHeartRatesFromTime(startTime: Long): List<HR> =
-        repository.getHeartRatesFromTime(startTime).asSequence().map { it.fromDb() }.toList()
+        repository.getHeartRatesFromTime(startTime).blockingGet().map { it.fromDb() }
 
     override fun getHeartRatesFromTimeToTime(startTime: Long, endTime: Long): List<HR> =
         repository.getHeartRatesFromTimeToTime(startTime, endTime)
@@ -1908,10 +1908,10 @@ class PersistenceLayerImpl @Inject constructor(
         repository.getStepsCountFromTime(from).map { list -> list.asSequence().map { it.fromDb() }.toList() }.blockingGet()
 
     override fun getStepsCountFromTimeToTime(startTime: Long, endTime: Long): List<SC> =
-        repository.getStepsCountFromTimeToTime(startTime, endTime).map { list -> list.asSequence().map { it.fromDb() }.toList() }.blockingGet()
+        repository.getStepsCountFromTimeToTime(startTime, endTime).map { it.fromDb() }
 
     override fun getLastStepsCountFromTimeToTime(startTime: Long, endTime: Long): SC? =
-        repository.getLastStepsCountFromTimeToTime(startTime, endTime).blockingGet()?.fromDb()
+        repository.getLastStepsCountFromTimeToTime(startTime, endTime)?.fromDb()
 
     override fun insertOrUpdateStepsCount(stepsCount: SC): Single<PersistenceLayer.TransactionResult<SC>> =
         repository.runTransactionForResult(InsertOrUpdateStepsCountTransaction(stepsCount.toDb()))

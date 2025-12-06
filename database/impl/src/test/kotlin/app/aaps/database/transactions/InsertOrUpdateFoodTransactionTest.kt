@@ -12,6 +12,7 @@ import org.mockito.Mockito.verify
 import org.mockito.kotlin.any
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
+import kotlinx.coroutines.runBlocking
 
 class InsertOrUpdateFoodTransactionTest {
 
@@ -26,7 +27,7 @@ class InsertOrUpdateFoodTransactionTest {
     }
 
     @Test
-    fun `inserts new food when id not found`() {
+    fun `inserts new food when id not found`() = runBlocking {
         val food = createFood(id = 1, name = "Apple", carbs = 15)
 
         whenever(foodDao.findById(1)).thenReturn(null)
@@ -44,7 +45,7 @@ class InsertOrUpdateFoodTransactionTest {
     }
 
     @Test
-    fun `updates existing food when id found`() {
+    fun `updates existing food when id found`() = runBlocking {
         val food = createFood(id = 1, name = "Apple", carbs = 20)
         val existing = createFood(id = 1, name = "Apple", carbs = 15)
 
@@ -63,7 +64,7 @@ class InsertOrUpdateFoodTransactionTest {
     }
 
     @Test
-    fun `updates food carbs value`() {
+    fun `updates food carbs value`() = runBlocking {
         val existing = createFood(id = 1, name = "Banana", carbs = 25)
         val updated = createFood(id = 1, name = "Banana", carbs = 30)
 
@@ -78,7 +79,7 @@ class InsertOrUpdateFoodTransactionTest {
     }
 
     @Test
-    fun `inserts invalid food`() {
+    fun `inserts invalid food`() = runBlocking {
         val food = createFood(id = 1, name = "Test", carbs = 10, isValid = false)
 
         whenever(foodDao.findById(1)).thenReturn(null)

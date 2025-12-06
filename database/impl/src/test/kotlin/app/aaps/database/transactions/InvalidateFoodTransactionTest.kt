@@ -12,6 +12,7 @@ import org.mockito.Mockito.verify
 import org.mockito.kotlin.any
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
+import kotlinx.coroutines.runBlocking
 
 class InvalidateFoodTransactionTest {
 
@@ -26,7 +27,7 @@ class InvalidateFoodTransactionTest {
     }
 
     @Test
-    fun `invalidates valid food`() {
+    fun `invalidates valid food`() = runBlocking {
         val food = createFood(id = 1, isValid = true)
 
         whenever(foodDao.findById(1)).thenReturn(food)
@@ -42,7 +43,7 @@ class InvalidateFoodTransactionTest {
     }
 
     @Test
-    fun `does not update already invalid food`() {
+    fun `does not update already invalid food`() = runBlocking {
         val food = createFood(id = 1, isValid = false)
 
         whenever(foodDao.findById(1)).thenReturn(food)
@@ -57,7 +58,7 @@ class InvalidateFoodTransactionTest {
     }
 
     @Test
-    fun `throws exception when food not found`() {
+    fun `throws exception when food not found`() = runBlocking {
         whenever(foodDao.findById(999)).thenReturn(null)
 
         val transaction = InvalidateFoodTransaction(id = 999)

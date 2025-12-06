@@ -13,6 +13,7 @@ import org.mockito.Mockito.verify
 import org.mockito.kotlin.any
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
+import kotlinx.coroutines.runBlocking
 
 class InvalidateTherapyEventTransactionTest {
 
@@ -27,7 +28,7 @@ class InvalidateTherapyEventTransactionTest {
     }
 
     @Test
-    fun `invalidates valid therapy event`() {
+    fun `invalidates valid therapy event`() = runBlocking {
         val event = createTherapyEvent(id = 1, isValid = true)
 
         whenever(therapyEventDao.findById(1)).thenReturn(event)
@@ -44,7 +45,7 @@ class InvalidateTherapyEventTransactionTest {
     }
 
     @Test
-    fun `does not update already invalid therapy event`() {
+    fun `does not update already invalid therapy event`() = runBlocking {
         val event = createTherapyEvent(id = 1, isValid = false)
 
         whenever(therapyEventDao.findById(1)).thenReturn(event)
@@ -60,7 +61,7 @@ class InvalidateTherapyEventTransactionTest {
     }
 
     @Test
-    fun `throws exception when therapy event not found`() {
+    fun `throws exception when therapy event not found`() = runBlocking {
         whenever(therapyEventDao.findById(999)).thenReturn(null)
 
         val transaction = InvalidateTherapyEventTransaction(id = 999)
@@ -75,7 +76,7 @@ class InvalidateTherapyEventTransactionTest {
     }
 
     @Test
-    fun `preserves event type when invalidating`() {
+    fun `preserves event type when invalidating`() = runBlocking {
         val type = TherapyEvent.Type.CANNULA_CHANGE
         val event = createTherapyEvent(id = 1, isValid = true, type = type)
 

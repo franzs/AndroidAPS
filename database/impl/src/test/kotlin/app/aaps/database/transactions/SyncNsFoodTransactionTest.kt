@@ -12,6 +12,7 @@ import org.mockito.Mockito.verify
 import org.mockito.kotlin.any
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
+import kotlinx.coroutines.runBlocking
 
 class SyncNsFoodTransactionTest {
 
@@ -26,7 +27,7 @@ class SyncNsFoodTransactionTest {
     }
 
     @Test
-    fun `inserts new food when nsId not found`() {
+    fun `inserts new food when nsId not found`() = runBlocking {
         val food = createFood(id = 0, nsId = "ns-123", name = "Apple", carbs = 15)
 
         whenever(foodDao.findByNSId("ns-123")).thenReturn(null)
@@ -44,7 +45,7 @@ class SyncNsFoodTransactionTest {
     }
 
     @Test
-    fun `updates food when content changes`() {
+    fun `updates food when content changes`() = runBlocking {
         val food = createFood(id = 0, nsId = "ns-123", name = "Apple", carbs = 20)
         val existing = createFood(id = 1, nsId = "ns-123", name = "Apple", carbs = 15)
 
@@ -64,7 +65,7 @@ class SyncNsFoodTransactionTest {
     }
 
     @Test
-    fun `invalidates food when valid becomes invalid`() {
+    fun `invalidates food when valid becomes invalid`() = runBlocking {
         val food = createFood(id = 0, nsId = "ns-123", name = "Apple", carbs = 15, isValid = false)
         val existing = createFood(id = 1, nsId = "ns-123", name = "Apple", carbs = 15, isValid = true)
 
@@ -83,7 +84,7 @@ class SyncNsFoodTransactionTest {
     }
 
     @Test
-    fun `does not update when content is same`() {
+    fun `does not update when content is same`() = runBlocking {
         val food = createFood(id = 0, nsId = "ns-123", name = "Apple", carbs = 15)
         val existing = createFood(id = 1, nsId = "ns-123", name = "Apple", carbs = 15)
 
@@ -102,7 +103,7 @@ class SyncNsFoodTransactionTest {
     }
 
     @Test
-    fun `handles multiple foods`() {
+    fun `handles multiple foods`() = runBlocking {
         val food1 = createFood(id = 0, nsId = "ns-1", name = "Apple", carbs = 15)
         val food2 = createFood(id = 0, nsId = "ns-2", name = "Banana", carbs = 25)
 

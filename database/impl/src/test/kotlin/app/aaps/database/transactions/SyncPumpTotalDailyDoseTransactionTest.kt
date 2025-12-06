@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test
 import org.mockito.Mockito.verify
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
+import kotlinx.coroutines.runBlocking
 
 class SyncPumpTotalDailyDoseTransactionTest {
 
@@ -24,7 +25,7 @@ class SyncPumpTotalDailyDoseTransactionTest {
     }
 
     @Test
-    fun `inserts new TDD when not found by pump id or timestamp`() {
+    fun `inserts new TDD when not found by pump id or timestamp`() = runBlocking {
         val tdd = createTotalDailyDose(pumpId = 100L, timestamp = 1000L, basalAmount = 10.0, bolusAmount = 15.0)
 
         whenever(totalDailyDoseDao.findByPumpIds(100L, InterfaceIDs.PumpType.DANA_I, "ABC123")).thenReturn(null)
@@ -41,7 +42,7 @@ class SyncPumpTotalDailyDoseTransactionTest {
     }
 
     @Test
-    fun `updates existing TDD when found by pump id`() {
+    fun `updates existing TDD when found by pump id`() = runBlocking {
         val tdd = createTotalDailyDose(pumpId = 100L, timestamp = 1000L, basalAmount = 12.0, bolusAmount = 18.0, totalAmount = 30.0)
         val existing = createTotalDailyDose(pumpId = 100L, timestamp = 1000L, basalAmount = 10.0, bolusAmount = 15.0, totalAmount = 25.0)
 
@@ -61,7 +62,7 @@ class SyncPumpTotalDailyDoseTransactionTest {
     }
 
     @Test
-    fun `updates existing TDD when found by timestamp but not pump id`() {
+    fun `updates existing TDD when found by timestamp but not pump id`() = runBlocking {
         val tdd = createTotalDailyDose(pumpId = null, timestamp = 1000L, basalAmount = 12.0, bolusAmount = 18.0)
         val existing = createTotalDailyDose(pumpId = 50L, timestamp = 1000L, basalAmount = 10.0, bolusAmount = 15.0)
 
@@ -80,7 +81,7 @@ class SyncPumpTotalDailyDoseTransactionTest {
     }
 
     @Test
-    fun `updates carbs in TDD`() {
+    fun `updates carbs in TDD`() = runBlocking {
         val tdd = createTotalDailyDose(pumpId = 100L, timestamp = 1000L, basalAmount = 10.0, bolusAmount = 15.0, carbs = 200.0)
         val existing = createTotalDailyDose(pumpId = 100L, timestamp = 1000L, basalAmount = 10.0, bolusAmount = 15.0, carbs = 150.0)
 
