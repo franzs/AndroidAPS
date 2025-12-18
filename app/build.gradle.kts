@@ -1,4 +1,3 @@
-import org.gradle.kotlin.dsl.debugImplementation
 import java.text.SimpleDateFormat
 import java.util.Date
 
@@ -202,6 +201,7 @@ dependencies {
     androidTestImplementation(project(":shared:tests"))
     androidTestImplementation(libs.androidx.test.rules)
     androidTestImplementation(libs.org.skyscreamer.jsonassert)
+    androidTestImplementation(libs.kotlinx.coroutines.test)
 
     debugImplementation(libs.com.squareup.leakcanary.android)
 

@@ -77,7 +77,7 @@ class TirCalculatorImpl @Inject constructor(
      * @return LongSparseArray mapping midnight timestamps to daily TIR statistics
      * @throws RuntimeException if lowMgdl < 39 or lowMgdl > highMgdl
      */
-    override fun calculate(days: Long, lowMgdl: Double, highMgdl: Double): LongSparseArray<TIR> {
+    override suspend fun calculate(days: Long, lowMgdl: Double, highMgdl: Double): LongSparseArray<TIR> {
         if (lowMgdl < 39) throw RuntimeException("Low below 39")
         if (lowMgdl > highMgdl) throw RuntimeException("Low > High")
         val startTime = MidnightTime.calcDaysBack(days)

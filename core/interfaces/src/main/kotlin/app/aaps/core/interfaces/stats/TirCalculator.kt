@@ -48,7 +48,7 @@ interface TirCalculator {
      * @return LongSparseArray mapping midnight timestamps to daily TIR statistics
      * @throws RuntimeException if lowMgdl < 39 or lowMgdl > highMgdl
      */
-    fun calculate(days: Long, lowMgdl: Double, highMgdl: Double): LongSparseArray<TIR>
+    suspend fun calculate(days: Long, lowMgdl: Double, highMgdl: Double): LongSparseArray<TIR>
 
     /**
      * Calculates average TIR across multiple days.

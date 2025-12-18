@@ -46,7 +46,10 @@ import app.aaps.shared.tests.TestBaseWithProfile
 import com.google.common.truth.Truth.assertThat
 import com.google.common.util.concurrent.ListenableFuture
 import dagger.android.HasAndroidInjector
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.ArgumentMatchers.anyLong
@@ -71,6 +74,8 @@ class CommandQueueImplementationTest : TestBaseWithProfile() {
     @Mock lateinit var workManager: WorkManager
     @Mock lateinit var infos: ListenableFuture<List<WorkInfo>>
 
+    private val testScope = CoroutineScope(Dispatchers.Unconfined)
+
     class CommandQueueMocked(
         injector: HasAndroidInjector,
         aapsLogger: AAPSLogger,
@@ -89,11 +94,12 @@ class CommandQueueImplementationTest : TestBaseWithProfile() {
         decimalFormatter: DecimalFormatter,
         pumpEnactResultProvider: Provider<PumpEnactResult>,
         jobName: CommandQueueName,
-        workManager: WorkManager
+        workManager: WorkManager,
+        appScope: CoroutineScope
     ) : CommandQueueImplementation(
         injector, aapsLogger, rxBus, aapsSchedulers, rh, constraintChecker, profileFunction,
         activePlugin, context, config, dateUtil, fabricPrivacy,
-        uiInteraction, persistenceLayer, decimalFormatter, pumpEnactResultProvider, jobName, workManager
+        uiInteraction, persistenceLayer, decimalFormatter, pumpEnactResultProvider, jobName, workManager, appScope
     ) {
 
         override fun notifyAboutNewCommand(): Boolean = true
@@ -186,46 +192,48 @@ class CommandQueueImplementationTest : TestBaseWithProfile() {
 
     @BeforeEach
     fun prepare() {
-        commandQueue = CommandQueueMocked(
-            injector, aapsLogger, rxBus, aapsSchedulers, rh, constraintChecker, profileFunction, activePlugin, context,
-            config, dateUtil, fabricPrivacy, uiInteraction, persistenceLayer, decimalFormatter, pumpEnactResultProvider, jobName, workManager
-        )
-        testPumpPlugin.pumpDescription.basalMinimumRate = 0.1
-        testPumpPlugin.connected = true
-
-        whenever(context.getSystemService(Context.POWER_SERVICE)).thenReturn(powerManager)
-        whenever(activePlugin.activePump).thenReturn(testPumpPlugin)
-        whenever(persistenceLayer.getEffectiveProfileSwitchActiveAt(anyLong())).thenReturn(effectiveProfileSwitch)
-        whenever(persistenceLayer.getNewestBolus()).thenReturn(
-            BS(
-                timestamp = Calendar.getInstance().also { it.set(2000, 0, 1) }.timeInMillis,
-                type = BS.Type.NORMAL,
-                amount = 0.0
+        runTest {
+            commandQueue = CommandQueueMocked(
+                injector, aapsLogger, rxBus, aapsSchedulers, rh, constraintChecker, profileFunction, activePlugin, context,
+                config, dateUtil, fabricPrivacy, uiInteraction, persistenceLayer, decimalFormatter, pumpEnactResultProvider, jobName, workManager, testScope
             )
-        )
-        whenever(profileFunction.getProfile()).thenReturn(validProfile)
+            testPumpPlugin.pumpDescription.basalMinimumRate = 0.1
+            testPumpPlugin.connected = true
 
-        val bolusConstraint = ConstraintObject(0.0, aapsLogger)
-        whenever(constraintChecker.applyBolusConstraints(anyOrNull())).thenReturn(bolusConstraint)
-        whenever(constraintChecker.applyExtendedBolusConstraints(anyOrNull())).thenReturn(bolusConstraint)
-        val carbsConstraint = ConstraintObject(0, aapsLogger)
-        whenever(constraintChecker.applyCarbsConstraints(anyOrNull())).thenReturn(carbsConstraint)
-        val rateConstraint = ConstraintObject(0.0, aapsLogger)
-        whenever(constraintChecker.applyBasalConstraints(anyOrNull(), anyOrNull())).thenReturn(rateConstraint)
-        val percentageConstraint = ConstraintObject(0, aapsLogger)
-        whenever(constraintChecker.applyBasalPercentConstraints(anyOrNull(), anyOrNull())).thenReturn(percentageConstraint)
-        whenever(rh.gs(app.aaps.core.ui.R.string.connectiontimedout)).thenReturn("Connection timed out")
-        whenever(rh.gs(app.aaps.core.ui.R.string.format_insulin_units)).thenReturn("%1\$.2f U")
-        whenever(rh.gs(app.aaps.core.ui.R.string.goingtodeliver)).thenReturn("Going to deliver %1\$.2f U")
-        whenever(workManager.getWorkInfosForUniqueWork(anyOrNull())).thenReturn(infos)
-        doAnswer { invocation: InvocationOnMock ->
-            Thread {
-                val work = TestListenableWorkerBuilder<QueueWorker>(context).build()
-                runBlocking { work.doWorkAndLog() }
-            }.start()
-            null
-        }.whenever(workManager).enqueueUniqueWork(anyOrNull(), anyOrNull(), any<OneTimeWorkRequest>())
-        whenever(infos.get()).thenReturn(emptyList())
+            whenever(context.getSystemService(Context.POWER_SERVICE)).thenReturn(powerManager)
+            whenever(activePlugin.activePump).thenReturn(testPumpPlugin)
+            whenever(persistenceLayer.getEffectiveProfileSwitchActiveAt(anyLong())).thenReturn(effectiveProfileSwitch)
+            whenever(persistenceLayer.getNewestBolus()).thenReturn(
+                BS(
+                    timestamp = Calendar.getInstance().also { it.set(2000, 0, 1) }.timeInMillis,
+                    type = BS.Type.NORMAL,
+                    amount = 0.0
+                )
+            )
+            whenever(profileFunction.getProfile()).thenReturn(validProfile)
+
+            val bolusConstraint = ConstraintObject(0.0, aapsLogger)
+            whenever(constraintChecker.applyBolusConstraints(anyOrNull())).thenReturn(bolusConstraint)
+            whenever(constraintChecker.applyExtendedBolusConstraints(anyOrNull())).thenReturn(bolusConstraint)
+            val carbsConstraint = ConstraintObject(0, aapsLogger)
+            whenever(constraintChecker.applyCarbsConstraints(anyOrNull())).thenReturn(carbsConstraint)
+            val rateConstraint = ConstraintObject(0.0, aapsLogger)
+            whenever(constraintChecker.applyBasalConstraints(anyOrNull(), anyOrNull())).thenReturn(rateConstraint)
+            val percentageConstraint = ConstraintObject(0, aapsLogger)
+            whenever(constraintChecker.applyBasalPercentConstraints(anyOrNull(), anyOrNull())).thenReturn(percentageConstraint)
+            whenever(rh.gs(app.aaps.core.ui.R.string.connectiontimedout)).thenReturn("Connection timed out")
+            whenever(rh.gs(app.aaps.core.ui.R.string.format_insulin_units)).thenReturn("%1\$.2f U")
+            whenever(rh.gs(app.aaps.core.ui.R.string.goingtodeliver)).thenReturn("Going to deliver %1\$.2f U")
+            whenever(workManager.getWorkInfosForUniqueWork(anyOrNull())).thenReturn(infos)
+            doAnswer { invocation: InvocationOnMock ->
+                CoroutineScope(Dispatchers.IO).launch {
+                    val work = TestListenableWorkerBuilder<QueueWorker>(context).build()
+                    work.doWorkAndLog()
+                }
+                null
+            }.whenever(workManager).enqueueUniqueWork(anyOrNull(), anyOrNull(), any<OneTimeWorkRequest>())
+            whenever(infos.get()).thenReturn(emptyList())
+        }
     }
 
     @Test
@@ -233,7 +241,7 @@ class CommandQueueImplementationTest : TestBaseWithProfile() {
         commandQueue = CommandQueueImplementation(
             injector, aapsLogger, rxBus, aapsSchedulers, rh,
             constraintChecker, profileFunction, activePlugin, context,
-            config, dateUtil, fabricPrivacy, uiInteraction, persistenceLayer, decimalFormatter, pumpEnactResultProvider, jobName, workManager
+            config, dateUtil, fabricPrivacy, uiInteraction, persistenceLayer, decimalFormatter, pumpEnactResultProvider, jobName, workManager, testScope
         )
         val handler: Handler = mock()
         whenever(handler.post(anyOrNull())).thenAnswer { invocation: InvocationOnMock ->

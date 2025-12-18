@@ -26,6 +26,7 @@ import app.aaps.core.interfaces.utils.fabric.FabricPrivacy
 import app.aaps.core.keys.interfaces.Preferences
 import app.aaps.plugins.source.keys.IntelligoLongKey
 import io.reactivex.rxjava3.disposables.CompositeDisposable
+import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -146,8 +147,7 @@ class IntelligoPlugin @Inject constructor(
             cr.close()
 
             if (glucoseValues.isNotEmpty() || calibrations.isNotEmpty())
-                persistenceLayer.insertCgmSourceData(Sources.Intelligo, glucoseValues, calibrations, null)
-                    .blockingGet()
+                runBlocking { persistenceLayer.insertCgmSourceData(Sources.Intelligo, glucoseValues, calibrations, null) }
         }
     }
 

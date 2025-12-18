@@ -19,6 +19,7 @@ import app.aaps.ui.compose.ToolbarConfig
 import app.aaps.ui.compose.TreatmentScreenToolbar
 import app.aaps.ui.viewmodels.TreatmentConstants.TREATMENT_HISTORY_DAYS
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -27,6 +28,7 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
@@ -92,6 +94,7 @@ class TempTargetViewModel @Inject constructor(
     /**
      * Subscribe to temp target change events using Flow
      */
+    @OptIn(FlowPreview::class)
     private fun observeTempTargetChanges() {
         persistenceLayer
             .observeChanges<TT>()
@@ -157,7 +160,7 @@ class TempTargetViewModel @Inject constructor(
      * Get currently active temporary target
      */
     fun getActiveTarget(): TT? {
-        return persistenceLayer.getTemporaryTargetActiveAt(dateUtil.now())
+        return runBlocking { persistenceLayer.getTemporaryTargetActiveAt(dateUtil.now()) }
     }
 
     /**
@@ -185,19 +188,21 @@ class TempTargetViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 selected.forEach { tt ->
-                    persistenceLayer.invalidateTemporaryTarget(
-                        id = tt.id,
-                        action = Action.TT_REMOVED,
-                        source = Sources.Treatments,
-                        note = null,
-                        listValues = listOfNotNull(
-                            ValueWithUnit.Timestamp(tt.timestamp),
-                            ValueWithUnit.TETTReason(tt.reason),
-                            ValueWithUnit.Mgdl(tt.lowTarget),
-                            ValueWithUnit.Mgdl(tt.highTarget).takeIf { tt.lowTarget != tt.highTarget },
-                            ValueWithUnit.Minute(TimeUnit.MILLISECONDS.toMinutes(tt.duration).toInt())
+                    runBlocking {
+                        persistenceLayer.invalidateTemporaryTarget(
+                            id = tt.id,
+                            action = Action.TT_REMOVED,
+                            source = Sources.Treatments,
+                            note = null,
+                            listValues = listOfNotNull(
+                                ValueWithUnit.Timestamp(tt.timestamp),
+                                ValueWithUnit.TETTReason(tt.reason),
+                                ValueWithUnit.Mgdl(tt.lowTarget),
+                                ValueWithUnit.Mgdl(tt.highTarget).takeIf { tt.lowTarget != tt.highTarget },
+                                ValueWithUnit.Minute(TimeUnit.MILLISECONDS.toMinutes(tt.duration).toInt())
+                            )
                         )
-                    ).blockingGet()
+                    }
                 }
                 exitSelectionMode()
                 loadData()

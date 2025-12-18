@@ -8,6 +8,8 @@ import app.aaps.core.interfaces.queue.CommandQueue
 import app.aaps.core.keys.StringKey
 import app.aaps.shared.tests.TestBaseWithProfile
 import com.google.common.truth.Truth.assertThat
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.Mock
@@ -21,12 +23,13 @@ class VirtualPumpPluginTest : TestBaseWithProfile() {
     @Mock lateinit var persistenceLayer: PersistenceLayer
 
     private lateinit var virtualPumpPlugin: VirtualPumpPlugin
+    private val testScope = CoroutineScope(Dispatchers.Unconfined)
 
     @BeforeEach
     fun prepareMocks() {
         virtualPumpPlugin = VirtualPumpPlugin(
             aapsLogger, rxBus, fabricPrivacy, rh, aapsSchedulers, preferences, profileFunction,
-            commandQueue, pumpSync, config, dateUtil, processedDeviceStatusData, persistenceLayer, pumpEnactResultProvider
+            commandQueue, pumpSync, config, dateUtil, processedDeviceStatusData, persistenceLayer, pumpEnactResultProvider, testScope
         )
     }
 

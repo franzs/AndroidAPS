@@ -7,6 +7,7 @@ import app.aaps.database.entities.data.GlucoseUnit
 import app.aaps.database.entities.embedments.InsulinConfiguration
 import app.aaps.database.entities.embedments.InterfaceIDs
 import com.google.common.truth.Truth.assertThat
+import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.never
@@ -14,7 +15,6 @@ import org.mockito.Mockito.verify
 import org.mockito.kotlin.any
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
-import kotlinx.coroutines.runBlocking
 
 class UpdateNsIdProfileSwitchTransactionTest {
 
@@ -29,7 +29,7 @@ class UpdateNsIdProfileSwitchTransactionTest {
     }
 
     @Test
-    fun `updates NS ID when different`() = runBlocking {
+    fun `updates NS ID when different`() = runTest {
         val newNsId = "new-ns-123"
         val current = createProfileSwitch(id = 1, nsId = "old-ns")
         val update = createProfileSwitch(id = 1, nsId = newNsId)
@@ -47,7 +47,7 @@ class UpdateNsIdProfileSwitchTransactionTest {
     }
 
     @Test
-    fun `does not update when NS ID is same`() = runBlocking {
+    fun `does not update when NS ID is same`() = runTest {
         val sameNsId = "same-ns"
         val current = createProfileSwitch(id = 1, nsId = sameNsId)
         val update = createProfileSwitch(id = 1, nsId = sameNsId)
@@ -64,7 +64,7 @@ class UpdateNsIdProfileSwitchTransactionTest {
     }
 
     @Test
-    fun `skips when profile switch not found`() = runBlocking {
+    fun `skips when profile switch not found`() = runTest {
         val update = createProfileSwitch(id = 999, nsId = "new-ns")
 
         whenever(profileSwitchDao.findById(999)).thenReturn(null)

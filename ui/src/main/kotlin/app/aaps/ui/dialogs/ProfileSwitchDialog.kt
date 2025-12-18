@@ -8,6 +8,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
+import androidx.lifecycle.lifecycleScope
 import app.aaps.core.data.configuration.Constants
 import app.aaps.core.data.model.TT
 import app.aaps.core.data.time.T
@@ -34,8 +35,7 @@ import app.aaps.core.ui.toast.ToastUtils
 import app.aaps.ui.R
 import app.aaps.ui.databinding.DialogProfileswitchBinding
 import com.google.common.base.Joiner
-import io.reactivex.rxjava3.disposables.CompositeDisposable
-import io.reactivex.rxjava3.kotlin.plusAssign
+import kotlinx.coroutines.launch
 import java.text.DecimalFormat
 import java.util.LinkedList
 import java.util.concurrent.TimeUnit
@@ -58,7 +58,6 @@ class ProfileSwitchDialog : DialogFragmentWithDate() {
 
     private var queryingProtection = false
     private var profileName: String? = null
-    private val disposable = CompositeDisposable()
     private var _binding: DialogProfileswitchBinding? = null
 
     // This property is only valid between onCreateView and onDestroyView.
@@ -159,7 +158,6 @@ class ProfileSwitchDialog : DialogFragmentWithDate() {
 
     override fun onDestroyView() {
         super.onDestroyView()
-        disposable.clear()
         _binding = null
     }
 
@@ -221,24 +219,26 @@ class ProfileSwitchDialog : DialogFragmentWithDate() {
                     ) {
                         if (percent == 90 && duration == 10) preferences.put(BooleanNonKey.ObjectivesProfileSwitchUsed, true)
                         if (isTT) {
-                            disposable += persistenceLayer.insertAndCancelCurrentTemporaryTarget(
-                                TT(
-                                    timestamp = eventTime + 10000, // Add ten secs for proper NSCv1 sync
-                                    duration = TimeUnit.MINUTES.toMillis(duration.toLong()),
-                                    reason = TT.Reason.ACTIVITY,
-                                    lowTarget = profileUtil.convertToMgdl(target, profileFunction.getUnits()),
-                                    highTarget = profileUtil.convertToMgdl(target, profileFunction.getUnits())
-                                ),
-                                action = Action.TT,
-                                source = Sources.TTDialog,
-                                note = null,
-                                listValues = listOfNotNull(
-                                    ValueWithUnit.Timestamp(eventTime).takeIf { eventTimeChanged },
-                                    ValueWithUnit.TETTReason(TT.Reason.ACTIVITY),
-                                    ValueWithUnit.fromGlucoseUnit(target, units),
-                                    ValueWithUnit.Minute(duration)
+                            lifecycleScope.launch {
+                                persistenceLayer.insertAndCancelCurrentTemporaryTarget(
+                                    TT(
+                                        timestamp = eventTime + 10000, // Add ten secs for proper NSCv1 sync
+                                        duration = TimeUnit.MINUTES.toMillis(duration.toLong()),
+                                        reason = TT.Reason.ACTIVITY,
+                                        lowTarget = profileUtil.convertToMgdl(target, profileFunction.getUnits()),
+                                        highTarget = profileUtil.convertToMgdl(target, profileFunction.getUnits())
+                                    ),
+                                    action = Action.TT,
+                                    source = Sources.TTDialog,
+                                    note = null,
+                                    listValues = listOfNotNull(
+                                        ValueWithUnit.Timestamp(eventTime).takeIf { eventTimeChanged },
+                                        ValueWithUnit.TETTReason(TT.Reason.ACTIVITY),
+                                        ValueWithUnit.fromGlucoseUnit(target, units),
+                                        ValueWithUnit.Minute(duration)
+                                    )
                                 )
-                            ).subscribe()
+                            }
                         }
                     }
                 }

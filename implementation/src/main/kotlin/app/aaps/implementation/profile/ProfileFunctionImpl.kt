@@ -9,6 +9,7 @@ import app.aaps.core.data.ue.Sources
 import app.aaps.core.data.ue.ValueWithUnit
 import app.aaps.core.interfaces.configuration.Config
 import app.aaps.core.interfaces.db.PersistenceLayer
+import app.aaps.core.interfaces.di.ApplicationScope
 import app.aaps.core.interfaces.logging.AAPSLogger
 import app.aaps.core.interfaces.nsclient.ProcessedDeviceStatusData
 import app.aaps.core.interfaces.plugin.ActivePlugin
@@ -27,6 +28,9 @@ import app.aaps.core.keys.interfaces.Preferences
 import app.aaps.core.objects.profile.ProfileSealed
 import io.reactivex.rxjava3.disposables.CompositeDisposable
 import io.reactivex.rxjava3.kotlin.plusAssign
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -44,7 +48,8 @@ class ProfileFunctionImpl @Inject constructor(
     private val hardLimits: HardLimits,
     aapsSchedulers: AapsSchedulers,
     private val fabricPrivacy: FabricPrivacy,
-    private val processedDeviceStatusData: ProcessedDeviceStatusData
+    private val processedDeviceStatusData: ProcessedDeviceStatusData,
+    @ApplicationScope private val appScope: CoroutineScope
 ) : ProfileFunction {
 
     @VisibleForTesting
@@ -75,7 +80,7 @@ class ProfileFunctionImpl @Inject constructor(
     private fun getProfileName(time: Long, customized: Boolean, showRemainingTime: Boolean): String {
         var profileName = rh.gs(app.aaps.core.ui.R.string.no_profile_set)
 
-        val profileSwitch = persistenceLayer.getEffectiveProfileSwitchActiveAt(time)
+        val profileSwitch = runBlocking { persistenceLayer.getEffectiveProfileSwitchActiveAt(time) }
         if (profileSwitch != null) {
             profileName = if (customized) profileSwitch.originalCustomizedName else profileSwitch.originalProfileName
             if (showRemainingTime && profileSwitch.originalDuration != 0L) {
@@ -102,7 +107,7 @@ class ProfileFunctionImpl @Inject constructor(
                 return cache[rounded]
             }
         }
-        val ps = persistenceLayer.getEffectiveProfileSwitchActiveAt(time)
+        val ps = runBlocking { persistenceLayer.getEffectiveProfileSwitchActiveAt(time) }
         if (ps != null) {
             val sealed = ProfileSealed.EPS(ps, activePlugin)
             synchronized(cache) {
@@ -133,7 +138,7 @@ class ProfileFunctionImpl @Inject constructor(
         return null
     }
 
-    override fun getRequestedProfile(): PS? = persistenceLayer.getProfileSwitchActiveAt(dateUtil.now())
+    override fun getRequestedProfile(): PS? = runBlocking { persistenceLayer.getProfileSwitchActiveAt(dateUtil.now()) }
 
     override fun isProfileChangePending(): Boolean {
         val requested = getRequestedProfile() ?: return false
@@ -169,7 +174,7 @@ class ProfileFunctionImpl @Inject constructor(
         action: Action, source: Sources, note: String?, listValues: List<ValueWithUnit>
     ): Boolean {
         val ps = buildProfileSwitch(profileStore, profileName, durationInMinutes, percentage, timeShiftInHours, timestamp) ?: return false
-        disposable += persistenceLayer.insertOrUpdateProfileSwitch(ps, action, source, note, listValues).subscribe()
+        appScope.launch { persistenceLayer.insertOrUpdateProfileSwitch(ps, action, source, note, listValues) }
         return true
     }
 
@@ -177,7 +182,7 @@ class ProfileFunctionImpl @Inject constructor(
         durationInMinutes: Int, percentage: Int, timeShiftInHours: Int,
         action: Action, source: Sources, note: String?, listValues: List<ValueWithUnit>
     ): Boolean {
-        val profile = persistenceLayer.getPermanentProfileSwitchActiveAt(dateUtil.now()) ?: return false
+        val profile = runBlocking { persistenceLayer.getPermanentProfileSwitchActiveAt(dateUtil.now()) } ?: return false
         val profileStore = activePlugin.activeProfileSource.profile ?: return false
         val ps = buildProfileSwitch(profileStore, profile.profileName, durationInMinutes, percentage, timeShiftInHours, dateUtil.now()) ?: return false
         val validity = ProfileSealed.PS(ps, activePlugin).isValid(
@@ -190,7 +195,7 @@ class ProfileFunctionImpl @Inject constructor(
             false
         )
         if (validity.isValid) {
-            disposable += persistenceLayer.insertOrUpdateProfileSwitch(ps, action, source, note, listValues).subscribe()
+            appScope.launch { persistenceLayer.insertOrUpdateProfileSwitch(ps, action, source, note, listValues) }
             return true
         }
         return false

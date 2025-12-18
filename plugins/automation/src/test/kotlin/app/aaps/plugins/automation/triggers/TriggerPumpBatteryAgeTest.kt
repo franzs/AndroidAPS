@@ -7,6 +7,7 @@ import app.aaps.core.data.time.T
 import app.aaps.plugins.automation.elements.Comparator
 import app.aaps.pump.virtual.VirtualPumpPlugin
 import com.google.common.truth.Truth.assertThat
+import kotlinx.coroutines.test.runTest
 import org.json.JSONObject
 import org.junit.jupiter.api.Test
 import org.mockito.Mock
@@ -18,7 +19,7 @@ class TriggerPumpBatteryAgeTest : TriggerTestBase() {
 
     @Mock lateinit var virtualPumpPlugin: VirtualPumpPlugin
 
-    @Test fun shouldRunTest() {
+    @Test fun shouldRunTest() = runTest {
         val pumpBatteryChangeEvent = TE(glucoseUnit = GlucoseUnit.MGDL, timestamp = now - T.hours(6).msecs(), type = TE.Type.PUMP_BATTERY_CHANGE)
         whenever(persistenceLayer.getLastTherapyRecordUpToNow(TE.Type.PUMP_BATTERY_CHANGE)).thenReturn(pumpBatteryChangeEvent)
         var t: TriggerPumpBatteryAge = TriggerPumpBatteryAge(injector).setValue(1.0).comparator(Comparator.Compare.IS_EQUAL)
@@ -39,7 +40,7 @@ class TriggerPumpBatteryAgeTest : TriggerTestBase() {
         assertThat(t.shouldRun()).isFalse()
     }
 
-    @Test fun shouldRunNotAvailable() {
+    @Test fun shouldRunNotAvailable() = runTest {
         whenever(persistenceLayer.getLastTherapyRecordUpToNow(TE.Type.PUMP_BATTERY_CHANGE)).thenReturn(null)
         var t = TriggerPumpBatteryAge(injector).apply { comparator.value = Comparator.Compare.IS_NOT_AVAILABLE }
         assertThat(t.shouldRun()).isTrue()
@@ -47,7 +48,7 @@ class TriggerPumpBatteryAgeTest : TriggerTestBase() {
         assertThat(t.shouldRun()).isFalse()
     }
 
-    @Test fun shouldRunBatteryAgeSupport() {
+    @Test fun shouldRunBatteryAgeSupport() = runTest {
         val pumpBatteryChangeEvent = TE(glucoseUnit = GlucoseUnit.MGDL, timestamp = now - T.hours(6).msecs(), type = TE.Type.PUMP_BATTERY_CHANGE)
         whenever(persistenceLayer.getLastTherapyRecordUpToNow(TE.Type.PUMP_BATTERY_CHANGE)).thenReturn(pumpBatteryChangeEvent)
         val t: TriggerPumpBatteryAge = TriggerPumpBatteryAge(injector).setValue(6.0).comparator(Comparator.Compare.IS_EQUAL)
@@ -87,7 +88,7 @@ class TriggerPumpBatteryAgeTest : TriggerTestBase() {
     }
 
     @Test fun iconTest() {
-        val t= TriggerPumpBatteryAge(injector)
+        val t = TriggerPumpBatteryAge(injector)
         assertThat(t.icon()).isEqualTo(Optional.of(app.aaps.core.objects.R.drawable.ic_cp_age_battery))
     }
 }

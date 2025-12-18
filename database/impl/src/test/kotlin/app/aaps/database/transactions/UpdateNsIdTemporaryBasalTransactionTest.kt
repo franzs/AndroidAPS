@@ -5,6 +5,7 @@ import app.aaps.database.daos.TemporaryBasalDao
 import app.aaps.database.entities.TemporaryBasal
 import app.aaps.database.entities.embedments.InterfaceIDs
 import com.google.common.truth.Truth.assertThat
+import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.never
@@ -12,7 +13,6 @@ import org.mockito.Mockito.verify
 import org.mockito.kotlin.any
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
-import kotlinx.coroutines.runBlocking
 
 class UpdateNsIdTemporaryBasalTransactionTest {
 
@@ -27,7 +27,7 @@ class UpdateNsIdTemporaryBasalTransactionTest {
     }
 
     @Test
-    fun `updates NS ID when different`() = runBlocking {
+    fun `updates NS ID when different`() = runTest {
         val newNsId = "new-ns-123"
         val current = createTemporaryBasal(id = 1, nsId = "old-ns")
         val update = createTemporaryBasal(id = 1, nsId = newNsId)
@@ -45,7 +45,7 @@ class UpdateNsIdTemporaryBasalTransactionTest {
     }
 
     @Test
-    fun `does not update when NS ID is same`() = runBlocking {
+    fun `does not update when NS ID is same`() = runTest {
         val sameNsId = "same-ns"
         val current = createTemporaryBasal(id = 1, nsId = sameNsId)
         val update = createTemporaryBasal(id = 1, nsId = sameNsId)
@@ -62,7 +62,7 @@ class UpdateNsIdTemporaryBasalTransactionTest {
     }
 
     @Test
-    fun `skips when temporary basal not found`() = runBlocking {
+    fun `skips when temporary basal not found`() = runTest {
         val update = createTemporaryBasal(id = 999, nsId = "new-ns")
 
         whenever(temporaryBasalDao.findById(999)).thenReturn(null)

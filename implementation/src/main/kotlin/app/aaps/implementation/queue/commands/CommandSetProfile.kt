@@ -14,6 +14,7 @@ import app.aaps.core.interfaces.resources.ResourceHelper
 import app.aaps.core.interfaces.smsCommunicator.SmsCommunicator
 import app.aaps.core.interfaces.utils.DateUtil
 import dagger.android.HasAndroidInjector
+import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
 import javax.inject.Provider
 
@@ -41,7 +42,7 @@ class CommandSetProfile(
     override val commandType: Command.CommandType = Command.CommandType.BASAL_PROFILE
 
     override fun execute() {
-        if (commandQueue.isThisProfileSet(profile) && persistenceLayer.getEffectiveProfileSwitchActiveAt(dateUtil.now()) != null) {
+        if (commandQueue.isThisProfileSet(profile) && runBlocking { persistenceLayer.getEffectiveProfileSwitchActiveAt(dateUtil.now()) } != null) {
             aapsLogger.debug(LTag.PUMPQUEUE, "Correct profile already set. profile: $profile")
             callback?.result(pumpEnactResultProvider.get().success(true).enacted(false))?.run()
             return
@@ -50,7 +51,7 @@ class CommandSetProfile(
         aapsLogger.debug(LTag.PUMPQUEUE, "Result success: ${r.success} enacted: ${r.enacted} profile: $profile")
         callback?.result(r)?.run()
         // Send SMS notification if ProfileSwitch is coming from NS
-        val profileSwitch = persistenceLayer.getEffectiveProfileSwitchActiveAt(dateUtil.now())
+        val profileSwitch = runBlocking { persistenceLayer.getEffectiveProfileSwitchActiveAt(dateUtil.now()) }
         if (profileSwitch != null && r.enacted && hasNsId && !config.AAPSCLIENT) {
             if (smsCommunicator.isEnabled() && !config.doNotSendSmsOnProfileChange())
                 smsCommunicator.sendNotificationToAllNumbers(rh.gs(app.aaps.core.ui.R.string.profile_set_ok))

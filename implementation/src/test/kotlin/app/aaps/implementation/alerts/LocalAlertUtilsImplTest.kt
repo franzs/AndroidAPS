@@ -14,7 +14,9 @@ import app.aaps.core.keys.IntKey
 import app.aaps.core.keys.interfaces.Preferences
 import app.aaps.implementation.alerts.keys.LocalAlertLongKey
 import app.aaps.shared.tests.TestBase
-import io.reactivex.rxjava3.core.Single
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.Mock
@@ -37,6 +39,7 @@ class LocalAlertUtilsImplTest : TestBase() {
     @Mock lateinit var pump: Pump
     @Mock lateinit var pumpDescription: PumpDescription
 
+    private val testScope = CoroutineScope(Dispatchers.Unconfined)
     private lateinit var localAlertUtils: LocalAlertUtilsImpl
 
     private val now = 100000000L
@@ -53,14 +56,17 @@ class LocalAlertUtilsImplTest : TestBase() {
             smsCommunicator,
             config,
             persistenceLayer,
-            dateUtil
+            dateUtil,
+            testScope
         )
         whenever(dateUtil.now()).thenReturn(now)
         whenever(activePlugin.activePump).thenReturn(pump)
         whenever(pump.pumpDescription).thenReturn(pumpDescription)
         whenever(pumpDescription.hasCustomUnreachableAlertCheck).thenReturn(false)
-        whenever(persistenceLayer.insertPumpTherapyEventIfNewByTimestamp(any(), any(), any(), any(), any(), any()))
-            .thenReturn(Single.just(PersistenceLayer.TransactionResult()))
+        runTest {
+            whenever(persistenceLayer.insertPumpTherapyEventIfNewByTimestamp(any(), any(), any(), any(), any(), any()))
+                .thenReturn(PersistenceLayer.TransactionResult())
+        }
     }
 
     @Test

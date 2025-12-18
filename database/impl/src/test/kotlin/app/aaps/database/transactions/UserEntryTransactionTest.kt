@@ -4,12 +4,12 @@ import app.aaps.database.DelegatedAppDatabase
 import app.aaps.database.daos.UserEntryDao
 import app.aaps.database.entities.UserEntry
 import com.google.common.truth.Truth.assertThat
+import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.verify
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
-import kotlinx.coroutines.runBlocking
 
 class UserEntryTransactionTest {
 
@@ -24,7 +24,7 @@ class UserEntryTransactionTest {
     }
 
     @Test
-    fun `inserts single user entry`() = runBlocking {
+    fun `inserts single user entry`() = runTest {
         val entry = createUserEntry("Test action")
 
         val transaction = UserEntryTransaction(listOf(entry))
@@ -38,7 +38,7 @@ class UserEntryTransactionTest {
     }
 
     @Test
-    fun `inserts multiple user entries`() = runBlocking {
+    fun `inserts multiple user entries`() = runTest {
         val entry1 = createUserEntry("Action 1")
         val entry2 = createUserEntry("Action 2")
 

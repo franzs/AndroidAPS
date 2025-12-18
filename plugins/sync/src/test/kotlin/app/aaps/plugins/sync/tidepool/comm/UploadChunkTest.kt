@@ -13,7 +13,7 @@ import app.aaps.plugins.sync.tidepool.elements.BolusElement
 import app.aaps.plugins.sync.tidepool.utils.GsonInstance
 import com.google.common.truth.Truth.assertThat
 import com.google.gson.reflect.TypeToken
-import io.reactivex.rxjava3.core.Single
+import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.mockito.InjectMocks
@@ -43,14 +43,18 @@ class UploadChunkTest {
     @InjectMocks lateinit var sut: UploadChunk
 
     @Test
-    fun `SMBs should be marked as 'automated' when uploading to Tidepool`() {
+    fun `SMBs should be marked as 'automated' when uploading to Tidepool`() = runTest {
         // setup mocked test data
         val boluses = listOf(
             BS(timestamp = 100, amount = 7.5, type = BS.Type.NORMAL),
             BS(timestamp = 200, amount = 0.5, type = BS.Type.SMB)
         )
         whenever(persistenceLayer.getBolusesFromTimeToTime(any(), any(), any())).thenReturn(boluses)
-        whenever(persistenceLayer.getTherapyEventDataFromToTime(any(), any())).thenReturn(Single.just(listOf()))
+        whenever(persistenceLayer.getCarbsFromTimeToTimeExpanded(any(), any(), any())).thenReturn(listOf())
+        whenever(persistenceLayer.getTherapyEventDataFromToTime(any(), any())).thenReturn(listOf())
+        whenever(persistenceLayer.getBgReadingsDataFromTimeToTime(any(), any(), any())).thenReturn(listOf())
+        whenever(persistenceLayer.getTemporaryBasalsStartingFromTimeToTime(any(), any(), any())).thenReturn(listOf())
+        whenever(persistenceLayer.getEffectiveProfileSwitchesFromTimeToTime(any(), any(), any())).thenReturn(listOf())
 
         // when
         val resultJson = sut.get(1, 500)

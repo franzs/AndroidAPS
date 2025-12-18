@@ -5,12 +5,12 @@ import app.aaps.database.daos.BolusCalculatorResultDao
 import app.aaps.database.entities.BolusCalculatorResult
 import app.aaps.database.entities.embedments.InterfaceIDs
 import com.google.common.truth.Truth.assertThat
+import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.verify
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
-import kotlinx.coroutines.runBlocking
 
 class SyncNsBolusCalculatorResultTransactionTest {
 
@@ -25,7 +25,7 @@ class SyncNsBolusCalculatorResultTransactionTest {
     }
 
     @Test
-    fun `inserts new when nsId not found and no timestamp match`() = runBlocking {
+    fun `inserts new when nsId not found and no timestamp match`() = runTest {
         val bcr = createBolusCalculatorResult(id = 0, nsId = "ns-123", timestamp = 1000L)
 
         whenever(bolusCalculatorResultDao.findByNSId("ns-123")).thenReturn(null)
@@ -43,7 +43,7 @@ class SyncNsBolusCalculatorResultTransactionTest {
     }
 
     @Test
-    fun `updates nsId when timestamp matches but nsId is null`() = runBlocking {
+    fun `updates nsId when timestamp matches but nsId is null`() = runTest {
         val bcr = createBolusCalculatorResult(id = 0, nsId = "ns-123", timestamp = 1000L)
         val existing = createBolusCalculatorResult(id = 1, nsId = null, timestamp = 1000L)
 
@@ -61,7 +61,7 @@ class SyncNsBolusCalculatorResultTransactionTest {
     }
 
     @Test
-    fun `invalidates when valid becomes invalid`() = runBlocking {
+    fun `invalidates when valid becomes invalid`() = runTest {
         val bcr = createBolusCalculatorResult(id = 0, nsId = "ns-123", isValid = false)
         val existing = createBolusCalculatorResult(id = 1, nsId = "ns-123", isValid = true)
 

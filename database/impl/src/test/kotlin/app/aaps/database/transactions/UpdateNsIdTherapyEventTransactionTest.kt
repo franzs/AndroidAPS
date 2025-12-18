@@ -6,6 +6,7 @@ import app.aaps.database.entities.TherapyEvent
 import app.aaps.database.entities.data.GlucoseUnit
 import app.aaps.database.entities.embedments.InterfaceIDs
 import com.google.common.truth.Truth.assertThat
+import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.never
@@ -13,7 +14,6 @@ import org.mockito.Mockito.verify
 import org.mockito.kotlin.any
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
-import kotlinx.coroutines.runBlocking
 
 class UpdateNsIdTherapyEventTransactionTest {
 
@@ -28,7 +28,7 @@ class UpdateNsIdTherapyEventTransactionTest {
     }
 
     @Test
-    fun `updates NS ID when different`() = runBlocking {
+    fun `updates NS ID when different`() = runTest {
         val newNsId = "new-ns-123"
         val current = createTherapyEvent(id = 1, nsId = "old-ns")
         val update = createTherapyEvent(id = 1, nsId = newNsId)
@@ -46,7 +46,7 @@ class UpdateNsIdTherapyEventTransactionTest {
     }
 
     @Test
-    fun `does not update when NS ID is same`() = runBlocking {
+    fun `does not update when NS ID is same`() = runTest {
         val sameNsId = "same-ns"
         val current = createTherapyEvent(id = 1, nsId = sameNsId)
         val update = createTherapyEvent(id = 1, nsId = sameNsId)
@@ -63,7 +63,7 @@ class UpdateNsIdTherapyEventTransactionTest {
     }
 
     @Test
-    fun `skips when therapy event not found`() = runBlocking {
+    fun `skips when therapy event not found`() = runTest {
         val update = createTherapyEvent(id = 999, nsId = "new-ns")
 
         whenever(therapyEventDao.findById(999)).thenReturn(null)
@@ -78,7 +78,7 @@ class UpdateNsIdTherapyEventTransactionTest {
     }
 
     @Test
-    fun `handles empty list`() = runBlocking {
+    fun `handles empty list`() = runTest {
         val transaction = UpdateNsIdTherapyEventTransaction(emptyList())
         transaction.database = database
         val result = transaction.run()

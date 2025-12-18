@@ -19,6 +19,7 @@ import app.aaps.ui.compose.ToolbarConfig
 import app.aaps.ui.compose.TreatmentScreenToolbar
 import app.aaps.ui.viewmodels.TreatmentConstants.TREATMENT_HISTORY_DAYS
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -28,6 +29,7 @@ import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
 
 /**
@@ -102,6 +104,7 @@ class ProfileSwitchViewModel @Inject constructor(
      * Subscribe to profile switch change events using Flow
      * Observes both ProfileSwitch and EffectiveProfileSwitch changes
      */
+    @OptIn(FlowPreview::class)
     private fun observeProfileSwitchChanges() {
         merge(
             persistenceLayer.observeChanges<PS>(),
@@ -169,7 +172,7 @@ class ProfileSwitchViewModel @Inject constructor(
      * Get currently active effective profile switch
      */
     fun getActiveProfile(): ProfileSealed? {
-        val eps = persistenceLayer.getEffectiveProfileSwitchActiveAt(dateUtil.now())
+        val eps = runBlocking { persistenceLayer.getEffectiveProfileSwitchActiveAt(dateUtil.now()) }
         return eps?.let { ProfileSealed.EPS(value = it, activePlugin = null) }
     }
 
@@ -199,15 +202,17 @@ class ProfileSwitchViewModel @Inject constructor(
             try {
                 selected.forEach { profileSwitch ->
                     if (profileSwitch is ProfileSealed.PS) {
-                        persistenceLayer.invalidateProfileSwitch(
-                            id = profileSwitch.id,
-                            action = Action.PROFILE_SWITCH_REMOVED,
-                            source = Sources.Treatments,
-                            note = profileSwitch.profileName,
-                            listValues = listOf(
-                                ValueWithUnit.Timestamp(profileSwitch.timestamp)
+                        runBlocking {
+                            persistenceLayer.invalidateProfileSwitch(
+                                id = profileSwitch.id,
+                                action = Action.PROFILE_SWITCH_REMOVED,
+                                source = Sources.Treatments,
+                                note = profileSwitch.profileName,
+                                listValues = listOf(
+                                    ValueWithUnit.Timestamp(profileSwitch.timestamp)
+                                )
                             )
-                        ).blockingGet()
+                        }
                     }
                 }
                 exitSelectionMode()

@@ -155,7 +155,7 @@ class NSClientPlugin @Inject constructor(
         nsClientService?.let { if (latestReceived > it.latestDateInReceivedData) it.latestDateInReceivedData = latestReceived }
     }
 
-    override fun resetToFullSync() {
+    override suspend fun resetToFullSync() {
         dataSyncSelector.resetToNextFullSync()
     }
 
@@ -173,7 +173,7 @@ class NSClientPlugin @Inject constructor(
             is DataSyncSelector.PairExtendedBolus          -> dataPair.value.toJson(true, profile, dateUtil)
             is DataSyncSelector.PairProfileSwitch          -> dataPair.value.toJson(true, dateUtil, decimalFormatter)
             is DataSyncSelector.PairEffectiveProfileSwitch -> dataPair.value.toJson(true, dateUtil)
-            is DataSyncSelector.PairRunningMode -> dataPair.value.toJson(true, dateUtil)
+            is DataSyncSelector.PairRunningMode            -> dataPair.value.toJson(true, dateUtil)
             is DataSyncSelector.PairProfileStore           -> dataPair.value
             else                                           -> null
         }?.let { data ->

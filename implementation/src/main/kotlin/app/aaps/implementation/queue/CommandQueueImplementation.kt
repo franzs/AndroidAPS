@@ -19,6 +19,7 @@ import app.aaps.core.data.ue.Sources
 import app.aaps.core.interfaces.configuration.Config
 import app.aaps.core.interfaces.constraints.ConstraintsChecker
 import app.aaps.core.interfaces.db.PersistenceLayer
+import app.aaps.core.interfaces.di.ApplicationScope
 import app.aaps.core.interfaces.logging.AAPSLogger
 import app.aaps.core.interfaces.logging.LTag
 import app.aaps.core.interfaces.notifications.Notification
@@ -75,6 +76,9 @@ import app.aaps.implementation.queue.commands.CommandUpdateTime
 import dagger.android.HasAndroidInjector
 import io.reactivex.rxjava3.disposables.CompositeDisposable
 import io.reactivex.rxjava3.kotlin.plusAssign
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import java.util.LinkedList
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
@@ -101,7 +105,8 @@ class CommandQueueImplementation @Inject constructor(
     private val decimalFormatter: DecimalFormatter,
     private val pumpEnactResultProvider: Provider<PumpEnactResult>,
     private val jobName: CommandQueueName,
-    private val workManager: WorkManager
+    private val workManager: WorkManager,
+    @ApplicationScope private val appScope: CoroutineScope
 ) : CommandQueue {
 
     private val disposable = CompositeDisposable()
@@ -145,7 +150,7 @@ class CommandQueueImplementation @Inject constructor(
                                                originalEnd = it.end,
                                                iCfg = it.iCfg
                                            ).also { eps ->
-                                               disposable += persistenceLayer.insertEffectiveProfileSwitch(eps).subscribe()
+                                               appScope.launch { persistenceLayer.insertEffectiveProfileSwitch(eps) }
                                            }
                                        }
                                    }
@@ -295,14 +300,18 @@ class CommandQueueImplementation @Inject constructor(
             carbsRunnable = Runnable {
                 aapsLogger.debug(LTag.PUMPQUEUE, "Going to store carbs")
                 detailedBolusInfo.carbs = originalCarbs
-                disposable += persistenceLayer.insertOrUpdateCarbs(
-                    carbs = detailedBolusInfo.createCarbs(),
-                    action = Action.CARBS,
-                    source = Sources.Database
-                ).subscribe(
-                    { callback?.result(pumpEnactResultProvider.get().enacted(false).success(true))?.run() },
-                    { callback?.result(pumpEnactResultProvider.get().enacted(false).success(false))?.run() }
-                )
+                appScope.launch {
+                    try {
+                        persistenceLayer.insertOrUpdateCarbs(
+                            carbs = detailedBolusInfo.createCarbs(),
+                            action = Action.CARBS,
+                            source = Sources.Database
+                        )
+                        callback?.result(pumpEnactResultProvider.get().enacted(false).success(true))?.run()
+                    } catch (e: Exception) {
+                        callback?.result(pumpEnactResultProvider.get().enacted(false).success(false))?.run()
+                    }
+                }
             }
             // Do not process carbs anymore
             detailedBolusInfo.carbs = 0.0
@@ -320,7 +329,7 @@ class CommandQueueImplementation @Inject constructor(
                 callback?.result(pumpEnactResultProvider.get().enacted(false).success(false))?.run()
                 return false
             }
-            val lastBolusTime = persistenceLayer.getNewestBolus()?.timestamp ?: 0L
+            val lastBolusTime = runBlocking { persistenceLayer.getNewestBolus() }?.timestamp ?: 0L
             if (detailedBolusInfo.lastKnownBolusTime < lastBolusTime) {
                 aapsLogger.debug(LTag.PUMPQUEUE, "Rejecting bolus, another bolus was issued since request time")
                 callback?.result(pumpEnactResultProvider.get().enacted(false).success(false))?.run()
@@ -460,7 +469,7 @@ class CommandQueueImplementation @Inject constructor(
             callback?.result(pumpEnactResultProvider.get().success(true).enacted(false))?.run()
             return false
         }
-        if (isThisProfileSet(profile) && persistenceLayer.getEffectiveProfileSwitchActiveAt(dateUtil.now()) != null) {
+        if (isThisProfileSet(profile) && runBlocking { persistenceLayer.getEffectiveProfileSwitchActiveAt(dateUtil.now()) } != null) {
             aapsLogger.debug(LTag.PUMPQUEUE, "Correct profile already set")
             callback?.result(pumpEnactResultProvider.get().success(true).enacted(false))?.run()
             return false

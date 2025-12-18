@@ -19,7 +19,7 @@ import app.aaps.plugins.configuration.maintenance.MaintenancePlugin
 import app.aaps.plugins.constraints.dstHelper.DstHelperPlugin
 import app.aaps.shared.tests.TestBaseWithProfile
 import com.google.common.util.concurrent.ListenableFuture
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.Mock
@@ -77,7 +77,7 @@ class KeepAliveWorkerTest : TestBaseWithProfile() {
         }
 
     @Test
-    fun `checkPump requests status when connection is outdated`() = runBlocking {
+    fun `checkPump requests status when connection is outdated`() = runTest {
         // Arrange
         worker = createWorker()
         whenever(loop.runningMode).thenReturn(RM.Mode.OPEN_LOOP)
@@ -95,7 +95,7 @@ class KeepAliveWorkerTest : TestBaseWithProfile() {
     }
 
     @Test
-    fun `checkPump sends profile switch event if profile is mismatched`() = runBlocking {
+    fun `checkPump sends profile switch event if profile is mismatched`() = runTest {
         // Arrange
         worker = createWorker()
         whenever(loop.runningMode).thenReturn(RM.Mode.OPEN_LOOP)
@@ -110,7 +110,7 @@ class KeepAliveWorkerTest : TestBaseWithProfile() {
     }
 
     @Test
-    fun `checkPump does nothing if mode is DISCONNECTED_PUMP`() = runBlocking {
+    fun `checkPump does nothing if mode is DISCONNECTED_PUMP`() = runTest {
         // Arrange
         worker = createWorker()
         whenever(loop.runningMode).thenReturn(RM.Mode.DISCONNECTED_PUMP)
@@ -125,7 +125,7 @@ class KeepAliveWorkerTest : TestBaseWithProfile() {
     }
 
     @Test
-    fun `checkAPS schedules device status upload if BG is missing`() = runBlocking {
+    fun `checkAPS schedules device status upload if BG is missing`() = runTest {
         // Arrange
         worker = createWorker()
         whenever(loop.runningMode).thenReturn(RM.Mode.CLOSED_LOOP)
@@ -139,7 +139,7 @@ class KeepAliveWorkerTest : TestBaseWithProfile() {
     }
 
     @Test
-    fun `databaseCleanup does NOT run if it was run less than a day ago`() = runBlocking {
+    fun `databaseCleanup does NOT run if it was run less than a day ago`() = runTest {
         // Arrange
         worker = createWorker()
         whenever(preferences.get(LongNonKey.LastCleanupRun)).thenReturn(now - T.hours(12).msecs())

@@ -6,7 +6,7 @@ import app.aaps.database.entities.ExtendedBolus
 import app.aaps.database.entities.embedments.InterfaceIDs
 import app.aaps.database.entities.interfaces.end
 import com.google.common.truth.Truth.assertThat
-import io.reactivex.rxjava3.core.Maybe
+import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.never
@@ -14,7 +14,6 @@ import org.mockito.Mockito.verify
 import org.mockito.kotlin.any
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
-import kotlinx.coroutines.runBlocking
 
 class SyncPumpCancelExtendedBolusIfAnyTransactionTest {
 
@@ -29,7 +28,7 @@ class SyncPumpCancelExtendedBolusIfAnyTransactionTest {
     }
 
     @Test
-    fun `cancels running extended bolus with proportional amount`() = runBlocking {
+    fun `cancels running extended bolus with proportional amount`() = runTest {
         val timestamp = 31_000L
         val endPumpId = 200L
         val running = createExtendedBolus(timestamp = 1000L, duration = 60_000L, amount = 6.0, endId = null)
@@ -53,7 +52,7 @@ class SyncPumpCancelExtendedBolusIfAnyTransactionTest {
     }
 
     @Test
-    fun `does not cancel if already cancelled by end id`() = runBlocking {
+    fun `does not cancel if already cancelled by end id`() = runTest {
         val timestamp = 31_000L
         val endPumpId = 200L
 
@@ -73,7 +72,7 @@ class SyncPumpCancelExtendedBolusIfAnyTransactionTest {
     }
 
     @Test
-    fun `does not cancel if no running extended bolus`() = runBlocking {
+    fun `does not cancel if no running extended bolus`() = runTest {
         val timestamp = 31_000L
         val endPumpId = 200L
 
@@ -92,7 +91,7 @@ class SyncPumpCancelExtendedBolusIfAnyTransactionTest {
     }
 
     @Test
-    fun `does not cancel if running already has end id`() = runBlocking {
+    fun `does not cancel if running already has end id`() = runTest {
         val timestamp = 31_000L
         val endPumpId = 200L
         val running = createExtendedBolus(timestamp = 1000L, duration = 60_000L, amount = 6.0, endId = 150L)

@@ -27,6 +27,7 @@ import app.aaps.core.interfaces.androidPermissions.AndroidPermission
 import app.aaps.core.interfaces.configuration.Config
 import app.aaps.core.interfaces.configuration.ConfigBuilder
 import app.aaps.core.interfaces.db.PersistenceLayer
+import app.aaps.core.interfaces.di.ApplicationScope
 import app.aaps.core.interfaces.logging.AAPSLogger
 import app.aaps.core.interfaces.logging.LTag
 import app.aaps.core.interfaces.maintenance.FileListProvider
@@ -67,8 +68,9 @@ import app.aaps.plugins.configuration.maintenance.formats.EncryptedPrefsFormat
 import app.aaps.shared.impl.weardata.ZipWatchfaceFormat
 import dagger.Reusable
 import io.reactivex.rxjava3.disposables.CompositeDisposable
-import io.reactivex.rxjava3.kotlin.plusAssign
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.json.JSONObject
 import java.io.FileNotFoundException
 import java.io.IOException
@@ -98,7 +100,8 @@ class ImportExportPrefsImpl @Inject constructor(
     private val dataWorkerStorage: DataWorkerStorage,
     private val activePlugin: ActivePlugin,
     private val configBuilder: ConfigBuilder,
-    private val prefImportSummaryDialog: PrefImportSummaryDialog
+    private val prefImportSummaryDialog: PrefImportSummaryDialog,
+    @ApplicationScope private val appScope: CoroutineScope
 ) : ImportExportPrefs {
 
     override var selectedImportFile: PrefsFile? = null
@@ -317,14 +320,16 @@ class ImportExportPrefsImpl @Inject constructor(
             ToastUtils.okToast(activity, exportResultMessage)
 
             // Register this event
-            disposable += persistenceLayer.insertPumpTherapyEventIfNewByTimestamp(
-                therapyEvent = TE.asSettingsExport(error = exportResultMessage),
-                timestamp = dateUtil.now(),
-                action = Action.EXPORT_SETTINGS, // Signal export was done....
-                source = Sources.Automation,
-                note = "Manual: $exportResultMessage",
-                listValues = listOf()
-            ).subscribe()
+            appScope.launch {
+                persistenceLayer.insertPumpTherapyEventIfNewByTimestamp(
+                    therapyEvent = TE.asSettingsExport(error = exportResultMessage),
+                    timestamp = dateUtil.now(),
+                    action = Action.EXPORT_SETTINGS, // Signal export was done....
+                    source = Sources.Automation,
+                    note = "Manual: $exportResultMessage",
+                    listValues = listOf()
+                )
+            }
         }
     }
 

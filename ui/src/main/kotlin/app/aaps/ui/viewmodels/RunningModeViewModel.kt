@@ -15,6 +15,7 @@ import app.aaps.core.interfaces.resources.ResourceHelper
 import app.aaps.core.interfaces.utils.DateUtil
 import app.aaps.ui.viewmodels.TreatmentConstants.TREATMENT_HISTORY_DAYS
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -23,6 +24,7 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
@@ -87,6 +89,7 @@ class RunningModeViewModel @Inject constructor(
     /**
      * Subscribe to running mode change events using Flow
      */
+    @OptIn(FlowPreview::class)
     private fun observeRunningModeChanges() {
         persistenceLayer
             .observeChanges<RM>()
@@ -152,7 +155,7 @@ class RunningModeViewModel @Inject constructor(
      * Get currently active running mode
      */
     fun getActiveMode(): RM {
-        return persistenceLayer.getRunningModeActiveAt(dateUtil.now())
+        return runBlocking { persistenceLayer.getRunningModeActiveAt(dateUtil.now()) }
     }
 
     /**
@@ -180,17 +183,19 @@ class RunningModeViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 selected.forEach { rm ->
-                    persistenceLayer.invalidateRunningMode(
-                        id = rm.id,
-                        action = Action.LOOP_REMOVED,
-                        source = Sources.Treatments,
-                        note = null,
-                        listValues = listOfNotNull(
-                            ValueWithUnit.Timestamp(rm.timestamp),
-                            ValueWithUnit.RMMode(rm.mode),
-                            ValueWithUnit.Minute(TimeUnit.MILLISECONDS.toMinutes(rm.duration).toInt())
+                    runBlocking {
+                        persistenceLayer.invalidateRunningMode(
+                            id = rm.id,
+                            action = Action.LOOP_REMOVED,
+                            source = Sources.Treatments,
+                            note = null,
+                            listValues = listOfNotNull(
+                                ValueWithUnit.Timestamp(rm.timestamp),
+                                ValueWithUnit.RMMode(rm.mode),
+                                ValueWithUnit.Minute(TimeUnit.MILLISECONDS.toMinutes(rm.duration).toInt())
+                            )
                         )
-                    ).blockingGet()
+                    }
                 }
                 exitSelectionMode()
                 loadData()

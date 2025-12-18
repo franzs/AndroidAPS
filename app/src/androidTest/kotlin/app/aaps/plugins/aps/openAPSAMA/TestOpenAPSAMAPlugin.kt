@@ -104,7 +104,7 @@ class TestOpenAPSAMAPlugin @Inject constructor(
         return pump.pumpDescription.isTempBasalCapable
     }
 
-    override fun invoke(initiator: String, tempBasalFallback: Boolean) {
+    override suspend fun invoke(initiator: String, tempBasalFallback: Boolean) {
         aapsLogger.debug(LTag.APS, "invoke from $initiator tempBasalFallback: $tempBasalFallback")
         lastAPSResult = null
         val determineBasalAdapterAMAJS = DetermineBasalAdapterAMAJS(ScriptReader(), injector)

@@ -5,6 +5,7 @@ import app.aaps.database.daos.CarbsDao
 import app.aaps.database.entities.Carbs
 import app.aaps.database.entities.embedments.InterfaceIDs
 import com.google.common.truth.Truth.assertThat
+import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.never
@@ -12,7 +13,6 @@ import org.mockito.Mockito.verify
 import org.mockito.kotlin.any
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
-import kotlinx.coroutines.runBlocking
 
 class InsertIfNewByTimestampCarbsTransactionTest {
 
@@ -27,7 +27,7 @@ class InsertIfNewByTimestampCarbsTransactionTest {
     }
 
     @Test
-    fun `inserts carbs when timestamp not found`() = runBlocking {
+    fun `inserts carbs when timestamp not found`() = runTest {
         val timestamp = 123456789L
         val carbs = createCarbs(timestamp = timestamp, amount = 50.0)
 
@@ -45,7 +45,7 @@ class InsertIfNewByTimestampCarbsTransactionTest {
     }
 
     @Test
-    fun `does not insert when timestamp exists`() = runBlocking {
+    fun `does not insert when timestamp exists`() = runTest {
         val timestamp = 123456789L
         val existing = createCarbs(timestamp = timestamp, amount = 30.0)
         val incoming = createCarbs(timestamp = timestamp, amount = 50.0)
@@ -64,7 +64,7 @@ class InsertIfNewByTimestampCarbsTransactionTest {
     }
 
     @Test
-    fun `handles different amounts at same timestamp`() = runBlocking {
+    fun `handles different amounts at same timestamp`() = runTest {
         val timestamp = 123456789L
         val existing = createCarbs(timestamp = timestamp, amount = 30.0)
         val incoming = createCarbs(timestamp = timestamp, amount = 50.0)
@@ -81,7 +81,7 @@ class InsertIfNewByTimestampCarbsTransactionTest {
     }
 
     @Test
-    fun `inserts carbs with extended duration`() = runBlocking {
+    fun `inserts carbs with extended duration`() = runTest {
         val timestamp = 123456789L
         val carbs = createCarbs(timestamp = timestamp, amount = 50.0, duration = 120_000L)
 
@@ -96,7 +96,7 @@ class InsertIfNewByTimestampCarbsTransactionTest {
     }
 
     @Test
-    fun `inserts carbs with zero amount`() = runBlocking {
+    fun `inserts carbs with zero amount`() = runTest {
         val timestamp = 123456789L
         val carbs = createCarbs(timestamp = timestamp, amount = 0.0)
 
@@ -111,7 +111,7 @@ class InsertIfNewByTimestampCarbsTransactionTest {
     }
 
     @Test
-    fun `does not insert invalid carbs when timestamp exists`() = runBlocking {
+    fun `does not insert invalid carbs when timestamp exists`() = runTest {
         val timestamp = 123456789L
         val existing = createCarbs(timestamp = timestamp, amount = 30.0, isValid = true)
         val incoming = createCarbs(timestamp = timestamp, amount = 50.0, isValid = false)
@@ -127,7 +127,7 @@ class InsertIfNewByTimestampCarbsTransactionTest {
     }
 
     @Test
-    fun `inserts invalid carbs when timestamp not found`() = runBlocking {
+    fun `inserts invalid carbs when timestamp not found`() = runTest {
         val timestamp = 123456789L
         val carbs = createCarbs(timestamp = timestamp, amount = 50.0, isValid = false)
 
@@ -142,7 +142,7 @@ class InsertIfNewByTimestampCarbsTransactionTest {
     }
 
     @Test
-    fun `preserves all carbs fields when inserting`() = runBlocking {
+    fun `preserves all carbs fields when inserting`() = runTest {
         val timestamp = 123456789L
         val amount = 75.0
         val duration = 90_000L
@@ -168,7 +168,7 @@ class InsertIfNewByTimestampCarbsTransactionTest {
     }
 
     @Test
-    fun `transaction result has correct structure`() = runBlocking {
+    fun `transaction result has correct structure`() = runTest {
         val result = InsertIfNewByTimestampCarbsTransaction.TransactionResult()
 
         assertThat(result.inserted).isEmpty()
@@ -178,7 +178,7 @@ class InsertIfNewByTimestampCarbsTransactionTest {
     }
 
     @Test
-    fun `handles carbs with notes when timestamp not found`() = runBlocking {
+    fun `handles carbs with notes when timestamp not found`() = runTest {
         val timestamp = 123456789L
         val carbs = createCarbs(timestamp = timestamp, amount = 50.0, notes = "Dinner")
 
@@ -193,7 +193,7 @@ class InsertIfNewByTimestampCarbsTransactionTest {
     }
 
     @Test
-    fun `checks timestamp equality exactly`() = runBlocking {
+    fun `checks timestamp equality exactly`() = runTest {
         val timestamp1 = 123456789L
         val timestamp2 = 123456790L // One millisecond difference
         val existing = createCarbs(timestamp = timestamp1, amount = 30.0)

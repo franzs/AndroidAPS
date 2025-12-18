@@ -34,6 +34,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.lifecycleScope
 import app.aaps.core.data.model.TE
 import app.aaps.core.data.time.T
 import app.aaps.core.data.ue.Action
@@ -55,8 +56,7 @@ import app.aaps.core.ui.compose.LocalPreferences
 import app.aaps.core.ui.compose.LocalRxBus
 import app.aaps.ui.services.AlarmSoundService
 import dagger.android.support.DaggerAppCompatActivity
-import io.reactivex.rxjava3.disposables.CompositeDisposable
-import io.reactivex.rxjava3.kotlin.plusAssign
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 class ErrorActivity : DaggerAppCompatActivity() {
@@ -71,7 +71,6 @@ class ErrorActivity : DaggerAppCompatActivity() {
     @Inject lateinit var uel: UserEntryLogger
     @Inject lateinit var iconsProvider: IconsProvider
 
-    private val disposable = CompositeDisposable()
     private val handler = Handler(HandlerThread(this::class.simpleName + "Handler").also { it.start() }.looper)
 
     private var status: String = ""
@@ -125,19 +124,20 @@ class ErrorActivity : DaggerAppCompatActivity() {
 
         // Create announcement if configured
         if (preferences.get(BooleanKey.NsClientCreateAnnouncementsFromErrors) && config.APS)
-            disposable += persistenceLayer.insertPumpTherapyEventIfNewByTimestamp(
-                therapyEvent = TE.asAnnouncement(status),
-                timestamp = dateUtil.now(),
-                action = Action.CAREPORTAL,
-                source = Sources.Aaps,
-                note = status,
-                listValues = listOf(ValueWithUnit.TEType(TE.Type.ANNOUNCEMENT))
-            ).subscribe()
+            lifecycleScope.launch {
+                persistenceLayer.insertPumpTherapyEventIfNewByTimestamp(
+                    therapyEvent = TE.asAnnouncement(status),
+                    timestamp = dateUtil.now(),
+                    action = Action.CAREPORTAL,
+                    source = Sources.Aaps,
+                    note = status,
+                    listValues = listOf(ValueWithUnit.TEType(TE.Type.ANNOUNCEMENT))
+                )
+            }
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        disposable.clear()
         handler.removeCallbacksAndMessages(null)
         handler.looper.quitSafely()
     }

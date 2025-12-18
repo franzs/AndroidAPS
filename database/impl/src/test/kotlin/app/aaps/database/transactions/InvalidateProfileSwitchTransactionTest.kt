@@ -7,6 +7,7 @@ import app.aaps.database.entities.data.GlucoseUnit
 import app.aaps.database.entities.embedments.InsulinConfiguration
 import app.aaps.database.entities.embedments.InterfaceIDs
 import com.google.common.truth.Truth.assertThat
+import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.never
@@ -14,7 +15,6 @@ import org.mockito.Mockito.verify
 import org.mockito.kotlin.any
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
-import kotlinx.coroutines.runBlocking
 
 class InvalidateProfileSwitchTransactionTest {
 
@@ -29,7 +29,7 @@ class InvalidateProfileSwitchTransactionTest {
     }
 
     @Test
-    fun `invalidates valid profile switch`() = runBlocking {
+    fun `invalidates valid profile switch`() = runTest {
         val ps = createProfileSwitch(id = 1, isValid = true)
 
         whenever(profileSwitchDao.findById(1)).thenReturn(ps)
@@ -45,7 +45,7 @@ class InvalidateProfileSwitchTransactionTest {
     }
 
     @Test
-    fun `does not update already invalid profile switch`() = runBlocking {
+    fun `does not update already invalid profile switch`() = runTest {
         val ps = createProfileSwitch(id = 1, isValid = false)
 
         whenever(profileSwitchDao.findById(1)).thenReturn(ps)
@@ -60,7 +60,7 @@ class InvalidateProfileSwitchTransactionTest {
     }
 
     @Test
-    fun `throws exception when profile switch not found`() = runBlocking {
+    fun `throws exception when profile switch not found`() = runTest {
         whenever(profileSwitchDao.findById(999)).thenReturn(null)
 
         val transaction = InvalidateProfileSwitchTransaction(id = 999)

@@ -78,7 +78,7 @@ interface NsClient : Sync {
      *
      * Next synchronization will start from scratch
      */
-    fun resetToFullSync()
+    suspend fun resetToFullSync()
 
     /**
      * Upload new record to NS

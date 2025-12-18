@@ -1,6 +1,7 @@
 package app.aaps.core.interfaces.nsclient
 
 import kotlinx.serialization.json.JsonElement
+import java.util.concurrent.atomic.AtomicLong
 
 class NSClientLog(
     val action: String,
@@ -9,4 +10,10 @@ class NSClientLog(
 ) {
 
     var date = System.currentTimeMillis()
+    val id: Long = idCounter.getAndIncrement()
+
+    companion object {
+
+        private val idCounter = AtomicLong(0)
+    }
 }

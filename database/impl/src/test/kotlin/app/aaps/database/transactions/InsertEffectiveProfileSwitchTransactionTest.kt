@@ -7,12 +7,12 @@ import app.aaps.database.entities.data.GlucoseUnit
 import app.aaps.database.entities.embedments.InsulinConfiguration
 import app.aaps.database.entities.embedments.InterfaceIDs
 import com.google.common.truth.Truth.assertThat
+import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.verify
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
-import kotlinx.coroutines.runBlocking
 
 class InsertEffectiveProfileSwitchTransactionTest {
 
@@ -27,7 +27,7 @@ class InsertEffectiveProfileSwitchTransactionTest {
     }
 
     @Test
-    fun `inserts effective profile switch`() = runBlocking {
+    fun `inserts effective profile switch`() = runTest {
         val eps = createEffectiveProfileSwitch()
 
         val transaction = InsertEffectiveProfileSwitchTransaction(eps)

@@ -21,6 +21,7 @@ import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.RelativeLayout
 import android.widget.TextView
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import app.aaps.core.data.configuration.Constants
 import app.aaps.core.data.model.GlucoseUnit
@@ -113,6 +114,8 @@ import com.jjoe64.graphview.GraphView
 import dagger.android.support.DaggerFragment
 import io.reactivex.rxjava3.disposables.CompositeDisposable
 import io.reactivex.rxjava3.kotlin.plusAssign
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
@@ -415,66 +418,64 @@ class OverviewFragment : DaggerFragment(), View.OnClickListener, OnLongClickList
     }
 
     override fun onClick(v: View) {
-        // try to fix  https://fabric.io/nightscout3/android/apps/info.nightscout.androidaps/issues/5aca7a1536c7b23527eb4be7?time=last-seven-days
-        // https://stackoverflow.com/questions/14860239/checking-if-state-is-saved-before-committing-a-fragmenttransaction
-        if (childFragmentManager.isStateSaved) return
-        when (v.id) {
-            R.id.treatment_button -> protectionCheck.queryProtection(requireActivity(), ProtectionCheck.Protection.BOLUS, UIRunnable { if (isAdded) uiInteraction.runTreatmentDialog(childFragmentManager) })
-            R.id.wizard_button -> protectionCheck.queryProtection(requireActivity(), ProtectionCheck.Protection.BOLUS, UIRunnable { if (isAdded) uiInteraction.runWizardDialog(childFragmentManager) })
-            R.id.insulin_button -> protectionCheck.queryProtection(requireActivity(), ProtectionCheck.Protection.BOLUS, UIRunnable { if (isAdded) uiInteraction.runInsulinDialog(childFragmentManager) })
-            R.id.quick_wizard_button -> protectionCheck.queryProtection(requireActivity(), ProtectionCheck.Protection.BOLUS, UIRunnable { if (isAdded) onClickQuickWizard() })
-            R.id.carbs_button -> protectionCheck.queryProtection(requireActivity(), ProtectionCheck.Protection.BOLUS, UIRunnable { if (isAdded) uiInteraction.runCarbsDialog(childFragmentManager) })
-            R.id.temp_target -> protectionCheck.queryProtection(requireActivity(), ProtectionCheck.Protection.BOLUS, UIRunnable { if (isAdded) uiInteraction.runTempTargetDialog(childFragmentManager) })
-            R.id.active_profile -> uiInteraction.runProfileViewerActivity(requireContext(), dateUtil.now(), UiInteraction.Mode.RUNNING_PROFILE)
+        viewLifecycleOwner.lifecycleScope.launch {
+            // try to fix  https://fabric.io/nightscout3/android/apps/info.nightscout.androidaps/issues/5aca7a1536c7b23527eb4be7?time=last-seven-days
+            // https://stackoverflow.com/questions/14860239/checking-if-state-is-saved-before-committing-a-fragmenttransaction
+            if (childFragmentManager.isStateSaved) return@launch
+            when (v.id) {
+                R.id.treatment_button    -> protectionCheck.queryProtection(requireActivity(), ProtectionCheck.Protection.BOLUS, UIRunnable { if (isAdded) uiInteraction.runTreatmentDialog(childFragmentManager) })
+                R.id.wizard_button       -> protectionCheck.queryProtection(requireActivity(), ProtectionCheck.Protection.BOLUS, UIRunnable { if (isAdded) uiInteraction.runWizardDialog(childFragmentManager) })
+                R.id.insulin_button      -> protectionCheck.queryProtection(requireActivity(), ProtectionCheck.Protection.BOLUS, UIRunnable { if (isAdded) uiInteraction.runInsulinDialog(childFragmentManager) })
+                R.id.quick_wizard_button -> protectionCheck.queryProtection(requireActivity(), ProtectionCheck.Protection.BOLUS, UIRunnable { if (isAdded) onClickQuickWizard() })
+                R.id.carbs_button        -> protectionCheck.queryProtection(requireActivity(), ProtectionCheck.Protection.BOLUS, UIRunnable { if (isAdded) uiInteraction.runCarbsDialog(childFragmentManager) })
+                R.id.temp_target         -> protectionCheck.queryProtection(requireActivity(), ProtectionCheck.Protection.BOLUS, UIRunnable { if (isAdded) uiInteraction.runTempTargetDialog(childFragmentManager) })
+                R.id.active_profile      -> uiInteraction.runProfileViewerActivity(requireContext(), dateUtil.now(), UiInteraction.Mode.RUNNING_PROFILE)
 
-            R.id.cgm_button -> {
-                if (xDripSource.isEnabled()) openCgmApp("com.eveningoutpost.dexdrip")
-                else if (dexcomBoyda.isEnabled()) dexcomBoyda.dexcomPackages().forEach { openCgmApp(it) }
-            }
-
-            R.id.calibration_button -> {
-                if (xDripSource.isEnabled()) {
-                    uiInteraction.runCalibrationDialog(childFragmentManager)
+                R.id.cgm_button          -> {
+                    if (xDripSource.isEnabled()) openCgmApp("com.eveningoutpost.dexdrip")
+                    else if (dexcomBoyda.isEnabled()) dexcomBoyda.dexcomPackages().forEach { openCgmApp(it) }
                 }
-            }
 
-            R.id.accept_temp_button -> {
-                profileFunction.getProfile() ?: return
-                if ((loop as PluginBase).isEnabled()) {
-                    handler.post {
+                R.id.calibration_button  -> {
+                    if (xDripSource.isEnabled()) {
+                        uiInteraction.runCalibrationDialog(childFragmentManager)
+                    }
+                }
+
+                R.id.accept_temp_button  -> {
+                    profileFunction.getProfile() ?: return@launch
+                    if ((loop as PluginBase).isEnabled()) {
                         val lastRun = loop.lastRun
                         loop.invoke("Accept temp button", false)
                         if (lastRun?.lastAPSRun != null && lastRun.constraintsProcessed?.isChangeRequested == true) {
-                            runOnUiThread {
-                                protectionCheck.queryProtection(requireActivity(), ProtectionCheck.Protection.BOLUS, UIRunnable {
-                                    if (isAdded)
-                                        uiInteraction.showOkCancelDialog(
-                                            context = requireActivity(),
-                                            title = rh.gs(app.aaps.core.ui.R.string.tempbasal_label),
-                                            message = lastRun.constraintsProcessed?.resultAsHtmlString() ?: "",
-                                            ok = {
-                                                uel.log(Action.ACCEPTS_TEMP_BASAL, Sources.Overview)
-                                                (context?.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager?)?.cancel(Constants.notificationID)
-                                                rxBus.send(EventMobileToWear(EventData.CancelNotification(dateUtil.now())))
-                                                handler.post { loop.acceptChangeRequest() }
-                                                binding.buttonsLayout.acceptTempButton.visibility = View.GONE
-                                            })
-                                })
-                            }
+                            protectionCheck.queryProtection(requireActivity(), ProtectionCheck.Protection.BOLUS, UIRunnable {
+                                if (isAdded)
+                                    uiInteraction.showOkCancelDialog(
+                                        context = requireActivity(),
+                                        title = rh.gs(app.aaps.core.ui.R.string.tempbasal_label),
+                                        message = lastRun.constraintsProcessed?.resultAsHtmlString() ?: "",
+                                        ok = {
+                                            uel.log(Action.ACCEPTS_TEMP_BASAL, Sources.Overview)
+                                            (context?.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager?)?.cancel(Constants.notificationID)
+                                            rxBus.send(EventMobileToWear(EventData.CancelNotification(dateUtil.now())))
+                                            handler.post { loop.acceptChangeRequest() }
+                                            binding.buttonsLayout.acceptTempButton.visibility = View.GONE
+                                        })
+                            })
                         }
                     }
                 }
-            }
 
-            R.id.aps_mode -> {
-                protectionCheck.queryProtection(requireActivity(), ProtectionCheck.Protection.BOLUS, UIRunnable {
-                    if (isAdded) uiInteraction.runLoopDialog(childFragmentManager, 1)
-                })
-            }
+                R.id.aps_mode            -> {
+                    protectionCheck.queryProtection(requireActivity(), ProtectionCheck.Protection.BOLUS, UIRunnable {
+                        if (isAdded) uiInteraction.runLoopDialog(childFragmentManager, 1)
+                    })
+                }
 
-            R.id.pump_status_layout -> {
-                // Check if there is a bolus in progress
-                popupBolusDialogIfRunning(onClick = true)
+                R.id.pump_status_layout  -> {
+                    // Check if there is a bolus in progress
+                    popupBolusDialogIfRunning(onClick = true)
+                }
             }
         }
     }
@@ -508,7 +509,7 @@ class OverviewFragment : DaggerFragment(), View.OnClickListener, OnLongClickList
             }
 
             R.id.temp_target         -> v.performClick()
-            R.id.active_profile ->
+            R.id.active_profile      ->
                 if (loop.runningMode == RM.Mode.DISCONNECTED_PUMP) uiInteraction.showOkDialog(context = requireActivity(), title = R.string.not_available_full, message = R.string.smscommunicator_pump_disconnected)
                 else
                     protectionCheck.queryProtection(
@@ -912,7 +913,7 @@ class OverviewFragment : DaggerFragment(), View.OnClickListener, OnLongClickList
 
     private fun updateExtendedBolus() {
         val pump = activePlugin.activePump
-        val extendedBolus = persistenceLayer.getExtendedBolusActiveAt(dateUtil.now())
+        val extendedBolus = runBlocking { persistenceLayer.getExtendedBolusActiveAt(dateUtil.now()) }
         val extendedBolusText = overviewData.extendedBolusText()
         val extendedBolusDialogText = overviewData.extendedBolusDialogText()
         runOnUiThread {
@@ -967,7 +968,7 @@ class OverviewFragment : DaggerFragment(), View.OnClickListener, OnLongClickList
         val iobText = iobText()
         val iobDialogText = iobDialogText()
         val displayText = iobCobCalculator.getCobInfo("Overview COB").displayText(rh, decimalFormatter)
-        val lastCarbsTime = persistenceLayer.getNewestCarbs()?.timestamp ?: 0L
+        val lastCarbsTime = runBlocking { persistenceLayer.getNewestCarbs() }?.timestamp ?: 0L
         runOnUiThread {
             _binding ?: return@runOnUiThread
             binding.infoLayout.iob.text = iobText
@@ -996,10 +997,10 @@ class OverviewFragment : DaggerFragment(), View.OnClickListener, OnLongClickList
 
     @SuppressLint("SetTextI18n")
     fun updateTemporaryTarget() {
-        val units = profileFunction.getUnits()
-        val tempTarget = persistenceLayer.getTemporaryTargetActiveAt(dateUtil.now())
-        runOnUiThread {
-            _binding ?: return@runOnUiThread
+        viewLifecycleOwner.lifecycleScope.launch {
+            val units = profileFunction.getUnits()
+            val tempTarget = persistenceLayer.getTemporaryTargetActiveAt(dateUtil.now())
+            _binding ?: return@launch
             if (tempTarget != null) {
                 setRibbon(
                     binding.tempTarget,

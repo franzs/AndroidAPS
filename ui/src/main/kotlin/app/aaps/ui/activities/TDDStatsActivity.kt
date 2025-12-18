@@ -34,6 +34,7 @@ import app.aaps.core.keys.interfaces.Preferences
 import app.aaps.core.ui.activities.TranslatedDaggerAppCompatActivity
 import app.aaps.ui.databinding.ActivityTddStatsBinding
 import io.reactivex.rxjava3.disposables.CompositeDisposable
+import kotlinx.coroutines.runBlocking
 import java.text.DateFormat
 import java.text.DecimalFormat
 import java.text.SimpleDateFormat
@@ -243,7 +244,7 @@ class TDDStatsActivity : TranslatedDaggerAppCompatActivity() {
     private fun loadDataFromDB() {
         historyList.clear()
         // timestamp DESC sorting!
-        historyList.addAll(persistenceLayer.getLastTotalDailyDoses(10, true))
+        historyList.addAll(runBlocking { persistenceLayer.getLastTotalDailyDoses(10, true) })
 
         //only use newest 10
         historyList = historyList.subList(0, min(10, historyList.size))

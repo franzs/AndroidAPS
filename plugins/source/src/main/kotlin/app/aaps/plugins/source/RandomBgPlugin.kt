@@ -34,6 +34,7 @@ import app.aaps.core.utils.isRunningTest
 import app.aaps.core.validators.preferences.AdaptiveIntPreference
 import app.aaps.core.validators.preferences.AdaptiveSwitchPreference
 import io.reactivex.rxjava3.disposables.CompositeDisposable
+import kotlinx.coroutines.runBlocking
 import java.security.SecureRandom
 import java.util.Calendar
 import java.util.GregorianCalendar
@@ -141,8 +142,9 @@ class RandomBgPlugin @Inject constructor(
             trendArrow = TrendArrow.entries.shuffled().first(),
             sourceSensor = SourceSensor.RANDOM
         )
-        persistenceLayer.insertCgmSourceData(Sources.Random, glucoseValues, emptyList(), null)
-            .blockingGet()
+        runBlocking {
+            persistenceLayer.insertCgmSourceData(Sources.Random, glucoseValues, emptyList(), null)
+        }
 
         //  Generate carbs around once in 4 hours
         if (SecureRandom().nextDouble() <= 0.02) {
@@ -154,7 +156,7 @@ class RandomBgPlugin @Inject constructor(
                 notes = "Random carbs",
                 ids = IDs()
             )
-            persistenceLayer.insertOrUpdateCarbs(ca, Action.TREATMENT, Sources.CarbDialog, ca.notes).blockingGet()
+            runBlocking { persistenceLayer.insertOrUpdateCarbs(ca, Action.TREATMENT, Sources.CarbDialog, ca.notes) }
         }
     }
 

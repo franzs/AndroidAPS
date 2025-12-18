@@ -22,6 +22,8 @@ dependencies {
     implementation(project(":core:data"))
     implementation(project(":core:keys"))
 
+    // Dependency Injection
+    api(libs.com.google.dagger.android)
 
     api(libs.androidx.appcompat)
     api(libs.androidx.preference)

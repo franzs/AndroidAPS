@@ -5,6 +5,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.FragmentManager
+import androidx.lifecycle.lifecycleScope
 import app.aaps.core.data.model.BS
 import app.aaps.core.data.model.GlucoseUnit
 import app.aaps.core.data.model.TE
@@ -32,8 +33,7 @@ import app.aaps.core.ui.toast.ToastUtils
 import app.aaps.ui.R
 import app.aaps.ui.databinding.DialogFillBinding
 import com.google.common.base.Joiner
-import io.reactivex.rxjava3.disposables.CompositeDisposable
-import io.reactivex.rxjava3.kotlin.plusAssign
+import kotlinx.coroutines.launch
 import java.util.LinkedList
 import javax.inject.Inject
 import kotlin.math.abs
@@ -51,7 +51,6 @@ class FillDialog(val fm: FragmentManager) : DialogFragmentWithDate() {
     @Inject lateinit var decimalFormatter: DecimalFormatter
 
     private var queryingProtection = false
-    private val disposable = CompositeDisposable()
     private var _binding: DialogFillBinding? = null
 
     // This property is only valid between onCreateView and onDestroyView.
@@ -159,20 +158,22 @@ class FillDialog(val fm: FragmentManager) : DialogFragmentWithDate() {
                         requestPrimeBolus(insulinAfterConstraints, notes)
                     }
                     if (siteChange) {
-                        disposable += persistenceLayer.insertPumpTherapyEventIfNewByTimestamp(
-                            therapyEvent = TE(
-                                timestamp = eventTime,
-                                type = TE.Type.CANNULA_CHANGE,
+                        lifecycleScope.launch {
+                            persistenceLayer.insertPumpTherapyEventIfNewByTimestamp(
+                                therapyEvent = TE(
+                                    timestamp = eventTime,
+                                    type = TE.Type.CANNULA_CHANGE,
+                                    note = notes,
+                                    glucoseUnit = GlucoseUnit.MGDL
+                                ),
+                                action = Action.SITE_CHANGE, source = Sources.FillDialog,
                                 note = notes,
-                                glucoseUnit = GlucoseUnit.MGDL
-                            ),
-                            action = Action.SITE_CHANGE, source = Sources.FillDialog,
-                            note = notes,
-                            listValues = listOfNotNull(
-                                ValueWithUnit.Timestamp(eventTime).takeIf { eventTimeChanged },
-                                ValueWithUnit.TEType(TE.Type.CANNULA_CHANGE)
+                                listValues = listOfNotNull(
+                                    ValueWithUnit.Timestamp(eventTime).takeIf { eventTimeChanged },
+                                    ValueWithUnit.TEType(TE.Type.CANNULA_CHANGE)
+                                )
                             )
-                        ).subscribe()
+                        }
                         if (preferences.get(BooleanKey.SiteRotationManageCgm)) {
                             SiteRotationDialog().also { srd ->
                                 srd.arguments = Bundle().also { args ->
@@ -186,20 +187,22 @@ class FillDialog(val fm: FragmentManager) : DialogFragmentWithDate() {
                     }
                     if (insulinChange)
                     // add a second for case of both checked
-                        disposable += persistenceLayer.insertPumpTherapyEventIfNewByTimestamp(
-                            therapyEvent = TE(
-                                timestamp = eventTime + 1000,
-                                type = TE.Type.INSULIN_CHANGE,
+                        lifecycleScope.launch {
+                            persistenceLayer.insertPumpTherapyEventIfNewByTimestamp(
+                                therapyEvent = TE(
+                                    timestamp = eventTime + 1000,
+                                    type = TE.Type.INSULIN_CHANGE,
+                                    note = notes,
+                                    glucoseUnit = GlucoseUnit.MGDL
+                                ),
+                                action = Action.RESERVOIR_CHANGE, source = Sources.FillDialog,
                                 note = notes,
-                                glucoseUnit = GlucoseUnit.MGDL
-                            ),
-                            action = Action.RESERVOIR_CHANGE, source = Sources.FillDialog,
-                            note = notes,
-                            listValues = listOfNotNull(
-                                ValueWithUnit.Timestamp(eventTime).takeIf { eventTimeChanged },
-                                ValueWithUnit.TEType(TE.Type.INSULIN_CHANGE)
+                                listValues = listOfNotNull(
+                                    ValueWithUnit.Timestamp(eventTime).takeIf { eventTimeChanged },
+                                    ValueWithUnit.TEType(TE.Type.INSULIN_CHANGE)
+                                )
                             )
-                        ).subscribe()
+                        }
                 },
                 cancel = null
             )

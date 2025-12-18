@@ -55,6 +55,7 @@ import app.aaps.plugins.main.R
 import app.aaps.plugins.main.iob.iobCobCalculator.data.AutosensDataStoreObject
 import io.reactivex.rxjava3.disposables.CompositeDisposable
 import io.reactivex.rxjava3.kotlin.plusAssign
+import kotlinx.coroutines.runBlocking
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.ScheduledFuture
@@ -208,15 +209,15 @@ class IobCobCalculatorPlugin @Inject constructor(
 
     private fun oldestDataAvailable(): Long {
         var oldestTime = System.currentTimeMillis()
-        val oldestTempBasal = persistenceLayer.getOldestTemporaryBasalRecord()
+        val oldestTempBasal = runBlocking { persistenceLayer.getOldestTemporaryBasalRecord() }
         if (oldestTempBasal != null) oldestTime = min(oldestTime, oldestTempBasal.timestamp)
-        val oldestExtendedBolus = persistenceLayer.getOldestExtendedBolusRecord()
+        val oldestExtendedBolus = runBlocking { persistenceLayer.getOldestExtendedBolusRecord() }
         if (oldestExtendedBolus != null) oldestTime = min(oldestTime, oldestExtendedBolus.timestamp)
-        val oldestBolus = persistenceLayer.getOldestBolus()
+        val oldestBolus = runBlocking { persistenceLayer.getOldestBolus() }
         if (oldestBolus != null) oldestTime = min(oldestTime, oldestBolus.timestamp)
-        val oldestCarbs = persistenceLayer.getOldestCarbs()
+        val oldestCarbs = runBlocking { persistenceLayer.getOldestCarbs() }
         if (oldestCarbs != null) oldestTime = min(oldestTime, oldestCarbs.timestamp)
-        val oldestPs = persistenceLayer.getOldestEffectiveProfileSwitch()
+        val oldestPs = runBlocking { persistenceLayer.getOldestEffectiveProfileSwitch() }
         if (oldestPs != null) oldestTime = min(oldestTime, oldestPs.timestamp)
         oldestTime -= 15 * 60 * 1000L // allow 15 min before
         return oldestTime
@@ -336,7 +337,7 @@ class IobCobCalculatorPlugin @Inject constructor(
         var futureCarbs = 0.0
         val now = dateUtil.now()
         var timestamp = now
-        val carbs = persistenceLayer.getCarbsFromTimeExpanded(autosensData?.time ?: now, true)
+        val carbs = runBlocking { persistenceLayer.getCarbsFromTimeExpanded(autosensData?.time ?: now, true) }
         if (autosensData != null) {
             displayCob = autosensData.cob
             carbs.forEach { carb ->
@@ -357,7 +358,7 @@ class IobCobCalculatorPlugin @Inject constructor(
         val now = System.currentTimeMillis()
         val maxAbsorptionHours: Double = activePlugin.activeSensitivity.maxAbsorptionHours()
         val absorptionTimeAgo = now - (maxAbsorptionHours * T.hours(1).msecs()).toLong()
-        persistenceLayer.getCarbsFromTimeToTimeExpanded(absorptionTimeAgo + 1, now, true)
+        runBlocking { persistenceLayer.getCarbsFromTimeToTimeExpanded(absorptionTimeAgo + 1, now, true) }
             .forEach {
                 if (it.amount != 0.0) {
                     result.carbs += it.amount
@@ -371,7 +372,7 @@ class IobCobCalculatorPlugin @Inject constructor(
             result.slopeFromMaxDeviation = autosensData.slopeFromMaxDeviation
             result.usedMinCarbsImpact = autosensData.usedMinCarbsImpact
         }
-        val lastBolus = persistenceLayer.getNewestBolus()
+        val lastBolus = runBlocking { persistenceLayer.getNewestBolus() }
         result.lastBolusTime = lastBolus?.timestamp ?: 0L
         return result
     }
@@ -435,7 +436,7 @@ class IobCobCalculatorPlugin @Inject constructor(
                 {
                     synchronized(this) {
                         aapsLogger.debug(LTag.AUTOSENS, "Running newHistoryData")
-                        persistenceLayer.clearCachedTddData(MidnightTime.calc(event.oldDataTimestamp))
+                        runBlocking { persistenceLayer.clearCachedTddData(MidnightTime.calc(event.oldDataTimestamp)) }
                         newHistoryData(
                             event.oldDataTimestamp,
                             event.reloadBgData,
@@ -522,7 +523,7 @@ class IobCobCalculatorPlugin @Inject constructor(
         val divisor = preferences.get(DoubleKey.ApsAmaBolusSnoozeDivisor)
         assert(divisor > 0)
 
-        val boluses = persistenceLayer.getBolusesFromTimeBlocking(toTime - range(), true).blockingGet()
+        val boluses = runBlocking { persistenceLayer.getBolusesFromTime(toTime - range(), true) }
 
         boluses.forEach { t ->
             if (t.isValid && t.timestamp < toTime) {
@@ -550,7 +551,7 @@ class IobCobCalculatorPlugin @Inject constructor(
         val now = dateUtil.now()
         val pumpInterface = activePlugin.activePump
         if (!pumpInterface.isFakingTempsByExtendedBoluses) {
-            val extendedBoluses = persistenceLayer.getExtendedBolusesStartingFromTimeToTime(toTime - range(), toTime, true)
+            val extendedBoluses = runBlocking { persistenceLayer.getExtendedBolusesStartingFromTimeToTime(toTime - range(), toTime, true) }
             for (pos in extendedBoluses.indices) {
                 val e = extendedBoluses[pos]
                 if (e.timestamp > toTime) continue
@@ -599,7 +600,7 @@ class IobCobCalculatorPlugin @Inject constructor(
         val now = dateUtil.now()
         val pumpInterface = activePlugin.activePump
 
-        val temporaryBasals = persistenceLayer.getTemporaryBasalsStartingFromTimeToTime(toTime - range(), toTime, true)
+        val temporaryBasals = runBlocking { persistenceLayer.getTemporaryBasalsStartingFromTimeToTime(toTime - range(), toTime, true) }
         for (pos in temporaryBasals.indices) {
             val t = temporaryBasals[pos]
             if (t.timestamp > toTime) continue
@@ -611,7 +612,7 @@ class IobCobCalculatorPlugin @Inject constructor(
         }
         if (pumpInterface.isFakingTempsByExtendedBoluses) {
             val totalExt = IobTotal(toTime)
-            val extendedBoluses = persistenceLayer.getExtendedBolusesStartingFromTimeToTime(toTime - range(), toTime, true)
+            val extendedBoluses = runBlocking { persistenceLayer.getExtendedBolusesStartingFromTimeToTime(toTime - range(), toTime, true) }
             for (pos in extendedBoluses.indices) {
                 val e = extendedBoluses[pos]
                 if (e.timestamp > toTime) continue
@@ -638,7 +639,7 @@ class IobCobCalculatorPlugin @Inject constructor(
         val total = IobTotal(toTime)
         val pumpInterface = activePlugin.activePump
         val now = dateUtil.now()
-        val temporaryBasals = persistenceLayer.getTemporaryBasalsStartingFromTimeToTime(toTime - range(), toTime, true)
+        val temporaryBasals = runBlocking { persistenceLayer.getTemporaryBasalsStartingFromTimeToTime(toTime - range(), toTime, true) }
         for (pos in temporaryBasals.indices) {
             val t = temporaryBasals[pos]
             if (t.timestamp > toTime) continue
@@ -650,7 +651,7 @@ class IobCobCalculatorPlugin @Inject constructor(
         }
         if (pumpInterface.isFakingTempsByExtendedBoluses) {
             val totalExt = IobTotal(toTime)
-            val extendedBoluses = persistenceLayer.getExtendedBolusesStartingFromTimeToTime(toTime - range(), toTime, true)
+            val extendedBoluses = runBlocking { persistenceLayer.getExtendedBolusesStartingFromTimeToTime(toTime - range(), toTime, true) }
             for (pos in extendedBoluses.indices) {
                 val e = extendedBoluses[pos]
                 if (e.timestamp > toTime) continue

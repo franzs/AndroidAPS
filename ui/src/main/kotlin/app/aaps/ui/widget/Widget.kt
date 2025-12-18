@@ -45,6 +45,7 @@ import app.aaps.core.ui.extensions.toVisibility
 import app.aaps.core.ui.extensions.toVisibilityKeepSpace
 import app.aaps.ui.R
 import dagger.android.HasAndroidInjector
+import kotlinx.coroutines.runBlocking
 import java.util.Locale
 import javax.inject.Inject
 import kotlin.math.abs
@@ -197,7 +198,7 @@ class Widget : AppWidgetProvider() {
     private fun updateExtendedBolus(views: RemoteViews) {
         val pump = activePlugin.activePump
         views.setTextViewText(R.id.extended_bolus, overviewData.extendedBolusText())
-        views.setViewVisibility(R.id.extended_layout, (persistenceLayer.getExtendedBolusActiveAt(dateUtil.now()) != null && !pump.isFakingTempsByExtendedBoluses).toVisibility())
+        views.setViewVisibility(R.id.extended_layout, (runBlocking { persistenceLayer.getExtendedBolusActiveAt(dateUtil.now()) } != null && !pump.isFakingTempsByExtendedBoluses).toVisibility())
     }
 
     private fun bolusIob(): IobTotal = iobCobCalculator.calculateIobFromBolus().round()
@@ -215,7 +216,7 @@ class Widget : AppWidgetProvider() {
         if (config.APS && constraintsProcessed != null && lastRun != null) {
             if (constraintsProcessed.carbsReq > 0) {
                 //only display carbsreq when carbs have not been entered recently
-                val lastCarbsTime = persistenceLayer.getNewestCarbs()?.timestamp ?: 0L
+                val lastCarbsTime = runBlocking { persistenceLayer.getNewestCarbs() }?.timestamp ?: 0L
                 if (lastCarbsTime < lastRun.lastAPSRun) {
                     cobText += " | " + constraintsProcessed.carbsReq + " " + rh.gs(app.aaps.core.ui.R.string.required)
                 }
@@ -226,7 +227,7 @@ class Widget : AppWidgetProvider() {
 
     private fun updateTemporaryTarget(views: RemoteViews) {
         val units = profileFunction.getUnits()
-        val tempTarget = persistenceLayer.getTemporaryTargetActiveAt(dateUtil.now())
+        val tempTarget = runBlocking { persistenceLayer.getTemporaryTargetActiveAt(dateUtil.now()) }
         if (tempTarget != null) {
             // this is crashing, use background as text for now
             //views.setTextColor(R.id.temp_target, rh.gc(R.color.ribbonTextWarning))

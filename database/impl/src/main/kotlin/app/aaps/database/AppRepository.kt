@@ -24,7 +24,6 @@ import app.aaps.database.entities.embedments.InterfaceIDs
 import app.aaps.database.entities.interfaces.DBEntry
 import app.aaps.database.transactions.Transaction
 import io.reactivex.rxjava3.core.Completable
-import io.reactivex.rxjava3.core.Maybe
 import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.core.Single
 import io.reactivex.rxjava3.schedulers.Schedulers
@@ -40,8 +39,6 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.rx3.rxMaybe
-import kotlinx.coroutines.rx3.rxSingle
 import java.io.Closeable
 import java.util.concurrent.Callable
 import java.util.concurrent.TimeUnit
@@ -188,7 +185,7 @@ class AppRepository @Inject internal constructor(
 
     fun clearApsResults() = database.apsResultDao.deleteAllEntries()
 
-    fun cleanupDatabase(keepDays: Long, deleteTrackedChanges: Boolean): String = runBlocking {
+    suspend fun cleanupDatabase(keepDays: Long, deleteTrackedChanges: Boolean): String {
         val than = System.currentTimeMillis() - TimeUnit.DAYS.toMillis(keepDays)
         val removed = mutableListOf<Pair<String, Int>>()
         removed.add(Pair("APSResult", database.apsResultDao.deleteOlderThan(than)))
@@ -238,34 +235,27 @@ class AppRepository @Inject internal constructor(
         removed
             .filter { it.second > 0 }
             .map { ret.append(it.first + " " + it.second + "<br>") }
-        ret.toString()
+        return ret.toString()
     }
 
-    fun clearCachedTddData(from: Long) = database.totalDailyDoseDao.deleteNewerThan(from, InterfaceIDs.PumpType.CACHE)
+    suspend fun clearCachedTddData(from: Long) = database.totalDailyDoseDao.deleteNewerThan(from, InterfaceIDs.PumpType.CACHE)
 
     //BG READINGS -- only valid records
-    fun compatGetBgReadingsDataFromTime(timestamp: Long, ascending: Boolean): Single<List<GlucoseValue>> = rxSingle {
-        val data = database.glucoseValueDao.compatGetBgReadingsDataFromTime(timestamp)
-        if (!ascending) data.reversed() else data
-    }
+    suspend fun compatGetBgReadingsDataFromTime(timestamp: Long, ascending: Boolean): List<GlucoseValue> =
+        database.glucoseValueDao.compatGetBgReadingsDataFromTime(timestamp).reversedIf(!ascending)
 
-    fun compatGetBgReadingsDataFromTime(start: Long, end: Long, ascending: Boolean): Single<List<GlucoseValue>> = rxSingle {
-        val data = database.glucoseValueDao.compatGetBgReadingsDataFromTime(start, end)
-        if (!ascending) data.reversed() else data
-    }
+    suspend fun compatGetBgReadingsDataFromTime(start: Long, end: Long, ascending: Boolean): List<GlucoseValue> =
+        database.glucoseValueDao.compatGetBgReadingsDataFromTime(start, end).reversedIf(!ascending)
 
     //BG READINGS -- including invalid/history records
-    fun findBgReadingByNSId(nsId: String): GlucoseValue? = runBlocking {
+    suspend fun findBgReadingByNSId(nsId: String): GlucoseValue? =
         database.glucoseValueDao.findByNSId(nsId)
-    }
 
-    fun getLastGlucoseValueId(): Long? = runBlocking {
+    suspend fun getLastGlucoseValueId(): Long? =
         database.glucoseValueDao.getLastId()
-    }
 
-    fun getLastGlucoseValue(): GlucoseValue? = runBlocking {
+    suspend fun getLastGlucoseValue(): GlucoseValue? =
         database.glucoseValueDao.getLast()
-    }
 
     /*
        * returns a Pair of the next entity to sync and the ID of the "update".
@@ -274,21 +264,20 @@ class AppRepository @Inject internal constructor(
        *
        * It is a Maybe as there might be no next element.
        * */
-    fun getNextSyncElementGlucoseValue(id: Long): Maybe<Pair<GlucoseValue, GlucoseValue>> = rxMaybe {
-        val nextIdElement = database.glucoseValueDao.getNextModifiedOrNewAfter(id) ?: return@rxMaybe null
+    suspend fun getNextSyncElementGlucoseValue(id: Long): Pair<GlucoseValue, GlucoseValue>? {
+        val nextIdElement = database.glucoseValueDao.getNextModifiedOrNewAfter(id) ?: return null
         val nextIdElemReferenceId = nextIdElement.referenceId
-        if (nextIdElemReferenceId == null) {
+        return if (nextIdElemReferenceId == null) {
             nextIdElement to nextIdElement
         } else {
-            val historic = database.glucoseValueDao.getCurrentFromHistoric(nextIdElemReferenceId) ?: return@rxMaybe null
+            val historic = database.glucoseValueDao.getCurrentFromHistoric(nextIdElemReferenceId) ?: return null
             historic to nextIdElement
         }
     }
 
     // TEMP TARGETS
-    fun findTemporaryTargetByNSId(nsId: String): TemporaryTarget? = runBlocking {
+    suspend fun findTemporaryTargetByNSId(nsId: String): TemporaryTarget? =
         database.temporaryTargetDao.findByNSId(nsId)
-    }
 
     /*
        * returns a Pair of the next entity to sync and the ID of the "update".
@@ -297,10 +286,10 @@ class AppRepository @Inject internal constructor(
        *
        * It is a Maybe as there might be no next element.
        * */
-    fun getNextSyncElementTemporaryTarget(id: Long): Maybe<Pair<TemporaryTarget, TemporaryTarget>> = rxMaybe {
-        val nextIdElement = database.temporaryTargetDao.getNextModifiedOrNewAfter(id) ?: return@rxMaybe null
+    suspend fun getNextSyncElementTemporaryTarget(id: Long): Pair<TemporaryTarget, TemporaryTarget>? {
+        val nextIdElement = database.temporaryTargetDao.getNextModifiedOrNewAfter(id) ?: return null
         val nextIdElemReferenceId = nextIdElement.referenceId
-        if (nextIdElemReferenceId == null) {
+        return if (nextIdElemReferenceId == null) {
             nextIdElement to nextIdElement
         } else {
             val historic = database.temporaryTargetDao.getCurrentFromHistoric(nextIdElemReferenceId)
@@ -308,32 +297,24 @@ class AppRepository @Inject internal constructor(
         }
     }
 
-    fun getTemporaryTargetDataFromTime(timestamp: Long, ascending: Boolean): Single<List<TemporaryTarget>> = rxSingle {
-        val result = database.temporaryTargetDao.getTemporaryTargetDataFromTime(timestamp)
-        if (!ascending) result.reversed() else result
-    }
+    suspend fun getTemporaryTargetDataFromTime(timestamp: Long, ascending: Boolean): List<TemporaryTarget> =
+        database.temporaryTargetDao.getTemporaryTargetDataFromTime(timestamp).reversedIf(!ascending)
 
-    fun getTemporaryTargetDataIncludingInvalidFromTime(timestamp: Long, ascending: Boolean): Single<List<TemporaryTarget>> = rxSingle {
-        val result = database.temporaryTargetDao.getTemporaryTargetDataIncludingInvalidFromTime(timestamp)
-        if (!ascending) result.reversed() else result
-    }
+    suspend fun getTemporaryTargetDataIncludingInvalidFromTime(timestamp: Long, ascending: Boolean): List<TemporaryTarget> =
+        database.temporaryTargetDao.getTemporaryTargetDataIncludingInvalidFromTime(timestamp).reversedIf(!ascending)
 
-    fun getTemporaryTargetActiveAt(timestamp: Long): Maybe<TemporaryTarget> = rxMaybe {
+    suspend fun getTemporaryTargetActiveAt(timestamp: Long): TemporaryTarget? =
         database.temporaryTargetDao.getTemporaryTargetActiveAt(timestamp)
-    }
 
-    fun getLastTempTargetId(): Long? = runBlocking {
+    suspend fun getLastTempTargetId(): Long? =
         database.temporaryTargetDao.getLastId()
-    }
 
     // USER ENTRY
-    fun getUserEntryDataFromTime(timestamp: Long): Single<List<UserEntry>> = rxSingle {
+    suspend fun getUserEntryDataFromTime(timestamp: Long): List<UserEntry> =
         database.userEntryDao.getUserEntryDataFromTime(timestamp)
-    }
 
-    fun getUserEntryFilteredDataFromTime(timestamp: Long): Single<List<UserEntry>> = rxSingle {
+    suspend fun getUserEntryFilteredDataFromTime(timestamp: Long): List<UserEntry> =
         database.userEntryDao.getUserEntryFilteredDataFromTime(UserEntry.Sources.Loop, timestamp)
-    }
 
     suspend fun insert(word: UserEntry) {
         database.userEntryDao.insert(word)
@@ -342,14 +323,13 @@ class AppRepository @Inject internal constructor(
 
     // PROFILE SWITCH
 
-    fun findProfileSwitchByNSId(nsId: String): ProfileSwitch? = runBlocking {
+    suspend fun findProfileSwitchByNSId(nsId: String): ProfileSwitch? =
         database.profileSwitchDao.findByNSId(nsId)
-    }
 
-    fun getNextSyncElementProfileSwitch(id: Long): Maybe<Pair<ProfileSwitch, ProfileSwitch>> = rxMaybe {
-        val nextIdElement = database.profileSwitchDao.getNextModifiedOrNewAfter(id) ?: return@rxMaybe null
+    suspend fun getNextSyncElementProfileSwitch(id: Long): Pair<ProfileSwitch, ProfileSwitch>? {
+        val nextIdElement = database.profileSwitchDao.getNextModifiedOrNewAfter(id) ?: return null
         val nextIdElemReferenceId = nextIdElement.referenceId
-        if (nextIdElemReferenceId == null) {
+        return if (nextIdElemReferenceId == null) {
             nextIdElement to nextIdElement
         } else {
             val historic = database.profileSwitchDao.getCurrentFromHistoric(nextIdElemReferenceId)
@@ -357,47 +337,39 @@ class AppRepository @Inject internal constructor(
         }
     }
 
-    fun getProfileSwitchActiveAt(timestamp: Long): ProfileSwitch? = runBlocking {
+    suspend fun getProfileSwitchActiveAt(timestamp: Long): ProfileSwitch? {
         val tps = database.profileSwitchDao.getTemporaryProfileSwitchActiveAt(timestamp)
         val ps = database.profileSwitchDao.getPermanentProfileSwitchActiveAt(timestamp)
         if (tps != null && ps != null)
-            return@runBlocking if (ps.timestamp > tps.timestamp) ps else tps
-        if (ps == null) return@runBlocking tps
-        ps // if (tps == null)
+            return if (ps.timestamp > tps.timestamp) ps else tps
+        if (ps == null) return tps
+        return ps // if (tps == null)
     }
 
-    fun getPermanentProfileSwitchActiveAt(timestamp: Long): Maybe<ProfileSwitch> = rxMaybe {
+    suspend fun getPermanentProfileSwitchActiveAt(timestamp: Long): ProfileSwitch? =
         database.profileSwitchDao.getPermanentProfileSwitchActiveAt(timestamp)
-    }
 
-    fun getAllProfileSwitches(): Single<List<ProfileSwitch>> = rxSingle {
+    suspend fun getAllProfileSwitches(): List<ProfileSwitch> =
         database.profileSwitchDao.getAllProfileSwitches()
-    }
 
-    fun getProfileSwitchesFromTime(timestamp: Long, ascending: Boolean): Single<List<ProfileSwitch>> = rxSingle {
-        val result = database.profileSwitchDao.getProfileSwitchDataFromTime(timestamp)
-        if (!ascending) result.reversed() else result
-    }
+    suspend fun getProfileSwitchesFromTime(timestamp: Long, ascending: Boolean): List<ProfileSwitch> =
+        database.profileSwitchDao.getProfileSwitchDataFromTime(timestamp).reversedIf(!ascending)
 
-    fun getProfileSwitchesIncludingInvalidFromTime(timestamp: Long, ascending: Boolean): Single<List<ProfileSwitch>> = rxSingle {
-        val result = database.profileSwitchDao.getProfileSwitchDataIncludingInvalidFromTime(timestamp)
-        if (!ascending) result.reversed() else result
-    }
+    suspend fun getProfileSwitchesIncludingInvalidFromTime(timestamp: Long, ascending: Boolean): List<ProfileSwitch> =
+        database.profileSwitchDao.getProfileSwitchDataIncludingInvalidFromTime(timestamp).reversedIf(!ascending)
 
-    fun getLastProfileSwitchId(): Long? = runBlocking {
+    suspend fun getLastProfileSwitchId(): Long? =
         database.profileSwitchDao.getLastId()
-    }
 
     // RUNNING MODE
 
-    fun findRunningModeByNSId(nsId: String): RunningMode? = runBlocking {
+    suspend fun findRunningModeByNSId(nsId: String): RunningMode? =
         database.runningModeDao.findByNSId(nsId)
-    }
 
-    fun getNextSyncElementRunningMode(id: Long): Maybe<Pair<RunningMode, RunningMode>> = rxMaybe {
-        val nextIdElement = database.runningModeDao.getNextModifiedOrNewAfter(id) ?: return@rxMaybe null
+    suspend fun getNextSyncElementRunningMode(id: Long): Pair<RunningMode, RunningMode>? {
+        val nextIdElement = database.runningModeDao.getNextModifiedOrNewAfter(id) ?: return null
         val nextIdElemReferenceId = nextIdElement.referenceId
-        if (nextIdElemReferenceId == null) {
+        return if (nextIdElemReferenceId == null) {
             nextIdElement to nextIdElement
         } else {
             val historic = database.runningModeDao.getCurrentFromHistoric(nextIdElemReferenceId)
@@ -405,46 +377,36 @@ class AppRepository @Inject internal constructor(
         }
     }
 
-    fun getRunningModeActiveAt(timestamp: Long): RunningMode? = runBlocking {
+    suspend fun getRunningModeActiveAt(timestamp: Long): RunningMode? {
         val trm = database.runningModeDao.getTemporaryRunningModeActiveAt(timestamp)
         val prm = database.runningModeDao.getPermanentRunningModeActiveAt(timestamp)
         if (trm != null && prm != null)
-            return@runBlocking if (prm.timestamp > trm.timestamp) prm else trm
-        if (prm == null) return@runBlocking trm
-        prm // if (trm == null)
+            return if (prm.timestamp > trm.timestamp) prm else trm
+        if (prm == null) return trm
+        return prm // if (trm == null)
     }
 
-    fun getPermanentRunningModeActiveAt(timestamp: Long): Maybe<RunningMode> = rxMaybe {
+    suspend fun getPermanentRunningModeActiveAt(timestamp: Long): RunningMode? =
         database.runningModeDao.getPermanentRunningModeActiveAt(timestamp)
-    }
 
-    fun getAllRunningModes(): Single<List<RunningMode>> = rxSingle {
+    suspend fun getAllRunningModes(): List<RunningMode> =
         database.runningModeDao.getAllRunningModes()
-    }
 
-    fun getRunningModesFromTime(timestamp: Long, ascending: Boolean): Single<List<RunningMode>> = rxSingle {
-        val result = database.runningModeDao.getRunningModeDataFromTime(timestamp)
-        if (!ascending) result.reversed() else result
-    }
+    suspend fun getRunningModesFromTime(timestamp: Long, ascending: Boolean): List<RunningMode> =
+        database.runningModeDao.getRunningModeDataFromTime(timestamp).reversedIf(!ascending)
 
-    fun getRunningModesFromTimeToTime(startTime: Long, endTime: Long, ascending: Boolean): Single<List<RunningMode>> = rxSingle {
-        val result = database.runningModeDao.getRunningModeDataFromTimeToTime(startTime, endTime)
-        if (!ascending) result.reversed() else result
-    }
+    suspend fun getRunningModesFromTimeToTime(startTime: Long, endTime: Long, ascending: Boolean): List<RunningMode> =
+        database.runningModeDao.getRunningModeDataFromTimeToTime(startTime, endTime).reversedIf(!ascending)
 
-    fun getRunningModesIncludingInvalidFromTime(timestamp: Long, ascending: Boolean): Single<List<RunningMode>> = rxSingle {
-        val result = database.runningModeDao.getRunningModeDataIncludingInvalidFromTime(timestamp)
-        if (!ascending) result.reversed() else result
-    }
+    suspend fun getRunningModesIncludingInvalidFromTime(timestamp: Long, ascending: Boolean): List<RunningMode> =
+        database.runningModeDao.getRunningModeDataIncludingInvalidFromTime(timestamp).reversedIf(!ascending)
 
-    fun getLastRunningModeId(): Long? = runBlocking {
+    suspend fun getLastRunningModeId(): Long? =
         database.runningModeDao.getLastId()
-    }
 
     // EFFECTIVE PROFILE SWITCH
-    fun findEffectiveProfileSwitchByNSId(nsId: String): EffectiveProfileSwitch? = runBlocking {
+    suspend fun findEffectiveProfileSwitchByNSId(nsId: String): EffectiveProfileSwitch? =
         database.effectiveProfileSwitchDao.findByNSId(nsId)
-    }
 
     /*
        * returns a Pair of the next entity to sync and the ID of the "update".
@@ -453,10 +415,10 @@ class AppRepository @Inject internal constructor(
        *
        * It is a Maybe as there might be no next element.
        * */
-    fun getNextSyncElementEffectiveProfileSwitch(id: Long): Maybe<Pair<EffectiveProfileSwitch, EffectiveProfileSwitch>> = rxMaybe {
-        val nextIdElement = database.effectiveProfileSwitchDao.getNextModifiedOrNewAfter(id) ?: return@rxMaybe null
+    suspend fun getNextSyncElementEffectiveProfileSwitch(id: Long): Pair<EffectiveProfileSwitch, EffectiveProfileSwitch>? {
+        val nextIdElement = database.effectiveProfileSwitchDao.getNextModifiedOrNewAfter(id) ?: return null
         val nextIdElemReferenceId = nextIdElement.referenceId
-        if (nextIdElemReferenceId == null) {
+        return if (nextIdElemReferenceId == null) {
             nextIdElement to nextIdElement
         } else {
             val historic = database.effectiveProfileSwitchDao.getCurrentFromHistoric(nextIdElemReferenceId)
@@ -464,32 +426,23 @@ class AppRepository @Inject internal constructor(
         }
     }
 
-    fun getOldestEffectiveProfileSwitchRecord(): Maybe<EffectiveProfileSwitch> = rxMaybe {
+    suspend fun getOldestEffectiveProfileSwitchRecord(): EffectiveProfileSwitch? =
         database.effectiveProfileSwitchDao.getOldestEffectiveProfileSwitchRecord()
-    }
 
-    fun getEffectiveProfileSwitchActiveAt(timestamp: Long): Maybe<EffectiveProfileSwitch> = rxMaybe {
+    suspend fun getEffectiveProfileSwitchActiveAt(timestamp: Long): EffectiveProfileSwitch? =
         database.effectiveProfileSwitchDao.getEffectiveProfileSwitchActiveAt(timestamp)
-    }
 
-    fun getEffectiveProfileSwitchesFromTime(timestamp: Long, ascending: Boolean): Single<List<EffectiveProfileSwitch>> = rxSingle {
-        val result = database.effectiveProfileSwitchDao.getEffectiveProfileSwitchDataFromTime(timestamp)
-        if (!ascending) result.reversed() else result
-    }
+    suspend fun getEffectiveProfileSwitchesFromTime(timestamp: Long, ascending: Boolean): List<EffectiveProfileSwitch> =
+        database.effectiveProfileSwitchDao.getEffectiveProfileSwitchDataFromTime(timestamp).reversedIf(!ascending)
 
-    fun getEffectiveProfileSwitchesIncludingInvalidFromTime(timestamp: Long, ascending: Boolean): Single<List<EffectiveProfileSwitch>> = rxSingle {
-        val result = database.effectiveProfileSwitchDao.getEffectiveProfileSwitchDataIncludingInvalidFromTime(timestamp)
-        if (!ascending) result.reversed() else result
-    }
+    suspend fun getEffectiveProfileSwitchesIncludingInvalidFromTime(timestamp: Long, ascending: Boolean): List<EffectiveProfileSwitch> =
+        database.effectiveProfileSwitchDao.getEffectiveProfileSwitchDataIncludingInvalidFromTime(timestamp).reversedIf(!ascending)
 
-    fun getEffectiveProfileSwitchesFromTimeToTime(start: Long, end: Long, ascending: Boolean): Single<List<EffectiveProfileSwitch>> = rxSingle {
-        val result = database.effectiveProfileSwitchDao.getEffectiveProfileSwitchDataFromTimeToTime(start, end)
-        if (!ascending) result.reversed() else result
-    }
+    suspend fun getEffectiveProfileSwitchesFromTimeToTime(start: Long, end: Long, ascending: Boolean): List<EffectiveProfileSwitch> =
+        database.effectiveProfileSwitchDao.getEffectiveProfileSwitchDataFromTimeToTime(start, end).reversedIf(!ascending)
 
-    fun getLastEffectiveProfileSwitchId(): Long? = runBlocking {
+    suspend fun getLastEffectiveProfileSwitchId(): Long? =
         database.effectiveProfileSwitchDao.getLastId()
-    }
 
     // THERAPY EVENT
     /*
@@ -499,14 +452,13 @@ class AppRepository @Inject internal constructor(
        *
        * It is a Maybe as there might be no next element.
        * */
-    fun findTherapyEventByNSId(nsId: String): TherapyEvent? = runBlocking {
+    suspend fun findTherapyEventByNSId(nsId: String): TherapyEvent? =
         database.therapyEventDao.findByNSId(nsId)
-    }
 
-    fun getNextSyncElementTherapyEvent(id: Long): Maybe<Pair<TherapyEvent, TherapyEvent>> = rxMaybe {
-        val nextIdElement = database.therapyEventDao.getNextModifiedOrNewAfter(id) ?: return@rxMaybe null
+    suspend fun getNextSyncElementTherapyEvent(id: Long): Pair<TherapyEvent, TherapyEvent>? {
+        val nextIdElement = database.therapyEventDao.getNextModifiedOrNewAfter(id) ?: return null
         val nextIdElemReferenceId = nextIdElement.referenceId
-        if (nextIdElemReferenceId == null) {
+        return if (nextIdElemReferenceId == null) {
             nextIdElement to nextIdElement
         } else {
             val historic = database.therapyEventDao.getCurrentFromHistoric(nextIdElemReferenceId)
@@ -514,32 +466,23 @@ class AppRepository @Inject internal constructor(
         }
     }
 
-    fun getTherapyEventDataFromTime(timestamp: Long, ascending: Boolean): Single<List<TherapyEvent>> = rxSingle {
-        val result = database.therapyEventDao.getTherapyEventDataFromTime(timestamp)
-        if (!ascending) result.reversed() else result
-    }
+    suspend fun getTherapyEventDataFromTime(timestamp: Long, ascending: Boolean): List<TherapyEvent> =
+        database.therapyEventDao.getTherapyEventDataFromTime(timestamp).reversedIf(!ascending)
 
-    fun getTherapyEventDataFromTime(timestamp: Long, type: TherapyEvent.Type, ascending: Boolean): Single<List<TherapyEvent>> = rxSingle {
-        val result = database.therapyEventDao.getTherapyEventDataFromTime(timestamp, type)
-        if (!ascending) result.reversed() else result
-    }
+    suspend fun getTherapyEventDataFromTime(timestamp: Long, type: TherapyEvent.Type, ascending: Boolean): List<TherapyEvent> =
+        database.therapyEventDao.getTherapyEventDataFromTime(timestamp, type).reversedIf(!ascending)
 
-    fun getTherapyEventDataIncludingInvalidFromTime(timestamp: Long, ascending: Boolean): Single<List<TherapyEvent>> = rxSingle {
-        val result = database.therapyEventDao.getTherapyEventDataIncludingInvalidFromTime(timestamp)
-        if (!ascending) result.reversed() else result
-    }
+    suspend fun getTherapyEventDataIncludingInvalidFromTime(timestamp: Long, ascending: Boolean): List<TherapyEvent> =
+        database.therapyEventDao.getTherapyEventDataIncludingInvalidFromTime(timestamp).reversedIf(!ascending)
 
-    fun getLastTherapyRecordUpToNow(type: TherapyEvent.Type): Maybe<TherapyEvent> = rxMaybe {
+    suspend fun getLastTherapyRecordUpToNow(type: TherapyEvent.Type): TherapyEvent? =
         database.therapyEventDao.getLastTherapyRecord(type, System.currentTimeMillis())
-    }
 
-    fun compatGetTherapyEventDataFromToTime(from: Long, to: Long): Single<List<TherapyEvent>> = rxSingle {
+    suspend fun compatGetTherapyEventDataFromToTime(from: Long, to: Long): List<TherapyEvent> =
         database.therapyEventDao.compatGetTherapyEventDataFromToTime(from, to)
-    }
 
-    fun getLastTherapyEventId(): Long? = runBlocking {
+    suspend fun getLastTherapyEventId(): Long? =
         database.therapyEventDao.getLastId()
-    }
 
     // FOOD
     /*
@@ -549,29 +492,27 @@ class AppRepository @Inject internal constructor(
        *
        * It is a Maybe as there might be no next element.
        * */
-    fun getNextSyncElementFood(id: Long): Maybe<Pair<Food, Food>> = rxMaybe {
-        val nextIdElement = database.foodDao.getNextModifiedOrNewAfter(id) ?: return@rxMaybe null
+    suspend fun getNextSyncElementFood(id: Long): Pair<Food, Food>? {
+        val nextIdElement = database.foodDao.getNextModifiedOrNewAfter(id) ?: return null
         val nextIdElemReferenceId = nextIdElement.referenceId
-        if (nextIdElemReferenceId == null) {
+        return if (nextIdElemReferenceId == null) {
             nextIdElement to nextIdElement
         } else {
-            val historic = database.foodDao.getCurrentFromHistoric(nextIdElemReferenceId) ?: return@rxMaybe null
+            val historic = database.foodDao.getCurrentFromHistoric(nextIdElemReferenceId) ?: return null
             historic to nextIdElement
         }
     }
 
-    fun getFoodData(): Single<List<Food>> = rxSingle {
-        database.foodDao.getFoodData()
+    suspend fun getFoodData(): List<Food> {
+        return database.foodDao.getFoodData()
     }
 
-    fun getLastFoodId(): Long? = runBlocking {
+    suspend fun getLastFoodId(): Long? =
         database.foodDao.getLastId()
-    }
 
     // BOLUS
-    fun getBolusByNSId(nsId: String): Bolus? = runBlocking {
+    suspend fun getBolusByNSId(nsId: String): Bolus? =
         database.bolusDao.getByNSId(nsId)
-    }
 
     /*
       * returns a Pair of the next entity to sync and the ID of the "update".
@@ -580,10 +521,10 @@ class AppRepository @Inject internal constructor(
       *
       * It is a Maybe as there might be no next element.
       * */
-    fun getNextSyncElementBolus(id: Long): Maybe<Pair<Bolus, Bolus>> = rxMaybe {
-        val nextIdElement = database.bolusDao.getNextModifiedOrNewAfterExclude(id, Bolus.Type.PRIMING) ?: return@rxMaybe null
+    suspend fun getNextSyncElementBolus(id: Long): Pair<Bolus, Bolus>? {
+        val nextIdElement = database.bolusDao.getNextModifiedOrNewAfterExclude(id, Bolus.Type.PRIMING) ?: return null
         val nextIdElemReferenceId = nextIdElement.referenceId
-        if (nextIdElemReferenceId == null) {
+        return if (nextIdElemReferenceId == null) {
             nextIdElement to nextIdElement
         } else {
             val historic = database.bolusDao.getCurrentFromHistoric(nextIdElemReferenceId)
@@ -591,41 +532,30 @@ class AppRepository @Inject internal constructor(
         }
     }
 
-    fun getNewestBolus(): Maybe<Bolus> = rxMaybe {
+    suspend fun getNewestBolus(): Bolus? =
         database.bolusDao.getLastBolusRecord()
-    }
 
-    fun getLastBolusRecordOfType(type: Bolus.Type): Maybe<Bolus> = rxMaybe {
+    suspend fun getLastBolusRecordOfType(type: Bolus.Type): Bolus? =
         database.bolusDao.getLastBolusRecordOfType(type)
-    }
 
-    fun getOldestBolus(): Maybe<Bolus> = rxMaybe {
+    suspend fun getOldestBolus(): Bolus? =
         database.bolusDao.getOldestBolusRecord()
-    }
 
-    fun getBolusesDataFromTime(timestamp: Long, ascending: Boolean): Single<List<Bolus>> = rxSingle {
-        val result = database.bolusDao.getBolusesFromTime(timestamp)
-        if (!ascending) result.reversed() else result
-    }
+    suspend fun getBolusesDataFromTime(timestamp: Long, ascending: Boolean): List<Bolus> =
+        database.bolusDao.getBolusesFromTime(timestamp).reversedIf(!ascending)
 
-    fun getBolusesDataFromTimeToTime(from: Long, to: Long, ascending: Boolean): Single<List<Bolus>> = rxSingle {
-        val result = database.bolusDao.getBolusesFromTime(from, to)
-        if (!ascending) result.reversed() else result
-    }
+    suspend fun getBolusesDataFromTimeToTime(from: Long, to: Long, ascending: Boolean): List<Bolus> =
+        database.bolusDao.getBolusesFromTime(from, to).reversedIf(!ascending)
 
-    fun getBolusesIncludingInvalidFromTime(timestamp: Long, ascending: Boolean): Single<List<Bolus>> = rxSingle {
-        val result = database.bolusDao.getBolusesIncludingInvalidFromTime(timestamp)
-        if (!ascending) result.reversed() else result
-    }
+    suspend fun getBolusesIncludingInvalidFromTime(timestamp: Long, ascending: Boolean): List<Bolus> =
+        database.bolusDao.getBolusesIncludingInvalidFromTime(timestamp).reversedIf(!ascending)
 
-    fun getLastBolusId(): Long? = runBlocking {
+    suspend fun getLastBolusId(): Long? =
         database.bolusDao.getLastId()
-    }
     // CARBS
 
-    fun getCarbsByNSId(nsId: String): Carbs? = runBlocking {
+    suspend fun getCarbsByNSId(nsId: String): Carbs? =
         database.carbsDao.getByNSId(nsId)
-    }
 
     private fun expandCarbs(carbs: Carbs): List<Carbs> =
         if (carbs.duration == 0L) {
@@ -648,10 +578,10 @@ class AppRepository @Inject internal constructor(
       *
       * It is a Maybe as there might be no next element.
       * */
-    fun getNextSyncElementCarbs(id: Long): Maybe<Pair<Carbs, Carbs>> = rxMaybe {
-        val nextIdElement = database.carbsDao.getNextModifiedOrNewAfter(id) ?: return@rxMaybe null
+    suspend fun getNextSyncElementCarbs(id: Long): Pair<Carbs, Carbs>? {
+        val nextIdElement = database.carbsDao.getNextModifiedOrNewAfter(id) ?: return null
         val nextIdElemReferenceId = nextIdElement.referenceId
-        if (nextIdElemReferenceId == null) {
+        return if (nextIdElemReferenceId == null) {
             nextIdElement to nextIdElement
         } else {
             val historic = database.carbsDao.getCurrentFromHistoric(nextIdElemReferenceId)
@@ -659,52 +589,42 @@ class AppRepository @Inject internal constructor(
         }
     }
 
-    fun getLastCarbs(): Maybe<Carbs> = rxMaybe {
+    suspend fun getLastCarbs(): Carbs? =
         database.carbsDao.getLastCarbsRecord()
-    }
 
-    fun getOldestCarbs(): Maybe<Carbs> = rxMaybe {
+    suspend fun getOldestCarbs(): Carbs? =
         database.carbsDao.getOldestCarbsRecord()
-    }
 
-    fun getCarbsDataFromTime(timestamp: Long, ascending: Boolean): Single<List<Carbs>> = rxSingle {
-        val result = database.carbsDao.getCarbsFromTime(timestamp)
-        if (!ascending) result.reversed() else result
-    }
+    suspend fun getCarbsDataFromTime(timestamp: Long, ascending: Boolean): List<Carbs> =
+        database.carbsDao.getCarbsFromTime(timestamp).reversedIf(!ascending)
 
-    fun getCarbsDataFromTimeExpanded(timestamp: Long, ascending: Boolean): Single<List<Carbs>> = rxSingle {
+    suspend fun getCarbsDataFromTimeExpanded(timestamp: Long, ascending: Boolean): List<Carbs> {
         val data = database.carbsDao.getCarbsFromTimeExpandable(timestamp)
         val expanded = data.map(::expandCarbs).flatten()
         val filtered = expanded.filter { it.timestamp >= timestamp }
-        if (!ascending) filtered.reversed() else filtered
+        return filtered.reversedIf(!ascending)
     }
 
-    fun getCarbsDataFromTimeNotExpanded(timestamp: Long, ascending: Boolean): Single<List<Carbs>> = rxSingle {
-        val result = database.carbsDao.getCarbsFromTimeExpandable(timestamp)
-        if (!ascending) result.reversed() else result
+    suspend fun getCarbsDataFromTimeNotExpanded(timestamp: Long, ascending: Boolean): List<Carbs> {
+        return database.carbsDao.getCarbsFromTimeExpandable(timestamp).reversedIf(!ascending)
     }
 
-    fun getCarbsDataFromTimeToTimeExpanded(from: Long, to: Long, ascending: Boolean): Single<List<Carbs>> = rxSingle {
-        val data = database.carbsDao.getCarbsFromTimeToTimeExpandable(from, to)
-        val expanded = data.map(::expandCarbs).flatten()
-        val filtered = expanded.filter { it.timestamp in from..to }
-        val sorted = filtered.sortedBy { it.timestamp }
-        if (!ascending) sorted.reversed() else sorted
-    }
+    suspend fun getCarbsDataFromTimeToTimeExpanded(from: Long, to: Long, ascending: Boolean): List<Carbs> =
+        database.carbsDao.getCarbsFromTimeToTimeExpandable(from, to)
+            .map(::expandCarbs).flatten()
+            .filter { it.timestamp in from..to }
+            .sortedBy { it.timestamp }
+            .reversedIf(!ascending)
 
-    fun getCarbsIncludingInvalidFromTime(timestamp: Long, ascending: Boolean): Single<List<Carbs>> = rxSingle {
-        val result = database.carbsDao.getCarbsIncludingInvalidFromTime(timestamp)
-        if (!ascending) result.reversed() else result
-    }
+    suspend fun getCarbsIncludingInvalidFromTime(timestamp: Long, ascending: Boolean): List<Carbs> =
+        database.carbsDao.getCarbsIncludingInvalidFromTime(timestamp).reversedIf(!ascending)
 
-    fun getLastCarbsId(): Long? = runBlocking {
+    suspend fun getLastCarbsId(): Long? =
         database.carbsDao.getLastId()
-    }
 
     // BOLUS CALCULATOR RESULT
-    fun findBolusCalculatorResultByNSId(nsId: String): BolusCalculatorResult? = runBlocking {
+    suspend fun findBolusCalculatorResultByNSId(nsId: String): BolusCalculatorResult? =
         database.bolusCalculatorResultDao.findByNSId(nsId)
-    }
 
     /*
       * returns a Pair of the next entity to sync and the ID of the "update".
@@ -713,30 +633,25 @@ class AppRepository @Inject internal constructor(
       *
       * It is a Maybe as there might be no next element.
       * */
-    fun getNextSyncElementBolusCalculatorResult(id: Long): Maybe<Pair<BolusCalculatorResult, BolusCalculatorResult>> = rxMaybe {
-        val nextIdElement = database.bolusCalculatorResultDao.getNextModifiedOrNewAfter(id) ?: return@rxMaybe null
+    suspend fun getNextSyncElementBolusCalculatorResult(id: Long): Pair<BolusCalculatorResult, BolusCalculatorResult>? {
+        val nextIdElement = database.bolusCalculatorResultDao.getNextModifiedOrNewAfter(id) ?: return null
         val nextIdElemReferenceId = nextIdElement.referenceId
-        if (nextIdElemReferenceId == null) {
+        return if (nextIdElemReferenceId == null) {
             nextIdElement to nextIdElement
         } else {
-            val historic = database.bolusCalculatorResultDao.getCurrentFromHistoric(nextIdElemReferenceId) ?: return@rxMaybe null
+            val historic = database.bolusCalculatorResultDao.getCurrentFromHistoric(nextIdElemReferenceId) ?: return null
             historic to nextIdElement
         }
     }
 
-    fun getBolusCalculatorResultsDataFromTime(timestamp: Long, ascending: Boolean): Single<List<BolusCalculatorResult>> = rxSingle {
-        val data = database.bolusCalculatorResultDao.getBolusCalculatorResultsFromTime(timestamp)
-        if (!ascending) data.reversed() else data
-    }
+    suspend fun getBolusCalculatorResultsDataFromTime(timestamp: Long, ascending: Boolean): List<BolusCalculatorResult> =
+        database.bolusCalculatorResultDao.getBolusCalculatorResultsFromTime(timestamp).reversedIf(!ascending)
 
-    fun getBolusCalculatorResultsIncludingInvalidFromTime(timestamp: Long, ascending: Boolean): Single<List<BolusCalculatorResult>> = rxSingle {
-        val data = database.bolusCalculatorResultDao.getBolusCalculatorResultsIncludingInvalidFromTime(timestamp)
-        if (!ascending) data.reversed() else data
-    }
+    suspend fun getBolusCalculatorResultsIncludingInvalidFromTime(timestamp: Long, ascending: Boolean): List<BolusCalculatorResult> =
+        database.bolusCalculatorResultDao.getBolusCalculatorResultsIncludingInvalidFromTime(timestamp).reversedIf(!ascending)
 
-    fun getLastBolusCalculatorResultId(): Long? = runBlocking {
+    suspend fun getLastBolusCalculatorResultId(): Long? =
         database.bolusCalculatorResultDao.getLastId()
-    }
 
     // DEVICE STATUS
     fun insert(deviceStatus: DeviceStatus) {
@@ -752,18 +667,15 @@ class AppRepository @Inject internal constructor(
        * It is a Maybe as there might be no next element.
        * */
 
-    fun getNextSyncElementDeviceStatus(id: Long): Maybe<DeviceStatus> = rxMaybe {
+    suspend fun getNextSyncElementDeviceStatus(id: Long): DeviceStatus? =
         database.deviceStatusDao.getNextModifiedOrNewAfter(id)
-    }
 
-    fun getLastDeviceStatusId(): Long? = runBlocking {
+    suspend fun getLastDeviceStatusId(): Long? =
         database.deviceStatusDao.getLastId()
-    }
 
     // TEMPORARY BASAL
-    fun findTemporaryBasalByNSId(nsId: String): TemporaryBasal? = runBlocking {
+    suspend fun findTemporaryBasalByNSId(nsId: String): TemporaryBasal? =
         database.temporaryBasalDao.findByNSId(nsId)
-    }
 
     /*
         * returns a Pair of the next entity to sync and the ID of the "update".
@@ -773,10 +685,10 @@ class AppRepository @Inject internal constructor(
         * It is a Maybe as there might be no next element.
         * */
 
-    fun getNextSyncElementTemporaryBasal(id: Long): Maybe<Pair<TemporaryBasal, TemporaryBasal>> = rxMaybe {
-        val nextIdElement = database.temporaryBasalDao.getNextModifiedOrNewAfter(id) ?: return@rxMaybe null
+    suspend fun getNextSyncElementTemporaryBasal(id: Long): Pair<TemporaryBasal, TemporaryBasal>? {
+        val nextIdElement = database.temporaryBasalDao.getNextModifiedOrNewAfter(id) ?: return null
         val nextIdElemReferenceId = nextIdElement.referenceId
-        if (nextIdElemReferenceId == null) {
+        return if (nextIdElemReferenceId == null) {
             nextIdElement to nextIdElement
         } else {
             val historic = database.temporaryBasalDao.getCurrentFromHistoric(nextIdElemReferenceId)
@@ -784,41 +696,30 @@ class AppRepository @Inject internal constructor(
         }
     }
 
-    fun getTemporaryBasalActiveAt(timestamp: Long): Maybe<TemporaryBasal> = rxMaybe {
+    suspend fun getTemporaryBasalActiveAt(timestamp: Long): TemporaryBasal? =
         database.temporaryBasalDao.getTemporaryBasalActiveAt(timestamp)
-    }
 
-    fun getTemporaryBasalsActiveBetweenTimeAndTime(from: Long, to: Long): Single<List<TemporaryBasal>> = rxSingle {
+    suspend fun getTemporaryBasalsActiveBetweenTimeAndTime(from: Long, to: Long): List<TemporaryBasal> =
         database.temporaryBasalDao.getTemporaryBasalActiveBetweenTimeAndTime(from, to)
-    }
 
-    fun getTemporaryBasalsStartingFromTime(timestamp: Long, ascending: Boolean): Single<List<TemporaryBasal>> = rxSingle {
-        val result = database.temporaryBasalDao.getTemporaryBasalDataFromTime(timestamp)
-        if (!ascending) result.reversed() else result
-    }
+    suspend fun getTemporaryBasalsStartingFromTime(timestamp: Long, ascending: Boolean): List<TemporaryBasal> =
+        database.temporaryBasalDao.getTemporaryBasalDataFromTime(timestamp).reversedIf(!ascending)
 
-    fun getTemporaryBasalsStartingFromTimeToTime(from: Long, to: Long, ascending: Boolean): Single<List<TemporaryBasal>> = rxSingle {
-        val result = database.temporaryBasalDao.getTemporaryBasalStartingFromTimeToTime(from, to)
-        if (!ascending) result.reversed() else result
-    }
+    suspend fun getTemporaryBasalsStartingFromTimeToTime(from: Long, to: Long, ascending: Boolean): List<TemporaryBasal> =
+        database.temporaryBasalDao.getTemporaryBasalStartingFromTimeToTime(from, to).reversedIf(!ascending)
 
-    fun getTemporaryBasalsStartingFromTimeIncludingInvalid(timestamp: Long, ascending: Boolean): Single<List<TemporaryBasal>> = rxSingle {
-        val result = database.temporaryBasalDao.getTemporaryBasalDataIncludingInvalidFromTime(timestamp)
-        if (!ascending) result.reversed() else result
-    }
+    suspend fun getTemporaryBasalsStartingFromTimeIncludingInvalid(timestamp: Long, ascending: Boolean): List<TemporaryBasal> =
+        database.temporaryBasalDao.getTemporaryBasalDataIncludingInvalidFromTime(timestamp).reversedIf(!ascending)
 
-    fun getOldestTemporaryBasalRecord(): Maybe<TemporaryBasal> = rxMaybe {
+    suspend fun getOldestTemporaryBasalRecord(): TemporaryBasal? =
         database.temporaryBasalDao.getOldestRecord()
-    }
 
-    fun getLastTemporaryBasalId(): Long? = runBlocking {
+    suspend fun getLastTemporaryBasalId(): Long? =
         database.temporaryBasalDao.getLastId()
-    }
 
     // EXTENDED BOLUS
-    fun findExtendedBolusByNSId(nsId: String): ExtendedBolus? = runBlocking {
+    suspend fun findExtendedBolusByNSId(nsId: String): ExtendedBolus? =
         database.extendedBolusDao.findByNSId(nsId)
-    }
 
     /*
        * returns a Pair of the next entity to sync and the ID of the "update".
@@ -828,10 +729,10 @@ class AppRepository @Inject internal constructor(
        * It is a Maybe as there might be no next element.
        * */
 
-    fun getNextSyncElementExtendedBolus(id: Long): Maybe<Pair<ExtendedBolus, ExtendedBolus>> = rxMaybe {
-        val nextIdElement = database.extendedBolusDao.getNextModifiedOrNewAfter(id) ?: return@rxMaybe null
+    suspend fun getNextSyncElementExtendedBolus(id: Long): Pair<ExtendedBolus, ExtendedBolus>? {
+        val nextIdElement = database.extendedBolusDao.getNextModifiedOrNewAfter(id) ?: return null
         val nextIdElemReferenceId = nextIdElement.referenceId
-        if (nextIdElemReferenceId == null) {
+        return if (nextIdElemReferenceId == null) {
             nextIdElement to nextIdElement
         } else {
             val historic = database.extendedBolusDao.getCurrentFromHistoric(nextIdElemReferenceId)
@@ -839,67 +740,49 @@ class AppRepository @Inject internal constructor(
         }
     }
 
-    fun getExtendedBolusActiveAt(timestamp: Long): Maybe<ExtendedBolus> = rxMaybe {
+    suspend fun getExtendedBolusActiveAt(timestamp: Long): ExtendedBolus? =
         database.extendedBolusDao.getExtendedBolusActiveAt(timestamp)
-    }
 
-    fun getExtendedBolusesStartingFromTime(timestamp: Long, ascending: Boolean): Single<List<ExtendedBolus>> = rxSingle {
-        val result = database.extendedBolusDao.getExtendedBolusesStartingFromTime(timestamp)
-        if (!ascending) result.reversed() else result
-    }
+    suspend fun getExtendedBolusesStartingFromTime(timestamp: Long, ascending: Boolean): List<ExtendedBolus> =
+        database.extendedBolusDao.getExtendedBolusesStartingFromTime(timestamp).reversedIf(!ascending)
 
-    fun getExtendedBolusesStartingFromTimeToTime(start: Long, end: Long, ascending: Boolean): Single<List<ExtendedBolus>> = rxSingle {
-        val result = database.extendedBolusDao.getExtendedBolusDataFromTimeToTime(start, end)
-        if (!ascending) result.reversed() else result
-    }
+    suspend fun getExtendedBolusesStartingFromTimeToTime(start: Long, end: Long, ascending: Boolean): List<ExtendedBolus> =
+        database.extendedBolusDao.getExtendedBolusDataFromTimeToTime(start, end).reversedIf(!ascending)
 
-    fun getExtendedBolusStartingFromTimeIncludingInvalid(timestamp: Long, ascending: Boolean): Single<List<ExtendedBolus>> = rxSingle {
-        val result = database.extendedBolusDao.getExtendedBolusDataIncludingInvalidFromTime(timestamp)
-        if (!ascending) result.reversed() else result
-    }
+    suspend fun getExtendedBolusStartingFromTimeIncludingInvalid(timestamp: Long, ascending: Boolean): List<ExtendedBolus> =
+        database.extendedBolusDao.getExtendedBolusDataIncludingInvalidFromTime(timestamp).reversedIf(!ascending)
 
-    fun getOldestExtendedBolusRecord(): Maybe<ExtendedBolus> = rxMaybe {
+    suspend fun getOldestExtendedBolusRecord(): ExtendedBolus? =
         database.extendedBolusDao.getOldestRecord()
-    }
 
-    fun getLastExtendedBolusId(): Long? = runBlocking {
+    suspend fun getLastExtendedBolusId(): Long? =
         database.extendedBolusDao.getLastId()
-    }
 
     // TotalDailyDose
-    fun getLastTotalDailyDoses(count: Int, ascending: Boolean): Single<List<TotalDailyDose>> = rxSingle {
-        val result = database.totalDailyDoseDao.getLastTotalDailyDoses(count)
-        if (!ascending) result.reversed() else result
-    }
+    suspend fun getLastTotalDailyDoses(count: Int, ascending: Boolean): List<TotalDailyDose> =
+        database.totalDailyDoseDao.getLastTotalDailyDoses(count).reversedIf(!ascending)
 
-    fun getCalculatedTotalDailyDose(timestamp: Long): Maybe<TotalDailyDose> = rxMaybe {
+    suspend fun getCalculatedTotalDailyDose(timestamp: Long): TotalDailyDose? =
         database.totalDailyDoseDao.findByTimestamp(timestamp, InterfaceIDs.PumpType.CACHE)
-    }
 
-    // HEART RATES
+// HEART RATES
 
-    fun getHeartRatesFromTime(timeMillis: Long): Single<List<HeartRate>> = rxSingle {
+    suspend fun getHeartRatesFromTime(timeMillis: Long): List<HeartRate> =
         database.heartRateDao.getFromTime(timeMillis)
-    }
 
-    fun getHeartRatesFromTimeToTime(startMillis: Long, endMillis: Long): Single<List<HeartRate>> = rxSingle {
+    suspend fun getHeartRatesFromTimeToTime(startMillis: Long, endMillis: Long): List<HeartRate> =
         database.heartRateDao.getFromTimeToTime(startMillis, endMillis)
-    }
 
-    fun getStepsCountFromTime(timeMillis: Long): Single<List<StepsCount>> = rxSingle {
+    suspend fun getStepsCountFromTime(timeMillis: Long): List<StepsCount> =
         database.stepsCountDao.getFromTime(timeMillis)
-    }
 
-    fun getStepsCountFromTimeToTime(startMillis: Long, endMillis: Long): List<StepsCount> = runBlocking {
+    suspend fun getStepsCountFromTimeToTime(startMillis: Long, endMillis: Long): List<StepsCount> =
         database.stepsCountDao.getFromTimeToTime(startMillis, endMillis)
-    }
 
-    fun getLastStepsCountFromTimeToTime(startMillis: Long, endMillis: Long): StepsCount? = runBlocking {
+    suspend fun getLastStepsCountFromTimeToTime(startMillis: Long, endMillis: Long): StepsCount? =
         database.stepsCountDao.getLastStepsCountFromTimeToTime(startMillis, endMillis)
-    }
 
-    fun collectNewEntriesSince(since: Long, until: Long, limit: Int, offset: Int) = runBlocking {
-        NewEntries(
+    suspend fun collectNewEntriesSince(since: Long, until: Long, limit: Int, offset: Int) = NewEntries(
         apsResults = database.apsResultDao.getNewEntriesSince(since, until, limit, offset),
         bolusCalculatorResults = database.bolusCalculatorResultDao.getNewEntriesSince(since, until, limit, offset),
         boluses = database.bolusDao.getNewEntriesSince(since, until, limit, offset),
@@ -917,16 +800,13 @@ class AppRepository @Inject internal constructor(
         versionChanges = database.versionChangeDao.getNewEntriesSince(since, until, limit, offset),
         heartRates = database.heartRateDao.getNewEntriesSince(since, until, limit, offset),
         stepsCount = database.stepsCountDao.getNewEntriesSince(since, until, limit, offset),
-        )
-    }
+    )
 
-    fun getApsResultCloseTo(timestamp: Long): Maybe<APSResult> = rxMaybe {
+    suspend fun getApsResultCloseTo(timestamp: Long): APSResult? =
         database.apsResultDao.getApsResult(timestamp - 5 * 60 * 1000, timestamp)
-    }
 
-    fun getApsResults(start: Long, end: Long): Single<List<APSResult>> = rxSingle {
+    suspend fun getApsResults(start: Long, end: Long): List<APSResult> =
         database.apsResultDao.getApsResults(start, end)
-    }
 
     /**
      * Clean up Flow scope and release resources
@@ -948,10 +828,5 @@ class AppRepository @Inject internal constructor(
         repositoryScope.cancel()
     }
 
+    fun <T> Iterable<T>.reversedIf(reverse: Boolean): List<T> = if (reverse) this.reversed() else this.toList()
 }
-
-@Suppress("USELESS_CAST", "unused")
-inline fun <reified T : Any> Maybe<T>.toWrappedSingle(): Single<ValueWrapper<T>> =
-    this.map { ValueWrapper.Existing(it) as ValueWrapper<T> }
-        .switchIfEmpty(Maybe.just(ValueWrapper.Absent()))
-        .toSingle()

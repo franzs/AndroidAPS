@@ -11,11 +11,13 @@ import app.aaps.plugins.automation.elements.LabelWithElement
 import app.aaps.plugins.automation.elements.LayoutBuilder
 import app.aaps.plugins.automation.elements.StaticLabel
 import dagger.android.HasAndroidInjector
+import kotlinx.coroutines.runBlocking
 import org.json.JSONObject
 import java.text.DecimalFormat
 import java.util.Optional
 
 class TriggerStepsCount(injector: HasAndroidInjector) : Trigger(injector) {
+
     var measurementDuration: InputDropdownMenu = InputDropdownMenu(rh, "5")
     var stepsCount: InputDouble = InputDouble(100.0, 0.0, 20000.0, 10.0, DecimalFormat("1"))
     var comparator: Comparator = Comparator(rh).apply {
@@ -28,11 +30,10 @@ class TriggerStepsCount(injector: HasAndroidInjector) : Trigger(injector) {
             return true
         }
 
-        
         // Steps count entries update every 1-1.5 minutes on my watch,
         // so we must get some entries from the last 5 minutes.
         val start = dateUtil.now() - 5 * 60 * 1000L
-        val measurements = persistenceLayer.getStepsCountFromTime(start)
+        val measurements = runBlocking { persistenceLayer.getStepsCountFromTime(start) }
         val lastSC = measurements.lastOrNull { it.duration == measurementDuration.value.toInt() * 60 * 1000L }
         if (lastSC == null) {
             aapsLogger.info(LTag.AUTOMATION, "No steps count measurements available - ${friendlyDescription()}")
@@ -40,13 +41,13 @@ class TriggerStepsCount(injector: HasAndroidInjector) : Trigger(injector) {
         }
 
         val lastStepsCount: Int? = when (measurementDuration.value) {
-            "5" -> lastSC.steps5min
-            "10" -> lastSC.steps10min
-            "15" -> lastSC.steps15min
-            "30" -> lastSC.steps30min
-            "60" -> lastSC.steps60min
+            "5"   -> lastSC.steps5min
+            "10"  -> lastSC.steps10min
+            "15"  -> lastSC.steps15min
+            "30"  -> lastSC.steps30min
+            "60"  -> lastSC.steps60min
             "180" -> lastSC.steps180min
-            else -> null
+            else  -> null
         }
 
         if (lastStepsCount == null) {

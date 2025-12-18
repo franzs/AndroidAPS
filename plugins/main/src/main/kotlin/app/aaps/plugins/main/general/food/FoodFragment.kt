@@ -9,6 +9,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import app.aaps.core.data.model.FD
@@ -32,6 +33,9 @@ import app.aaps.plugins.main.databinding.FoodItemBinding
 import dagger.android.support.DaggerFragment
 import io.reactivex.rxjava3.disposables.CompositeDisposable
 import io.reactivex.rxjava3.kotlin.plusAssign
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
@@ -97,16 +101,16 @@ class FoodFragment : DaggerFragment() {
     }
 
     private fun swapAdapter() {
-        disposable += persistenceLayer
-            .getFoods()
-            .observeOn(aapsSchedulers.main)
-            .subscribe { list ->
-                unfiltered = list
-                fillCategories()
-                fillSubcategories()
-                filterData()
-                binding.recyclerview.swapAdapter(RecyclerViewAdapter(filtered), true)
+        lifecycleScope.launch {
+            val list = withContext(Dispatchers.IO) {
+                persistenceLayer.getFoods()
             }
+            unfiltered = list
+            fillCategories()
+            fillSubcategories()
+            filterData()
+            binding.recyclerview.swapAdapter(RecyclerViewAdapter(filtered), true)
+        }
     }
 
     @Synchronized
@@ -207,7 +211,7 @@ class FoodFragment : DaggerFragment() {
                 binding.icRemove.setOnClickListener { v: View ->
                     val food = v.tag as FD
                     uiInteraction.showOkCancelDialog(context = requireActivity(), message = rh.gs(app.aaps.core.ui.R.string.removerecord) + "\n" + food.name, ok = {
-                        disposable += persistenceLayer.invalidateFood(food.id, Action.FOOD_REMOVED, Sources.Food).subscribe()
+                        lifecycleScope.launch { persistenceLayer.invalidateFood(food.id, Action.FOOD_REMOVED, Sources.Food) }
                     }, cancel = null)
                 }
                 binding.icCalculator.setOnClickListener { v: View ->

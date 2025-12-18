@@ -151,7 +151,7 @@ fun NSClientScreen(
             ) {
                 items(
                     items = uiState.logList,
-                    key = { it.date }
+                    key = { it.id }
                 ) { log ->
                     var isJsonExpanded by remember { mutableStateOf(false) }
                     var isOverflowing by remember(log) { mutableStateOf(false) }

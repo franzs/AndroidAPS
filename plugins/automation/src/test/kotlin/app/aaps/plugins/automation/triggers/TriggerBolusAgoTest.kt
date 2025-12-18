@@ -3,6 +3,7 @@ package app.aaps.plugins.automation.triggers
 import app.aaps.core.data.model.BS
 import app.aaps.plugins.automation.elements.Comparator
 import com.google.common.truth.Truth.assertThat
+import kotlinx.coroutines.test.runTest
 import org.json.JSONException
 import org.json.JSONObject
 import org.junit.jupiter.api.Test
@@ -12,7 +13,7 @@ import org.skyscreamer.jsonassert.JSONAssert
 class TriggerBolusAgoTest : TriggerTestBase() {
 
     @Test
-    fun shouldRunTest() {
+    fun shouldRunTest() = runTest {
         // Set last bolus time to now
         whenever(persistenceLayer.getNewestBolusOfType(BS.Type.NORMAL)).thenReturn(
             BS(

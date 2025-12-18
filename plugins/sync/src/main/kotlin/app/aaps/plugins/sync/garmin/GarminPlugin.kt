@@ -183,7 +183,7 @@ class GarminPlugin @Inject constructor(
         }
     }
 
-    public override fun onStop() {
+    override fun onStop() {
         disposable.clear()
         aapsLogger.info(LTag.GARMIN, "Stop")
         server?.close()

@@ -5,6 +5,7 @@ import app.aaps.database.daos.TemporaryBasalDao
 import app.aaps.database.entities.TemporaryBasal
 import app.aaps.database.entities.embedments.InterfaceIDs
 import com.google.common.truth.Truth.assertThat
+import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.never
@@ -12,7 +13,6 @@ import org.mockito.Mockito.verify
 import org.mockito.kotlin.any
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
-import kotlinx.coroutines.runBlocking
 
 class InvalidateTemporaryBasalWithTempIdTransactionTest {
 
@@ -27,7 +27,7 @@ class InvalidateTemporaryBasalWithTempIdTransactionTest {
     }
 
     @Test
-    fun `invalidates valid temporary basal by temp id`() = runBlocking {
+    fun `invalidates valid temporary basal by temp id`() = runTest {
         val tempId = 54321L
         val tb = createTemporaryBasal(id = 1, isValid = true)
 
@@ -44,7 +44,7 @@ class InvalidateTemporaryBasalWithTempIdTransactionTest {
     }
 
     @Test
-    fun `does not update already invalid temporary basal`() = runBlocking {
+    fun `does not update already invalid temporary basal`() = runTest {
         val tempId = 54321L
         val tb = createTemporaryBasal(id = 1, isValid = false)
 
@@ -60,7 +60,7 @@ class InvalidateTemporaryBasalWithTempIdTransactionTest {
     }
 
     @Test
-    fun `throws exception when temporary basal not found`() = runBlocking {
+    fun `throws exception when temporary basal not found`() = runTest {
         val tempId = 999L
 
         whenever(temporaryBasalDao.findByTempId(tempId)).thenReturn(null)

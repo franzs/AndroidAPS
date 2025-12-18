@@ -16,7 +16,6 @@ import app.aaps.core.data.time.T
 import app.aaps.core.data.ue.Action
 import app.aaps.core.data.ue.Sources
 import app.aaps.core.data.ue.ValueWithUnit
-import app.aaps.core.interfaces.aps.Loop
 import app.aaps.core.interfaces.db.PersistenceLayer
 import app.aaps.core.interfaces.logging.L
 import app.aaps.core.interfaces.logging.LTag
@@ -44,6 +43,7 @@ import app.aaps.di.TestApplication
 import app.aaps.helpers.RxHelper
 import app.aaps.plugins.sync.nsShared.NsIncomingDataProcessor
 import com.google.common.truth.Truth.assertThat
+import kotlinx.coroutines.runBlocking
 import org.json.JSONObject
 import org.junit.After
 import org.junit.Before
@@ -53,7 +53,6 @@ import javax.inject.Provider
 
 class CompatDbHelperTest @Inject constructor() {
 
-    @Inject lateinit var loop: Loop
     @Inject lateinit var dateUtil: DateUtil
     @Inject lateinit var rxHelper: RxHelper
     @Inject lateinit var l: L
@@ -192,7 +191,7 @@ class CompatDbHelperTest @Inject constructor() {
             useTrend = false,
             useAlarm = false
         ).createBolusCalculatorResult()
-        persistenceLayer.insertOrUpdateBolusCalculatorResult(bcr).blockingGet()
+        runBlocking { persistenceLayer.insertOrUpdateBolusCalculatorResult(bcr) }
         // EventTreatmentChange should be triggered
         assertThat(rxHelper.waitFor(EventTreatmentChange::class.java, comment = "step5").first).isTrue()
         assertThat(rxHelper.waitFor(EventNewHistoryData::class.java, comment = "step6").first).isTrue()
@@ -208,7 +207,7 @@ class CompatDbHelperTest @Inject constructor() {
             duration = T.mins(30).msecs(),
             ids = IDs(pumpId = 123450, pumpType = PumpType.CELLNOVO, pumpSerial = "23424242342")
         )
-        persistenceLayer.syncPumpTemporaryBasal(tb, TB.Type.NORMAL).blockingGet()
+        runBlocking { persistenceLayer.syncPumpTemporaryBasal(tb, TB.Type.NORMAL) }
         // EventTempBasalChange should be triggered
         assertThat(rxHelper.waitFor(EventTempBasalChange::class.java, comment = "step7").first).isTrue()
         assertThat(rxHelper.waitFor(EventNewHistoryData::class.java, comment = "step8").first).isTrue()
@@ -223,7 +222,7 @@ class CompatDbHelperTest @Inject constructor() {
             duration = T.mins(30).msecs(),
             ids = IDs(pumpId = 123451, pumpType = PumpType.CELLNOVO, pumpSerial = "23424242342")
         )
-        persistenceLayer.syncPumpExtendedBolus(eb).blockingGet()
+        runBlocking { persistenceLayer.syncPumpExtendedBolus(eb) }
         // EventExtendedBolusChange should be triggered
         assertThat(rxHelper.waitFor(EventExtendedBolusChange::class.java, comment = "step9").first).isTrue()
         assertThat(rxHelper.waitFor(EventNewHistoryData::class.java, comment = "step10").first).isTrue()
@@ -238,7 +237,7 @@ class CompatDbHelperTest @Inject constructor() {
             duration = T.mins(30).msecs(),
             ids = IDs(pumpId = 123452, pumpType = PumpType.CELLNOVO, pumpSerial = "23424242342")
         )
-        persistenceLayer.insertAndCancelCurrentTemporaryTarget(tt, Action.TT, Sources.Aaps, null, listOf()).blockingGet()
+        runBlocking { persistenceLayer.insertAndCancelCurrentTemporaryTarget(tt, Action.TT, Sources.Aaps, null, listOf()) }
         // EventTempTargetChange should be triggered
         assertThat(rxHelper.waitFor(EventTempTargetChange::class.java, comment = "step11").first).isTrue()
 
@@ -251,7 +250,7 @@ class CompatDbHelperTest @Inject constructor() {
             duration = T.mins(30).msecs(),
             ids = IDs(pumpId = 123453, pumpType = PumpType.CELLNOVO, pumpSerial = "23424242342")
         )
-        persistenceLayer.insertPumpTherapyEventIfNewByTimestamp(te, dateUtil.now(), Action.CAREPORTAL, Sources.Aaps, null, listOf()).blockingGet()
+        runBlocking { persistenceLayer.insertPumpTherapyEventIfNewByTimestamp(te, dateUtil.now(), Action.CAREPORTAL, Sources.Aaps, null, listOf()) }
         // EventTherapyEventChange should be triggered
         assertThat(rxHelper.waitFor(EventTherapyEventChange::class.java, comment = "step12").first).isTrue()
 
@@ -262,7 +261,7 @@ class CompatDbHelperTest @Inject constructor() {
             carbs = 24,
             portion = 1.0
         )
-        persistenceLayer.syncNsFood(listOf(fd)).blockingGet()
+        runBlocking { persistenceLayer.syncNsFood(listOf(fd)) }
         // EventFoodDatabaseChanged should be triggered
         assertThat(rxHelper.waitFor(EventFoodDatabaseChanged::class.java, comment = "step13").first).isTrue()
 
@@ -273,7 +272,7 @@ class CompatDbHelperTest @Inject constructor() {
             mode = RM.Mode.DISCONNECTED_PUMP,
             duration = T.hours(1).msecs()
         )
-        persistenceLayer.insertOrUpdateRunningMode(rm, Action.DISCONNECT, Sources.Aaps, null, listOf()).blockingGet()
+        runBlocking { persistenceLayer.insertOrUpdateRunningMode(rm, Action.DISCONNECT, Sources.Aaps, null, listOf()) }
         // EventOfflineChange should be triggered
         assertThat(rxHelper.waitFor(EventRunningModeChange::class.java, comment = "step13").first).isTrue()
 

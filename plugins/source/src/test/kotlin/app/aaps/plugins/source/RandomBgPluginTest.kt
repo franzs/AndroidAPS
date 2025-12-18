@@ -6,7 +6,7 @@ import app.aaps.core.interfaces.pump.VirtualPump
 import app.aaps.core.keys.IntKey
 import app.aaps.shared.tests.TestBaseWithProfile
 import com.google.common.truth.Truth.assertThat
-import io.reactivex.rxjava3.core.Single
+import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -28,14 +28,18 @@ class RandomBgPluginTest : TestBaseWithProfile() {
 
     @Test
     fun `When plugin enabled then insert data`() {
-        whenever(persistenceLayer.insertCgmSourceData(anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull())).thenReturn(Single.just(PersistenceLayer.TransactionResult()))
-        whenever(persistenceLayer.insertOrUpdateCarbs(anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull())).thenReturn(Single.just(PersistenceLayer.TransactionResult()))
+        runTest {
+            whenever(persistenceLayer.insertCgmSourceData(anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull())).thenReturn(PersistenceLayer.TransactionResult())
+            whenever(persistenceLayer.insertOrUpdateCarbs(anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull())).thenReturn(PersistenceLayer.TransactionResult())
+        }
         whenever(config.isUnfinishedMode()).thenReturn(true)
         whenever(preferences.get(IntKey.BgSourceRandomInterval)).thenReturn(5)
         randomBgPlugin.setPluginEnabled(PluginType.BGSOURCE, true)
         randomBgPlugin.handleNewData()
 
-        verify(persistenceLayer).insertCgmSourceData(anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull())
+        runTest {
+            verify(persistenceLayer).insertCgmSourceData(anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull())
+        }
     }
 
     @Test

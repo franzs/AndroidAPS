@@ -5,7 +5,7 @@ import app.aaps.core.interfaces.db.PersistenceLayer
 import app.aaps.core.interfaces.queue.Callback
 import app.aaps.plugins.automation.R
 import com.google.common.truth.Truth.assertThat
-import io.reactivex.rxjava3.core.Single
+import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.any
@@ -45,18 +45,22 @@ class ActionStopTempTargetTest : ActionsTestBase() {
             // add(TemporaryTarget(id = 0, version = 0, dateCreated = 0, isValid = false, referenceId = null, interfaceIDs_backing = null, timestamp = 0, utcOffset = 0, reason =, highTarget = 0.0, lowTarget = 0.0, duration = 0))
             // insert all updated TTs
         }
-        whenever(persistenceLayer.cancelCurrentTemporaryTargetIfAny(any(), any(), any(), any(), any()))
-            .thenReturn(Single.just(PersistenceLayer.TransactionResult<TT>().apply {
-                inserted.addAll(inserted)
-                updated.addAll(updated)
-            }))
+        runTest {
+            whenever(persistenceLayer.cancelCurrentTemporaryTargetIfAny(any(), any(), any(), any(), any()))
+                .thenReturn(PersistenceLayer.TransactionResult<TT>().apply {
+                    inserted.addAll(inserted)
+                    updated.addAll(updated)
+                })
+        }
 
         sut.doAction(object : Callback() {
             override fun run() {
                 assertThat(result.success).isTrue()
             }
         })
-        verify(persistenceLayer, times(1)).cancelCurrentTemporaryTargetIfAny(any(), any(), any(), any(), any())
+        runTest {
+            verify(persistenceLayer, times(1)).cancelCurrentTemporaryTargetIfAny(any(), any(), any(), any(), any())
+        }
     }
 
     @Test fun hasDialogTest() {

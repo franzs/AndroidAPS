@@ -6,7 +6,9 @@ import app.aaps.plugins.automation.R
 import app.aaps.plugins.automation.elements.InputString
 import app.aaps.shared.tests.TestBaseWithProfile
 import com.google.common.truth.Truth.assertThat
-import io.reactivex.rxjava3.core.Single
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.Mock
@@ -20,6 +22,7 @@ class ActionNotificationTest : TestBaseWithProfile() {
     @Mock lateinit var persistenceLayer: PersistenceLayer
 
     private lateinit var sut: ActionNotification
+    private val testScope = CoroutineScope(Dispatchers.Unconfined)
 
     init {
         addInjector {
@@ -29,6 +32,7 @@ class ActionNotificationTest : TestBaseWithProfile() {
                 it.persistenceLayer = persistenceLayer
                 it.dateUtil = dateUtil
                 it.pumpEnactResultProvider = pumpEnactResultProvider
+                it.appScope = testScope
             }
         }
     }
@@ -37,8 +41,10 @@ class ActionNotificationTest : TestBaseWithProfile() {
     fun setup() {
         whenever(rh.gs(app.aaps.core.ui.R.string.notification)).thenReturn("Notification")
         whenever(rh.gs(eq(R.string.notification_message), any())).thenReturn("Notification: %s")
-        whenever(persistenceLayer.insertPumpTherapyEventIfNewByTimestamp(any(), any(), any(), any(), any(), any()))
-            .thenReturn(Single.just(PersistenceLayer.TransactionResult()))
+        runTest {
+            whenever(persistenceLayer.insertPumpTherapyEventIfNewByTimestamp(any(), any(), any(), any(), any(), any()))
+                .thenReturn(PersistenceLayer.TransactionResult())
+        }
 
         sut = ActionNotification(injector)
     }

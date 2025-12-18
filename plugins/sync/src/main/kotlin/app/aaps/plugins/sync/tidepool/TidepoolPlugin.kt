@@ -43,6 +43,10 @@ import app.aaps.plugins.sync.tidepool.keys.TidepoolStringNonKey
 import app.aaps.plugins.sync.tidepool.utils.RateLimit
 import io.reactivex.rxjava3.disposables.CompositeDisposable
 import io.reactivex.rxjava3.kotlin.plusAssign
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -77,6 +81,7 @@ class TidepoolPlugin @Inject constructor(
 ) {
 
     private var disposable: CompositeDisposable = CompositeDisposable()
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     private val listLog = ArrayList<EventTidepoolStatus>()
     var textLog: Spanned = HtmlHelper.fromHtml("")
@@ -134,11 +139,11 @@ class TidepoolPlugin @Inject constructor(
 
     private fun doUpload(from: String?) {
         //aapsLogger.debug(LTag.TIDEPOOL, "doUpload from $from")
-        return when (authFlowOut.connectionStatus) {
+        when (authFlowOut.connectionStatus) {
             AuthFlowOut.ConnectionStatus.NOT_LOGGED_IN       -> tidepoolUploader.doLogin(true, "doUpload $from NOT_LOGGED_IN")
             AuthFlowOut.ConnectionStatus.FAILED              -> tidepoolUploader.doLogin(true, "doUpload $from FAILED")
             AuthFlowOut.ConnectionStatus.NO_SESSION          -> tidepoolUploader.doLogin(true, "doUpload $from NO_SESSION")
-            AuthFlowOut.ConnectionStatus.SESSION_ESTABLISHED -> tidepoolUploader.doUpload(from)
+            AuthFlowOut.ConnectionStatus.SESSION_ESTABLISHED -> scope.launch { tidepoolUploader.doUpload(from) }
 
             else                                             -> aapsLogger.debug(LTag.TIDEPOOL, "doUpload $from do nothing ${authFlowOut.connectionStatus}")
         }

@@ -6,12 +6,12 @@ import app.aaps.database.entities.Carbs
 import app.aaps.database.entities.embedments.InterfaceIDs
 import app.aaps.database.entities.interfaces.end
 import com.google.common.truth.Truth.assertThat
+import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.verify
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
-import kotlinx.coroutines.runBlocking
 
 class CutCarbsTransactionTest {
 
@@ -26,7 +26,7 @@ class CutCarbsTransactionTest {
     }
 
     @Test
-    fun `invalidates carbs when end time equals start time`() = runBlocking {
+    fun `invalidates carbs when end time equals start time`() = runTest {
         val timestamp = 1000L
         val carbs = createCarbs(
             id = 1,
@@ -50,7 +50,7 @@ class CutCarbsTransactionTest {
     }
 
     @Test
-    fun `cuts carbs proportionally when end is in the middle`() = runBlocking {
+    fun `cuts carbs proportionally when end is in the middle`() = runTest {
         val timestamp = 1000L
         val duration = 60_000L // 60 seconds
         val amount = 100.0
@@ -79,7 +79,7 @@ class CutCarbsTransactionTest {
     }
 
     @Test
-    fun `cuts carbs proportionally at 25 percent`() = runBlocking {
+    fun `cuts carbs proportionally at 25 percent`() = runTest {
         val timestamp = 1000L
         val duration = 60_000L
         val amount = 100.0
@@ -104,7 +104,7 @@ class CutCarbsTransactionTest {
     }
 
     @Test
-    fun `cuts carbs proportionally at 75 percent`() = runBlocking {
+    fun `cuts carbs proportionally at 75 percent`() = runTest {
         val timestamp = 1000L
         val duration = 60_000L
         val amount = 100.0
@@ -129,7 +129,7 @@ class CutCarbsTransactionTest {
     }
 
     @Test
-    fun `rounds carbs amount to nearest integer`() = runBlocking {
+    fun `rounds carbs amount to nearest integer`() = runTest {
         val timestamp = 1000L
         val duration = 60_000L
         val amount = 100.0
@@ -152,7 +152,7 @@ class CutCarbsTransactionTest {
     }
 
     @Test
-    fun `does nothing when end time is before start time`() = runBlocking {
+    fun `does nothing when end time is before start time`() = runTest {
         val timestamp = 1000L
         val carbs = createCarbs(
             id = 1,
@@ -179,7 +179,7 @@ class CutCarbsTransactionTest {
     }
 
     @Test
-    fun `does nothing when end time is after carbs end time`() = runBlocking {
+    fun `does nothing when end time is after carbs end time`() = runTest {
         val timestamp = 1000L
         val duration = 60_000L
         val carbs = createCarbs(
@@ -207,7 +207,7 @@ class CutCarbsTransactionTest {
     }
 
     @Test
-    fun `throws exception when carbs not found`() = runBlocking {
+    fun `throws exception when carbs not found`() = runTest {
         whenever(carbsDao.findById(999)).thenReturn(null)
 
         val transaction = CutCarbsTransaction(id = 999, end = 2000L)
@@ -222,7 +222,7 @@ class CutCarbsTransactionTest {
     }
 
     @Test
-    fun `transaction result has correct structure`() = runBlocking {
+    fun `transaction result has correct structure`() = runTest {
         val result = CutCarbsTransaction.TransactionResult()
 
         assertThat(result.invalidated).isEmpty()

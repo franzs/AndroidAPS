@@ -53,7 +53,7 @@ class DexcomTirCalculatorImpl @Inject constructor(
      * @return DexcomTIR object with calculated statistics including percentages in each range,
      *         mean glucose, standard deviation, and estimated HbA1c
      */
-    override fun calculate(): DexcomTIR {
+    override suspend fun calculate(): DexcomTIR {
         val startTime = MidnightTime.calcDaysBack(days)
         val endTime = MidnightTime.calc(dateUtil.now())
 

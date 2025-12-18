@@ -31,6 +31,7 @@ import app.aaps.core.objects.extensions.isInProgress
 import app.aaps.core.objects.extensions.toStringFull
 import app.aaps.core.objects.extensions.toStringShort
 import com.jjoe64.graphview.series.DataPoint
+import kotlinx.coroutines.runBlocking
 import java.util.Calendar
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -64,7 +65,7 @@ class OverviewDataImpl @Inject constructor(
         basalLineGraphSeries = LineGraphSeries<ScaledDataPoint>()
         absoluteBasalGraphSeries = LineGraphSeries<ScaledDataPoint>()
         temporaryTargetSeries = LineGraphSeries<DataPoint>()
-        runningModesSeries = PointsWithLabelGraphSeries< RunningModeDataPoint>()
+        runningModesSeries = PointsWithLabelGraphSeries<RunningModeDataPoint>()
         maxIAValue = 0.0
         activitySeries = FixedLineGraphSeries<ScaledDataPoint>()
         activityPredictionSeries = FixedLineGraphSeries<ScaledDataPoint>()
@@ -172,14 +173,14 @@ class OverviewDataImpl @Inject constructor(
     */
 
     override fun extendedBolusText(): String =
-        persistenceLayer.getExtendedBolusActiveAt(dateUtil.now())?.let { extendedBolus ->
+        runBlocking { persistenceLayer.getExtendedBolusActiveAt(dateUtil.now()) }?.let { extendedBolus ->
             if (!extendedBolus.isInProgress(dateUtil)) ""
             else if (!activePlugin.activePump.isFakingTempsByExtendedBoluses) rh.gs(app.aaps.core.ui.R.string.pump_base_basal_rate, extendedBolus.rate)
             else ""
         } ?: ""
 
     override fun extendedBolusDialogText(): String =
-        persistenceLayer.getExtendedBolusActiveAt(dateUtil.now())?.toStringFull(dateUtil, rh) ?: ""
+        runBlocking { persistenceLayer.getExtendedBolusActiveAt(dateUtil.now()) }?.toStringFull(dateUtil, rh) ?: ""
 
     /*
      * Graphs
@@ -198,7 +199,7 @@ class OverviewDataImpl @Inject constructor(
     override var absoluteBasalGraphSeries: SeriesData = LineGraphSeries<ScaledDataPoint>()
 
     override var temporaryTargetSeries: SeriesData = LineGraphSeries<DataPoint>()
-    override var runningModesSeries: SeriesData = PointsWithLabelGraphSeries< RunningModeDataPoint>()
+    override var runningModesSeries: SeriesData = PointsWithLabelGraphSeries<RunningModeDataPoint>()
     override var maxIAValue = 0.0
     override val actScale = Scale()
     override var activitySeries: SeriesData = FixedLineGraphSeries<ScaledDataPoint>()

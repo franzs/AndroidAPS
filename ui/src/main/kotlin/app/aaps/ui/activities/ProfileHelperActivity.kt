@@ -67,7 +67,6 @@ import app.aaps.core.interfaces.profile.ProfileUtil
 import app.aaps.core.interfaces.profile.PureProfile
 import app.aaps.core.interfaces.resources.ResourceHelper
 import app.aaps.core.interfaces.rx.bus.RxBus
-import app.aaps.core.interfaces.rx.events.EventLocalProfileChanged
 import app.aaps.core.interfaces.stats.TddCalculator
 import app.aaps.core.interfaces.ui.UiInteraction
 import app.aaps.core.interfaces.utils.DateUtil
@@ -88,6 +87,7 @@ import app.aaps.ui.defaultProfile.DefaultProfileDPV
 import dagger.android.support.DaggerAppCompatActivity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
@@ -141,6 +141,7 @@ class ProfileHelperActivity : DaggerAppCompatActivity() {
      * - PROFILE_SWITCH: Selects from recent profile switches (last 2 months)
      */
     enum class ProfileType {
+
         MOTOL_DEFAULT,
         DPV_DEFAULT,
         CURRENT,
@@ -195,11 +196,11 @@ class ProfileHelperActivity : DaggerAppCompatActivity() {
                                         else null
                                     }
 
-                                    ProfileType.PROFILE_SWITCH    -> {
-                                        val switches = persistenceLayer.getEffectiveProfileSwitchesFromTimeBlocking(
+                                    ProfileType.PROFILE_SWITCH    -> runBlocking {
+                                        val switches = persistenceLayer.getEffectiveProfileSwitchesFromTime(
                                             dateUtil.now() - T.months(2).msecs(),
                                             true
-                                        ).blockingGet()
+                                        )
                                         if (profileSwitchIndex < switches.size)
                                             ProfileSealed.EPS(value = switches[profileSwitchIndex], activePlugin = null)
                                                 .convertToNonCustomizedProfile(dateUtil)
@@ -223,11 +224,11 @@ class ProfileHelperActivity : DaggerAppCompatActivity() {
                                     if (list != null && profileIndex < list.size) list[profileIndex].toString() else ""
                                 }
 
-                                ProfileType.PROFILE_SWITCH    -> {
-                                    val switches = persistenceLayer.getEffectiveProfileSwitchesFromTimeBlocking(
+                                ProfileType.PROFILE_SWITCH    -> runBlocking {
+                                    val switches = persistenceLayer.getEffectiveProfileSwitchesFromTime(
                                         dateUtil.now() - T.months(2).msecs(),
                                         true
-                                    ).blockingGet()
+                                    )
                                     if (profileSwitchIndex < switches.size) switches[profileSwitchIndex].originalCustomizedName else ""
                                 }
                             }
@@ -250,10 +251,7 @@ class ProfileHelperActivity : DaggerAppCompatActivity() {
                         dateUtil = dateUtil,
                         currentProfile = profileFunction.getProfileName(),
                         availableProfiles = activePlugin.activeProfileSource.profile?.getProfileList() ?: ArrayList(),
-                        profileSwitches = persistenceLayer.getEffectiveProfileSwitchesFromTimeBlocking(
-                            dateUtil.now() - T.months(2).msecs(),
-                            true
-                        ).blockingGet(),
+                        profileSwitches = runBlocking { persistenceLayer.getEffectiveProfileSwitchesFromTime(dateUtil.now() - T.months(2).msecs(), true) },
                         profileFunction = profileFunction,
                         rh = rh,
                         profileUtil = profileUtil

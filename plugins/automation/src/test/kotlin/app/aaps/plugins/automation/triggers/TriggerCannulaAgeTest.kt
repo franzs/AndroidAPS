@@ -7,6 +7,7 @@ import app.aaps.core.data.time.T
 import app.aaps.plugins.automation.elements.Comparator
 import app.aaps.pump.virtual.VirtualPumpPlugin
 import com.google.common.truth.Truth.assertThat
+import kotlinx.coroutines.test.runTest
 import org.json.JSONObject
 import org.junit.jupiter.api.Test
 import org.mockito.Mock
@@ -18,7 +19,7 @@ class TriggerCannulaAgeTest : TriggerTestBase() {
 
     @Mock lateinit var virtualPumpPlugin: VirtualPumpPlugin
 
-    @Test fun shouldRunTest() {
+    @Test fun shouldRunTest() = runTest {
         // Cannula age is 6
         val cannulaChangeEvent = TE(glucoseUnit = GlucoseUnit.MGDL, timestamp = now - T.hours(6).msecs(), type = TE.Type.CANNULA_CHANGE)
         whenever(persistenceLayer.getLastTherapyRecordUpToNow(TE.Type.CANNULA_CHANGE)).thenReturn(cannulaChangeEvent)
@@ -40,7 +41,7 @@ class TriggerCannulaAgeTest : TriggerTestBase() {
         assertThat(t.shouldRun()).isFalse()
     }
 
-    @Test fun shouldRunNotAvailable() {
+    @Test fun shouldRunNotAvailable() = runTest {
         whenever(persistenceLayer.getLastTherapyRecordUpToNow(TE.Type.CANNULA_CHANGE)).thenReturn(null)
         var t = TriggerCannulaAge(injector).apply { comparator.value = Comparator.Compare.IS_NOT_AVAILABLE }
         assertThat(t.shouldRun()).isTrue()

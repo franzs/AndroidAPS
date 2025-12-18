@@ -15,6 +15,7 @@ import app.aaps.core.data.ue.Action
 import app.aaps.core.data.ue.Sources
 import app.aaps.core.interfaces.configuration.Config
 import app.aaps.core.interfaces.db.PersistenceLayer
+import app.aaps.core.interfaces.di.ApplicationScope
 import app.aaps.core.interfaces.logging.AAPSLogger
 import app.aaps.core.interfaces.logging.LTag
 import app.aaps.core.interfaces.notifications.Notification
@@ -50,6 +51,8 @@ import app.aaps.pump.virtual.extensions.toText
 import app.aaps.pump.virtual.keys.VirtualBooleanNonPreferenceKey
 import io.reactivex.rxjava3.disposables.CompositeDisposable
 import io.reactivex.rxjava3.kotlin.plusAssign
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 import javax.inject.Provider
 import javax.inject.Singleton
@@ -69,7 +72,8 @@ open class VirtualPumpPlugin @Inject constructor(
     private val dateUtil: DateUtil,
     private val processedDeviceStatusData: ProcessedDeviceStatusData,
     private val persistenceLayer: PersistenceLayer,
-    private val pumpEnactResultProvider: Provider<PumpEnactResult>
+    private val pumpEnactResultProvider: Provider<PumpEnactResult>,
+    @ApplicationScope private val appScope: CoroutineScope
 ) : PumpPluginBase(
     pluginDescription = PluginDescription()
         .mainType(PluginType.PUMP)
@@ -204,11 +208,13 @@ open class VirtualPumpPlugin @Inject constructor(
         lastDataTime = System.currentTimeMillis()
         if (detailedBolusInfo.insulin > 0) {
             if (config.AAPSCLIENT) // do not store pump serial (record will not be marked PH)
-                disposable += persistenceLayer.insertOrUpdateBolus(
-                    bolus = detailedBolusInfo.createBolus(),
-                    action = Action.BOLUS,
-                    source = Sources.Pump
-                ).subscribe()
+                appScope.launch {
+                    persistenceLayer.insertOrUpdateBolus(
+                        bolus = detailedBolusInfo.createBolus(),
+                        action = Action.BOLUS,
+                        source = Sources.Pump
+                    )
+                }
             else
                 pumpSync.syncBolusWithPumpId(
                     timestamp = detailedBolusInfo.timestamp,

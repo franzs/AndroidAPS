@@ -100,7 +100,7 @@ class PrepareTreatmentsDataWorker(
         }
 
         // Careportal
-        persistenceLayer.getTherapyEventDataFromToTime(fromTime - T.hours(6).msecs(), endTime).blockingGet()
+        persistenceLayer.getTherapyEventDataFromToTime(fromTime - T.hours(6).msecs(), endTime)
             .map { TherapyEventDataPoint(it, rh, profileUtil, translator) }
             .filterTimeframe(fromTime, endTime)
             .forEach {

@@ -6,6 +6,7 @@ import app.aaps.core.data.ue.Action
 import app.aaps.core.data.ue.Sources
 import app.aaps.core.data.ue.ValueWithUnit
 import app.aaps.core.interfaces.db.PersistenceLayer
+import app.aaps.core.interfaces.di.ApplicationScope
 import app.aaps.core.interfaces.logging.AAPSLogger
 import app.aaps.core.interfaces.resources.ResourceHelper
 import app.aaps.core.interfaces.ui.UiInteraction
@@ -16,7 +17,8 @@ import app.aaps.core.keys.interfaces.Preferences
 import app.aaps.core.objects.extensions.asAnnouncement
 import dagger.Reusable
 import io.reactivex.rxjava3.disposables.CompositeDisposable
-import io.reactivex.rxjava3.kotlin.plusAssign
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 import kotlin.math.max
 import kotlin.math.min
@@ -29,7 +31,8 @@ class HardLimitsImpl @Inject constructor(
     private val rh: ResourceHelper,
     private val context: Context,
     private val persistenceLayer: PersistenceLayer,
-    private val dateUtil: DateUtil
+    private val dateUtil: DateUtil,
+    @ApplicationScope private val appScope: CoroutineScope
 ) : HardLimits {
 
     private val disposable = CompositeDisposable()
@@ -68,14 +71,16 @@ class HardLimitsImpl @Inject constructor(
             msg += ".\n"
             msg += rh.gs(app.aaps.core.ui.R.string.valuelimitedto, value, newValue)
             aapsLogger.error(msg)
-            disposable += persistenceLayer.insertPumpTherapyEventIfNewByTimestamp(
-                therapyEvent = TE.asAnnouncement(msg),
-                timestamp = dateUtil.now(),
-                action = Action.CAREPORTAL,
-                source = Sources.Aaps,
-                note = msg,
-                listValues = listOf(ValueWithUnit.TEType(TE.Type.ANNOUNCEMENT))
-            ).subscribe()
+            appScope.launch {
+                persistenceLayer.insertPumpTherapyEventIfNewByTimestamp(
+                    therapyEvent = TE.asAnnouncement(msg),
+                    timestamp = dateUtil.now(),
+                    action = Action.CAREPORTAL,
+                    source = Sources.Aaps,
+                    note = msg,
+                    listValues = listOf(ValueWithUnit.TEType(TE.Type.ANNOUNCEMENT))
+                )
+            }
             uiInteraction.showToastAndNotification(context, msg, app.aaps.core.ui.R.raw.error)
         }
         return newValue

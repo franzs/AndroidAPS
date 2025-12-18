@@ -7,6 +7,7 @@ import app.aaps.core.data.time.T
 import app.aaps.plugins.automation.elements.Comparator
 import app.aaps.pump.virtual.VirtualPumpPlugin
 import com.google.common.truth.Truth.assertThat
+import kotlinx.coroutines.test.runTest
 import org.json.JSONObject
 import org.junit.jupiter.api.Test
 import org.mockito.Mock
@@ -18,7 +19,7 @@ class TriggerInsulinAgeTest : TriggerTestBase() {
 
     @Mock lateinit var virtualPumpPlugin: VirtualPumpPlugin
 
-    @Test fun shouldRunTest() {
+    @Test fun shouldRunTest() = runTest {
         val insulinChangeEvent = TE(glucoseUnit = GlucoseUnit.MGDL, timestamp = now - T.hours(6).msecs(), type = TE.Type.INSULIN_CHANGE)
         whenever(persistenceLayer.getLastTherapyRecordUpToNow(TE.Type.INSULIN_CHANGE)).thenReturn(insulinChangeEvent)
         var t: TriggerInsulinAge = TriggerInsulinAge(injector).setValue(1.0).comparator(Comparator.Compare.IS_EQUAL)
@@ -39,7 +40,7 @@ class TriggerInsulinAgeTest : TriggerTestBase() {
         assertThat(t.shouldRun()).isFalse()
     }
 
-    @Test fun shouldRunNotAvailable() {
+    @Test fun shouldRunNotAvailable() = runTest {
         whenever(persistenceLayer.getLastTherapyRecordUpToNow(TE.Type.INSULIN_CHANGE)).thenReturn(null)
         var t = TriggerInsulinAge(injector).apply { comparator.value = Comparator.Compare.IS_NOT_AVAILABLE }
         assertThat(t.shouldRun()).isTrue()
@@ -76,7 +77,7 @@ class TriggerInsulinAgeTest : TriggerTestBase() {
     }
 
     @Test fun iconTest() {
-        val t= TriggerInsulinAge(injector)
+        val t = TriggerInsulinAge(injector)
         assertThat(t.icon()).isEqualTo(Optional.of(app.aaps.core.objects.R.drawable.ic_cp_age_insulin))
     }
 }

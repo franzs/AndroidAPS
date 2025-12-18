@@ -7,6 +7,7 @@ import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.lifecycle.lifecycleScope
 import app.aaps.core.data.model.TE
 import app.aaps.core.data.ue.Action
 import app.aaps.core.data.ue.Sources
@@ -32,8 +33,7 @@ import app.aaps.core.ui.toast.ToastUtils
 import app.aaps.ui.R
 import app.aaps.ui.databinding.DialogTreatmentBinding
 import com.google.common.base.Joiner
-import io.reactivex.rxjava3.disposables.CompositeDisposable
-import io.reactivex.rxjava3.kotlin.plusAssign
+import kotlinx.coroutines.launch
 import java.text.DecimalFormat
 import java.util.LinkedList
 import javax.inject.Inject
@@ -55,8 +55,6 @@ class TreatmentDialog : DialogFragmentWithDate() {
 
     private var queryingProtection = false
     private var _binding: DialogTreatmentBinding? = null
-
-    private val disposable = CompositeDisposable()
 
     // This property is only valid between onCreateView and onDestroyView.
     private val binding get() = _binding!!
@@ -185,19 +183,23 @@ class TreatmentDialog : DialogFragmentWithDate() {
                     detailedBolusInfo.context = context
                     if (recordOnlyChecked) {
                         if (detailedBolusInfo.insulin > 0)
-                            disposable += persistenceLayer.insertOrUpdateBolus(
-                                bolus = detailedBolusInfo.createBolus(),
-                                action = action,
-                                source = Sources.TreatmentDialog,
-                                note = if (insulinAfterConstraints != 0.0) rh.gs(app.aaps.core.ui.R.string.record) else ""
-                            ).subscribe()
+                            lifecycleScope.launch {
+                                persistenceLayer.insertOrUpdateBolus(
+                                    bolus = detailedBolusInfo.createBolus(),
+                                    action = action,
+                                    source = Sources.TreatmentDialog,
+                                    note = if (insulinAfterConstraints != 0.0) rh.gs(app.aaps.core.ui.R.string.record) else ""
+                                )
+                            }
                         if (detailedBolusInfo.carbs > 0)
-                            disposable += persistenceLayer.insertOrUpdateCarbs(
-                                carbs = detailedBolusInfo.createCarbs(),
-                                action = action,
-                                source = Sources.TreatmentDialog,
-                                note = if (carbsAfterConstraints != 0) rh.gs(app.aaps.core.ui.R.string.record) else ""
-                            ).subscribe()
+                            lifecycleScope.launch {
+                                persistenceLayer.insertOrUpdateCarbs(
+                                    carbs = detailedBolusInfo.createCarbs(),
+                                    action = action,
+                                    source = Sources.TreatmentDialog,
+                                    note = if (carbsAfterConstraints != 0) rh.gs(app.aaps.core.ui.R.string.record) else ""
+                                )
+                            }
                     } else {
                         if (detailedBolusInfo.insulin > 0) {
                             uel.log(
@@ -217,11 +219,13 @@ class TreatmentDialog : DialogFragmentWithDate() {
                             })
                         } else {
                             if (detailedBolusInfo.carbs > 0)
-                                disposable += persistenceLayer.insertOrUpdateCarbs(
-                                    detailedBolusInfo.createCarbs(),
-                                    action = action,
-                                    source = Sources.TreatmentDialog
-                                ).subscribe()
+                                lifecycleScope.launch {
+                                    persistenceLayer.insertOrUpdateCarbs(
+                                        detailedBolusInfo.createCarbs(),
+                                        action = action,
+                                        source = Sources.TreatmentDialog
+                                    )
+                                }
                         }
                     }
                 }

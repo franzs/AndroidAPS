@@ -518,7 +518,7 @@ internal class NSClientV3PluginTest : TestBaseWithProfile() {
     }
 
     @Test
-    fun `resetToFullSync should clear sync timestamps and reset initialLoadFinished flag`() {
+    fun `resetToFullSync should clear sync timestamps and reset initialLoadFinished flag`() = runTest {
         // Arrange
         // 1. Set the plugin's state to a "synced" status to ensure the reset works.
         sut.initialLoadFinished = true

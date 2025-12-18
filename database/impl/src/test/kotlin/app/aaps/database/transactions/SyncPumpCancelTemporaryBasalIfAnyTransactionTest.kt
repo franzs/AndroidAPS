@@ -6,7 +6,7 @@ import app.aaps.database.entities.TemporaryBasal
 import app.aaps.database.entities.embedments.InterfaceIDs
 import app.aaps.database.entities.interfaces.end
 import com.google.common.truth.Truth.assertThat
-import io.reactivex.rxjava3.core.Maybe
+import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.never
@@ -14,7 +14,6 @@ import org.mockito.Mockito.verify
 import org.mockito.kotlin.any
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
-import kotlinx.coroutines.runBlocking
 
 class SyncPumpCancelTemporaryBasalIfAnyTransactionTest {
 
@@ -29,7 +28,7 @@ class SyncPumpCancelTemporaryBasalIfAnyTransactionTest {
     }
 
     @Test
-    fun `cancels running temporary basal`() = runBlocking {
+    fun `cancels running temporary basal`() = runTest {
         val timestamp = 31_000L
         val endPumpId = 200L
         val running = createTemporaryBasal(timestamp = 1000L, duration = 60_000L, endId = null)
@@ -51,7 +50,7 @@ class SyncPumpCancelTemporaryBasalIfAnyTransactionTest {
     }
 
     @Test
-    fun `does not cancel if already cancelled by end id`() = runBlocking {
+    fun `does not cancel if already cancelled by end id`() = runTest {
         val timestamp = 31_000L
         val endPumpId = 200L
 
@@ -71,7 +70,7 @@ class SyncPumpCancelTemporaryBasalIfAnyTransactionTest {
     }
 
     @Test
-    fun `does not cancel if no running temporary basal`() = runBlocking {
+    fun `does not cancel if no running temporary basal`() = runTest {
         val timestamp = 31_000L
         val endPumpId = 200L
 
@@ -90,7 +89,7 @@ class SyncPumpCancelTemporaryBasalIfAnyTransactionTest {
     }
 
     @Test
-    fun `sets duration to 1 when timestamp equals start`() = runBlocking {
+    fun `sets duration to 1 when timestamp equals start`() = runTest {
         val timestamp = 1000L
         val endPumpId = 200L
         val running = createTemporaryBasal(timestamp = 1000L, duration = 60_000L, endId = null)

@@ -17,6 +17,7 @@ import app.aaps.ui.compose.ToolbarConfig
 import app.aaps.ui.compose.TreatmentScreenToolbar
 import app.aaps.ui.viewmodels.TreatmentConstants.TREATMENT_HISTORY_DAYS
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -25,6 +26,7 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
@@ -89,6 +91,7 @@ class ExtendedBolusViewModel @Inject constructor(
     /**
      * Subscribe to extended bolus change events using Flow
      */
+    @OptIn(FlowPreview::class)
     private fun observeExtendedBolusChanges() {
         persistenceLayer
             .observeChanges<EB>()
@@ -175,17 +178,19 @@ class ExtendedBolusViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 selected.forEach { eb ->
-                    persistenceLayer.invalidateExtendedBolus(
-                        id = eb.id,
-                        action = Action.EXTENDED_BOLUS_REMOVED,
-                        source = Sources.Treatments,
-                        listValues = listOf(
-                            ValueWithUnit.Timestamp(eb.timestamp),
-                            ValueWithUnit.Insulin(eb.amount),
-                            ValueWithUnit.UnitPerHour(eb.rate),
-                            ValueWithUnit.Minute(TimeUnit.MILLISECONDS.toMinutes(eb.duration).toInt())
+                    runBlocking {
+                        persistenceLayer.invalidateExtendedBolus(
+                            id = eb.id,
+                            action = Action.EXTENDED_BOLUS_REMOVED,
+                            source = Sources.Treatments,
+                            listValues = listOf(
+                                ValueWithUnit.Timestamp(eb.timestamp),
+                                ValueWithUnit.Insulin(eb.amount),
+                                ValueWithUnit.UnitPerHour(eb.rate),
+                                ValueWithUnit.Minute(TimeUnit.MILLISECONDS.toMinutes(eb.duration).toInt())
+                            )
                         )
-                    ).blockingGet()
+                    }
                 }
                 exitSelectionMode()
                 loadData()

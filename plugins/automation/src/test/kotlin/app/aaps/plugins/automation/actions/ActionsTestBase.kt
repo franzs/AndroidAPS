@@ -7,6 +7,8 @@ import app.aaps.core.interfaces.profile.ProfileSource
 import app.aaps.core.interfaces.smsCommunicator.SmsCommunicator
 import app.aaps.plugins.automation.triggers.Trigger
 import app.aaps.shared.tests.TestBaseWithProfile
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import org.junit.jupiter.api.BeforeEach
 import org.mockito.ArgumentMatchers.anyInt
 import org.mockito.Mock
@@ -21,6 +23,8 @@ ActionsTestBase : TestBaseWithProfile() {
     @Mock lateinit var loop: Loop
     @Mock lateinit var persistenceLayer: PersistenceLayer
 
+    private val testScope = CoroutineScope(Dispatchers.Unconfined)
+
     init {
         addInjector {
             if (it is Action) {
@@ -31,6 +35,7 @@ ActionsTestBase : TestBaseWithProfile() {
             if (it is ActionStopTempTarget) {
                 it.dateUtil = dateUtil
                 it.persistenceLayer = persistenceLayer
+                it.appScope = testScope
             }
             if (it is ActionStartTempTarget) {
                 it.activePlugin = activePlugin
@@ -38,6 +43,7 @@ ActionsTestBase : TestBaseWithProfile() {
                 it.profileFunction = profileFunction
                 it.dateUtil = dateUtil
                 it.profileUtil = profileUtil
+                it.appScope = testScope
             }
             if (it is ActionSendSMS) {
                 it.smsCommunicator = smsCommunicator
@@ -61,6 +67,10 @@ ActionsTestBase : TestBaseWithProfile() {
                 it.persistenceLayer = persistenceLayer
                 it.dateUtil = dateUtil
                 it.profileFunction = profileFunction
+                it.appScope = testScope
+            }
+            if (it is ActionSettingsExport) {
+                it.appScope = testScope
             }
             if (it is Trigger) {
                 it.rh = rh

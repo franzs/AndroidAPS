@@ -7,12 +7,12 @@ import app.aaps.database.entities.data.GlucoseUnit
 import app.aaps.database.entities.embedments.InsulinConfiguration
 import app.aaps.database.entities.embedments.InterfaceIDs
 import com.google.common.truth.Truth.assertThat
+import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.verify
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
-import kotlinx.coroutines.runBlocking
 
 class SyncNsEffectiveProfileSwitchTransactionTest {
 
@@ -27,7 +27,7 @@ class SyncNsEffectiveProfileSwitchTransactionTest {
     }
 
     @Test
-    fun `inserts new when nsId not found and no timestamp match`() = runBlocking {
+    fun `inserts new when nsId not found and no timestamp match`() = runTest {
         val eps = createEffectiveProfileSwitch(id = 0, nsId = "ns-123", timestamp = 1000L)
 
         whenever(effectiveProfileSwitchDao.findByNSId("ns-123")).thenReturn(null)
@@ -45,7 +45,7 @@ class SyncNsEffectiveProfileSwitchTransactionTest {
     }
 
     @Test
-    fun `updates nsId when timestamp matches but nsId is null`() = runBlocking {
+    fun `updates nsId when timestamp matches but nsId is null`() = runTest {
         val eps = createEffectiveProfileSwitch(id = 0, nsId = "ns-123", timestamp = 1000L)
         val existing = createEffectiveProfileSwitch(id = 1, nsId = null, timestamp = 1000L)
 
@@ -63,7 +63,7 @@ class SyncNsEffectiveProfileSwitchTransactionTest {
     }
 
     @Test
-    fun `invalidates when valid becomes invalid`() = runBlocking {
+    fun `invalidates when valid becomes invalid`() = runTest {
         val eps = createEffectiveProfileSwitch(id = 0, nsId = "ns-123", isValid = false)
         val existing = createEffectiveProfileSwitch(id = 1, nsId = "ns-123", isValid = true)
 

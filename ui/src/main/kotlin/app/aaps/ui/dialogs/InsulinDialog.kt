@@ -7,6 +7,7 @@ import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.lifecycle.lifecycleScope
 import app.aaps.core.data.model.GlucoseUnit
 import app.aaps.core.data.model.TE
 import app.aaps.core.data.model.TT
@@ -44,8 +45,7 @@ import app.aaps.ui.R
 import app.aaps.ui.databinding.DialogInsulinBinding
 import app.aaps.ui.extensions.toSignedString
 import com.google.common.base.Joiner
-import io.reactivex.rxjava3.disposables.CompositeDisposable
-import io.reactivex.rxjava3.kotlin.plusAssign
+import kotlinx.coroutines.launch
 import java.text.DecimalFormat
 import java.util.LinkedList
 import java.util.concurrent.TimeUnit
@@ -72,7 +72,6 @@ class InsulinDialog : DialogFragmentWithDate() {
     @Inject lateinit var loop: Loop
 
     private var queryingProtection = false
-    private val disposable = CompositeDisposable()
     private var _binding: DialogInsulinBinding? = null
 
     // This property is only valid between onCreateView and onDestroyView.
@@ -181,7 +180,6 @@ class InsulinDialog : DialogFragmentWithDate() {
 
     override fun onDestroyView() {
         super.onDestroyView()
-        disposable.clear()
         _binding = null
     }
 
@@ -235,22 +233,24 @@ class InsulinDialog : DialogFragmentWithDate() {
                 message = Joiner.on("<br/>").join(actions),
                 ok = {
                     if (eatingSoonChecked) {
-                        disposable += persistenceLayer.insertAndCancelCurrentTemporaryTarget(
-                            TT(
-                                timestamp = System.currentTimeMillis(),
-                                duration = TimeUnit.MINUTES.toMillis(eatingSoonTTDuration.toLong()),
-                                reason = TT.Reason.EATING_SOON,
-                                lowTarget = profileUtil.convertToMgdl(eatingSoonTT, profileFunction.getUnits()),
-                                highTarget = profileUtil.convertToMgdl(eatingSoonTT, profileFunction.getUnits())
-                            ),
-                            action = Action.TT, source = Sources.InsulinDialog,
-                            note = notes,
-                            listValues = listOf(
-                                ValueWithUnit.TETTReason(TT.Reason.EATING_SOON),
-                                ValueWithUnit.fromGlucoseUnit(eatingSoonTT, units),
-                                ValueWithUnit.Minute(eatingSoonTTDuration)
+                        lifecycleScope.launch {
+                            persistenceLayer.insertAndCancelCurrentTemporaryTarget(
+                                TT(
+                                    timestamp = System.currentTimeMillis(),
+                                    duration = TimeUnit.MINUTES.toMillis(eatingSoonTTDuration.toLong()),
+                                    reason = TT.Reason.EATING_SOON,
+                                    lowTarget = profileUtil.convertToMgdl(eatingSoonTT, profileFunction.getUnits()),
+                                    highTarget = profileUtil.convertToMgdl(eatingSoonTT, profileFunction.getUnits())
+                                ),
+                                action = Action.TT, source = Sources.InsulinDialog,
+                                note = notes,
+                                listValues = listOf(
+                                    ValueWithUnit.TETTReason(TT.Reason.EATING_SOON),
+                                    ValueWithUnit.fromGlucoseUnit(eatingSoonTT, units),
+                                    ValueWithUnit.Minute(eatingSoonTTDuration)
+                                )
                             )
-                        ).subscribe()
+                        }
                     }
                     if (insulinAfterConstraints > 0) {
                         val detailedBolusInfo = DetailedBolusInfo()
@@ -260,12 +260,14 @@ class InsulinDialog : DialogFragmentWithDate() {
                         detailedBolusInfo.notes = notes
                         detailedBolusInfo.timestamp = time
                         if (recordOnlyChecked) {
-                            disposable += persistenceLayer.insertOrUpdateBolus(
-                                bolus = detailedBolusInfo.createBolus(),
-                                action = Action.BOLUS,
-                                source = Sources.InsulinDialog,
-                                note = rh.gs(app.aaps.core.ui.R.string.record) + if (notes.isNotEmpty()) ": $notes" else ""
-                            ).subscribe()
+                            lifecycleScope.launch {
+                                persistenceLayer.insertOrUpdateBolus(
+                                    bolus = detailedBolusInfo.createBolus(),
+                                    action = Action.BOLUS,
+                                    source = Sources.InsulinDialog,
+                                    note = rh.gs(app.aaps.core.ui.R.string.record) + if (notes.isNotEmpty()) ": $notes" else ""
+                                )
+                            }
                             if (timeOffset == 0)
                                 automation.removeAutomationEventBolusReminder()
                         } else {

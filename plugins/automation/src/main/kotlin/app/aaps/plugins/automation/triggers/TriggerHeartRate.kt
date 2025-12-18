@@ -11,6 +11,7 @@ import app.aaps.plugins.automation.elements.LabelWithElement
 import app.aaps.plugins.automation.elements.LayoutBuilder
 import app.aaps.plugins.automation.elements.StaticLabel
 import dagger.android.HasAndroidInjector
+import kotlinx.coroutines.runBlocking
 import org.json.JSONObject
 import java.text.DecimalFormat
 import java.util.Optional
@@ -31,7 +32,7 @@ class TriggerHeartRate(injector: HasAndroidInjector) : Trigger(injector) {
             return true
         }
         val start = dateUtil.now() - averageHeartRateDurationMillis
-        val hrs = persistenceLayer.getHeartRatesFromTime(start)
+        val hrs = runBlocking { persistenceLayer.getHeartRatesFromTime(start) }
         val duration = hrs.takeUnless { it.isEmpty() }?.sumOf { hr -> hr.duration } ?: 0L
         if (duration == 0L) {
             aapsLogger.info(LTag.AUTOMATION, "HR not ready, no heart rate measured for ${friendlyDescription()}")

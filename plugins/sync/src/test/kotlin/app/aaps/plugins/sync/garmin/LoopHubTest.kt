@@ -31,7 +31,9 @@ import app.aaps.core.keys.StringKey
 import app.aaps.core.keys.UnitDoubleKey
 import app.aaps.core.keys.interfaces.Preferences
 import app.aaps.shared.tests.TestBase
-import io.reactivex.rxjava3.core.Single
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -68,6 +70,7 @@ class LoopHubTest : TestBase() {
 
     private lateinit var loopHub: LoopHubImpl
     private val clock = Clock.fixed(Instant.ofEpochMilli(10_000), ZoneId.of("UTC"))
+    private val testScope = CoroutineScope(Dispatchers.Unconfined)
 
     @BeforeEach
     fun setup() {
@@ -78,7 +81,7 @@ class LoopHubTest : TestBase() {
         }
         loopHub = LoopHubImpl(
             aapsLogger, commandQueue, constraints, iobCobCalculator, loop,
-            profileFunction, profileUtil, persistenceLayer, userEntryLogger, preferences, processedTbrEbData
+            profileFunction, profileUtil, persistenceLayer, userEntryLogger, preferences, processedTbrEbData, testScope
         )
         loopHub.clock = clock
     }
@@ -189,7 +192,7 @@ class LoopHubTest : TestBase() {
     )
 
     @Test
-    fun testIsTemporaryProfileTrue() {
+    fun testIsTemporaryProfileTrue() = runTest {
         val eps = effectiveProfileSwitch(10)
         whenever(persistenceLayer.getEffectiveProfileSwitchActiveAt(clock.millis())).thenReturn(eps)
         assertEquals(true, loopHub.isTemporaryProfile)
@@ -197,7 +200,7 @@ class LoopHubTest : TestBase() {
     }
 
     @Test
-    fun testIsTemporaryProfileFalse() {
+    fun testIsTemporaryProfileFalse() = runTest {
         val eps = effectiveProfileSwitch(0)
         whenever(persistenceLayer.getEffectiveProfileSwitchActiveAt(clock.millis())).thenReturn(eps)
         assertEquals(false, loopHub.isTemporaryProfile)
@@ -242,9 +245,10 @@ class LoopHubTest : TestBase() {
     }
 
     @Test
-    fun testConnectPump() {
-        whenever(persistenceLayer.cancelCurrentRunningMode(clock.millis(), Action.RECONNECT, Sources.Garmin)).thenReturn(Single.just(PersistenceLayer.TransactionResult()))
+    fun testConnectPump() = runTest {
+        whenever(persistenceLayer.cancelCurrentRunningMode(clock.millis(), Action.RECONNECT, Sources.Garmin)).thenReturn(PersistenceLayer.TransactionResult())
         loopHub.connectPump()
+        kotlinx.coroutines.delay(100) // Give time for GlobalScope.launch to complete
         verify(persistenceLayer).cancelCurrentRunningMode(clock.millis(), Action.RECONNECT, Sources.Garmin)
         verify(commandQueue).cancelTempBasal(enforceNew = true, autoForced = false, callback = null)
     }
@@ -262,7 +266,7 @@ class LoopHubTest : TestBase() {
     }
 
     @Test
-    fun testGetGlucoseValues() {
+    fun testGetGlucoseValues() = runTest {
         val glucoseValues = listOf(
             GV(
                 timestamp = 1_000_000L, raw = 90.0, value = 93.0,
@@ -271,7 +275,7 @@ class LoopHubTest : TestBase() {
             )
         )
         whenever(persistenceLayer.getBgReadingsDataFromTime(1001_000, false))
-            .thenReturn(Single.just(glucoseValues))
+            .thenReturn(glucoseValues)
         assertArrayEquals(
             glucoseValues.toTypedArray(),
             loopHub.getGlucoseValues(Instant.ofEpochMilli(1001_000), false).toTypedArray()
@@ -303,7 +307,7 @@ class LoopHubTest : TestBase() {
     }
 
     @Test
-    fun testStoreHeartRate() {
+    fun testStoreHeartRate() = runTest {
         val samplingStart = Instant.ofEpochMilli(1_001_000)
         val samplingEnd = Instant.ofEpochMilli(1_101_000)
         val hr = HR(
@@ -314,11 +318,12 @@ class LoopHubTest : TestBase() {
             device = "Test Device"
         )
         whenever(persistenceLayer.insertOrUpdateHeartRate(hr)).thenReturn(
-            Single.just(PersistenceLayer.TransactionResult())
+            PersistenceLayer.TransactionResult()
         )
         loopHub.storeHeartRate(
             samplingStart, samplingEnd, 101, "Test Device"
         )
+        kotlinx.coroutines.delay(100) // Give time for GlobalScope.launch to complete
         verify(persistenceLayer).insertOrUpdateHeartRate(hr)
     }
 }

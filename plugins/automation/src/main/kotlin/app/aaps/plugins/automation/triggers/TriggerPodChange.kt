@@ -9,14 +9,15 @@ import app.aaps.plugins.automation.elements.LabelWithElement
 import app.aaps.plugins.automation.elements.LayoutBuilder
 import app.aaps.plugins.automation.elements.StaticLabel
 import dagger.android.HasAndroidInjector
+import kotlinx.coroutines.runBlocking
 import org.json.JSONObject
 import java.util.Optional
 
 class TriggerPodChange(injector: HasAndroidInjector) : Trigger(injector) {
 
     override fun shouldRun(): Boolean {
-        val eventLastSettingsExport = persistenceLayer.getLastTherapyRecordUpToNow(TE.Type.SETTINGS_EXPORT)
-        val eventLastPodChange = persistenceLayer.getLastTherapyRecordUpToNow(TE.Type.CANNULA_CHANGE)
+        val eventLastSettingsExport = runBlocking { persistenceLayer.getLastTherapyRecordUpToNow(TE.Type.SETTINGS_EXPORT) }
+        val eventLastPodChange = runBlocking { persistenceLayer.getLastTherapyRecordUpToNow(TE.Type.CANNULA_CHANGE) }
         if (eventLastPodChange == null || eventLastSettingsExport == null) {
             aapsLogger.debug(LTag.AUTOMATION, "NOT ready for execution (no events): " + friendlyDescription())
             return false

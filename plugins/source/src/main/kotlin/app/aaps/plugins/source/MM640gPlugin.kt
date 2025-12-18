@@ -81,9 +81,11 @@ class MM640gPlugin @Inject constructor(
                                 else  -> aapsLogger.debug(LTag.BGSOURCE, "Unknown entries type: $type")
                             }
                         }
-                        persistenceLayer.insertCgmSourceData(Sources.MM640g, glucoseValues, emptyList(), null)
-                            .doOnError { ret = Result.failure(workDataOf("Error" to it.toString())) }
-                            .blockingGet()
+                        try {
+                            persistenceLayer.insertCgmSourceData(Sources.MM640g, glucoseValues, emptyList(), null)
+                        } catch (e: Exception) {
+                            ret = Result.failure(workDataOf("Error" to e.toString()))
+                        }
                     } catch (e: JSONException) {
                         aapsLogger.error("Exception: ", e)
                         ret = Result.failure(workDataOf("Error" to e.toString()))

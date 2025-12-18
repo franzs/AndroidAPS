@@ -1,6 +1,5 @@
 package app.aaps
 
-import android.annotation.SuppressLint
 import android.bluetooth.BluetoothDevice
 import android.content.Intent
 import android.content.IntentFilter
@@ -22,6 +21,7 @@ import app.aaps.core.interfaces.aps.Loop
 import app.aaps.core.interfaces.configuration.Config
 import app.aaps.core.interfaces.configuration.ConfigBuilder
 import app.aaps.core.interfaces.db.PersistenceLayer
+import app.aaps.core.interfaces.di.ApplicationScope
 import app.aaps.core.interfaces.logging.AAPSLogger
 import app.aaps.core.interfaces.logging.LTag
 import app.aaps.core.interfaces.plugin.PluginBase
@@ -77,6 +77,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.json.JSONObject
 import rxdogtag2.RxDogTag
 import java.io.IOException
@@ -109,6 +110,7 @@ class MainApp : DaggerApplication(), ComposeUiProvider {
     @Inject lateinit var loop: Loop
     @Inject lateinit var profileFunction: ProfileFunction
     @Inject lateinit var fabricPrivacy: FabricPrivacy
+    @Inject @ApplicationScope lateinit var appScope: CoroutineScope
     lateinit var appComponent: AppComponent
 
     private var handler = Handler(HandlerThread(this::class.simpleName + "Handler").also { it.start() }.looper)
@@ -168,19 +170,21 @@ class MainApp : DaggerApplication(), ComposeUiProvider {
         handler.postDelayed(
             {
                 // log version
-                disposable += persistenceLayer.insertVersionChangeIfChanged(config.VERSION_NAME, BuildConfig.VERSION_CODE, gitRemote, commitHash).subscribe()
+                appScope.launch { persistenceLayer.insertVersionChangeIfChanged(config.VERSION_NAME, BuildConfig.VERSION_CODE, gitRemote, commitHash) }
                 // log app start
                 if (preferences.get(BooleanKey.NsClientLogAppStart))
-                    disposable += persistenceLayer.insertPumpTherapyEventIfNewByTimestamp(
-                        therapyEvent = TE(
-                            timestamp = dateUtil.now(),
-                            type = TE.Type.NOTE,
-                            note = rh.get().gs(app.aaps.core.ui.R.string.androidaps_start) + " - " + Build.MANUFACTURER + " " + Build.MODEL,
-                            glucoseUnit = GlucoseUnit.MGDL
-                        ),
-                        action = Action.START_AAPS,
-                        source = Sources.Aaps, note = "", listValues = listOf()
-                    ).subscribe()
+                    appScope.launch {
+                        persistenceLayer.insertPumpTherapyEventIfNewByTimestamp(
+                            therapyEvent = TE(
+                                timestamp = dateUtil.now(),
+                                type = TE.Type.NOTE,
+                                note = rh.get().gs(app.aaps.core.ui.R.string.androidaps_start) + " - " + Build.MANUFACTURER + " " + Build.MODEL,
+                                glucoseUnit = GlucoseUnit.MGDL
+                            ),
+                            action = Action.START_AAPS,
+                            source = Sources.Aaps, note = "", listValues = listOf()
+                        )
+                    }
             }, 10000
         )
         KeepAliveWorker.schedule(this@MainApp)
@@ -377,18 +381,19 @@ class MainApp : DaggerApplication(), ComposeUiProvider {
                 "LGS"    -> RM.Mode.CLOSED_LOOP_LGS
                 else     -> RM.Mode.CLOSED_LOOP
             }
-            @SuppressLint("CheckResult")
-            persistenceLayer.insertOrUpdateRunningMode(
-                runningMode = RM(
-                    timestamp = dateUtil.now(),
-                    mode = mode,
-                    autoForced = false,
-                    duration = 0
-                ),
-                action = Action.CLOSED_LOOP_MODE,
-                source = Sources.Aaps,
-                listValues = listOf(ValueWithUnit.SimpleString("Migration"))
-            ).blockingGet()
+            runBlocking {
+                persistenceLayer.insertOrUpdateRunningMode(
+                    runningMode = RM(
+                        timestamp = dateUtil.now(),
+                        mode = mode,
+                        autoForced = false,
+                        duration = 0
+                    ),
+                    action = Action.CLOSED_LOOP_MODE,
+                    source = Sources.Aaps,
+                    listValues = listOf(ValueWithUnit.SimpleString("Migration"))
+                )
+            }
             sp.remove("aps_mode")
         }
     }

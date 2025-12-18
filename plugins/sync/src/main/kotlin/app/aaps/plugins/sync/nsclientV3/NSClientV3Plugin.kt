@@ -95,6 +95,7 @@ import app.aaps.plugins.sync.nsclientV3.workers.LoadStatusWorker
 import app.aaps.plugins.sync.nsclientV3.workers.LoadTreatmentsWorker
 import io.reactivex.rxjava3.disposables.CompositeDisposable
 import io.reactivex.rxjava3.kotlin.plusAssign
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.encodeToJsonElement
 import java.security.InvalidParameterException
@@ -284,7 +285,7 @@ class NSClientV3Plugin @Inject constructor(
         runLoop = Runnable {
             var refreshInterval = T.mins(5).msecs()
             if (nsClientSource.isEnabled())
-                persistenceLayer.getLastGlucoseValue()?.let {
+                runBlocking { persistenceLayer.getLastGlucoseValue() }?.let {
                     // if last value is older than 5 min or there is no bg
                     if (it.timestamp < dateUtil.now() - T.mins(5).plus(T.secs(20)).msecs()) {
                         refreshInterval = T.mins(1).msecs()
@@ -396,7 +397,7 @@ class NSClientV3Plugin @Inject constructor(
         if (isFirstLoad(NsClient.Collection.TREATMENTS)) firstLoadContinueTimestamp.collections.treatments = latestReceived
     }
 
-    override fun resetToFullSync() {
+    override suspend fun resetToFullSync() {
         firstLoadContinueTimestamp = LastModified(LastModified.Collections())
         lastLoadedSrvModified = LastModified(LastModified.Collections())
         initialLoadFinished = false

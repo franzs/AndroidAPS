@@ -23,7 +23,6 @@ import app.aaps.core.interfaces.rx.events.EventEffectiveProfileSwitchChanged
 import app.aaps.core.interfaces.rx.events.EventNewBG
 import app.aaps.core.interfaces.rx.events.EventNewHistoryData
 import app.aaps.core.interfaces.utils.DateUtil
-import app.aaps.database.AppRepository
 import app.aaps.di.TestApplication
 import app.aaps.helpers.RxHelper
 import app.aaps.implementation.profile.ProfileFunctionImpl
@@ -33,6 +32,7 @@ import app.aaps.plugins.aps.loop.events.EventLoopSetLastRunGui
 import app.aaps.plugins.constraints.objectives.ObjectivesPlugin
 import app.aaps.plugins.sync.nsShared.NsIncomingDataProcessor
 import com.google.common.truth.Truth.assertThat
+import kotlinx.coroutines.runBlocking
 import org.json.JSONObject
 import org.junit.After
 import org.junit.Before
@@ -50,7 +50,6 @@ class LoopTest @Inject constructor() {
     @Inject lateinit var rxHelper: RxHelper
     @Inject lateinit var l: L
     @Inject lateinit var config: Config
-    @Inject lateinit var repository: AppRepository
     @Inject lateinit var objectivesPlugin: ObjectivesPlugin
     @Inject lateinit var persistenceLayer: PersistenceLayer
 
@@ -73,21 +72,23 @@ class LoopTest @Inject constructor() {
     }
 
     @Test
-    fun loopTest() {
+    fun loopTest() = runBlocking {
         // Prepare
         persistenceLayer.clearDatabases()
         @SuppressLint("CheckResult")
-        persistenceLayer.insertOrUpdateRunningMode(
-            runningMode = RM(
-                timestamp = dateUtil.now(),
-                mode = RM.Mode.CLOSED_LOOP,
-                autoForced = false,
-                duration = 0
-            ),
-            action = Action.CLOSED_LOOP_MODE,
-            source = Sources.Aaps,
-            listValues = listOf(ValueWithUnit.SimpleString("Migration"))
-        ).blockingGet()
+        runBlocking {
+            persistenceLayer.insertOrUpdateRunningMode(
+                runningMode = RM(
+                    timestamp = dateUtil.now(),
+                    mode = RM.Mode.CLOSED_LOOP,
+                    autoForced = false,
+                    duration = 0
+                ),
+                action = Action.CLOSED_LOOP_MODE,
+                source = Sources.Aaps,
+                listValues = listOf(ValueWithUnit.SimpleString("Migration"))
+            )
+        }
         rxHelper.listen(EventEffectiveProfileSwitchChanged::class.java)
         rxHelper.listen(EventLoopSetLastRunGui::class.java)
         rxHelper.listen(EventResetOpenAPSGui::class.java)
@@ -97,7 +98,6 @@ class LoopTest @Inject constructor() {
         rxHelper.listen(EventAutosensCalculationFinished::class.java)
         rxHelper.listen(EventAPSCalculationFinished::class.java)
         objectivesPlugin.onStart()
-
 
         // Enable event logging
         l.findByName(LTag.EVENTS.name).enabled = true
@@ -134,7 +134,7 @@ class LoopTest @Inject constructor() {
             percentage = 100,
             timeShiftInHours = 0,
             timestamp = dateUtil.now(),
-            action = app.aaps.core.data.ue.Action.PROFILE_SWITCH,
+            action = Action.PROFILE_SWITCH,
             source = Sources.ProfileSwitchDialog,
             note = "Test profile switch",
             listValues = listOf(
@@ -168,7 +168,9 @@ class LoopTest @Inject constructor() {
         glucoseValues += GV(timestamp = now - 2 * 60000, value = 130.0, raw = 0.0, noise = null, trendArrow = TrendArrow.FORTY_FIVE_UP, sourceSensor = SourceSensor.RANDOM)
         glucoseValues += GV(timestamp = now - 1 * 60000, value = 140.0, raw = 0.0, noise = null, trendArrow = TrendArrow.FORTY_FIVE_UP, sourceSensor = SourceSensor.RANDOM)
         glucoseValues += GV(timestamp = now - 0 * 60000, value = 150.0, raw = 0.0, noise = null, trendArrow = TrendArrow.FORTY_FIVE_UP, sourceSensor = SourceSensor.RANDOM)
-        assertThat(persistenceLayer.insertCgmSourceData(Sources.Random, glucoseValues, emptyList(), null).blockingGet().inserted.size).isEqualTo(6)
+        runBlocking {
+            assertThat(persistenceLayer.insertCgmSourceData(Sources.Random, glucoseValues, emptyList(), null).inserted.size).isEqualTo(6)
+        }
 
         // EventNewBG should be triggered
         assertThat(rxHelper.waitFor(EventNewBG::class.java, comment = "step6").first).isTrue()

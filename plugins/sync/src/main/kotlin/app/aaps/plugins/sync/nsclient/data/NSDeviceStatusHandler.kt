@@ -3,6 +3,7 @@ package app.aaps.plugins.sync.nsclient.data
 import app.aaps.core.interfaces.aps.RT
 import app.aaps.core.interfaces.configuration.Config
 import app.aaps.core.interfaces.db.PersistenceLayer
+import app.aaps.core.interfaces.di.ApplicationScope
 import app.aaps.core.interfaces.logging.AAPSLogger
 import app.aaps.core.interfaces.logging.LTag
 import app.aaps.core.interfaces.nsclient.ProcessedDeviceStatusData
@@ -16,7 +17,8 @@ import app.aaps.core.nssdk.localmodel.devicestatus.NSDeviceStatus
 import app.aaps.core.utils.JsonHelper.safeGetString
 import app.aaps.core.utils.JsonHelper.safeGetStringAllowNull
 import io.reactivex.rxjava3.disposables.CompositeDisposable
-import io.reactivex.rxjava3.kotlin.plusAssign
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -83,7 +85,8 @@ class NSDeviceStatusHandler @Inject constructor(
     private val aapsLogger: AAPSLogger,
     private val persistenceLayer: PersistenceLayer,
     private val overviewData: OverviewData,
-    private val calculationWorkflow: CalculationWorkflow
+    private val calculationWorkflow: CalculationWorkflow,
+    @ApplicationScope private val appScope: CoroutineScope
 ) {
 
     private val disposable = CompositeDisposable()
@@ -160,7 +163,7 @@ class NSDeviceStatusHandler @Inject constructor(
                     }
                     processedDeviceStatusData.openAPSData.clockSuggested = clock
                     processedDeviceStatusData.getAPSResult()?.let { apsResult ->
-                        disposable += persistenceLayer.insertOrUpdateApsResult(apsResult).subscribe()
+                        appScope.launch { persistenceLayer.insertOrUpdateApsResult(apsResult) }
                     }
                 }
             }

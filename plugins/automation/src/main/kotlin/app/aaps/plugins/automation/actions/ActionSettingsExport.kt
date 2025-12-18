@@ -7,6 +7,7 @@ import app.aaps.core.data.model.TE
 import app.aaps.core.data.ue.Sources
 import app.aaps.core.interfaces.configuration.Config
 import app.aaps.core.interfaces.db.PersistenceLayer
+import app.aaps.core.interfaces.di.ApplicationScope
 import app.aaps.core.interfaces.logging.LTag
 import app.aaps.core.interfaces.maintenance.ImportExportPrefs
 import app.aaps.core.interfaces.notifications.Notification
@@ -28,7 +29,8 @@ import app.aaps.plugins.automation.elements.LabelWithElement
 import app.aaps.plugins.automation.elements.LayoutBuilder
 import dagger.android.HasAndroidInjector
 import io.reactivex.rxjava3.disposables.CompositeDisposable
-import io.reactivex.rxjava3.kotlin.plusAssign
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import org.json.JSONObject
 import javax.inject.Inject
 
@@ -42,6 +44,7 @@ class ActionSettingsExport(injector: HasAndroidInjector) : Action(injector) {
     @Inject lateinit var importExportPrefs: ImportExportPrefs
     @Inject lateinit var exportPasswordDataStore: ExportPasswordDataStore
     @Inject lateinit var preferences: Preferences
+    @Inject @ApplicationScope lateinit var appScope: CoroutineScope
 
     private val disposable = CompositeDisposable()
     private val text = InputString()
@@ -113,27 +116,31 @@ class ActionSettingsExport(injector: HasAndroidInjector) : Action(injector) {
         // Insert therapy event EXPORT_SETTINGS for automation trigger to uniquely detect.
         val error = "${text.value}: $exportResultMessage"
         aapsLogger.debug(LTag.AUTOMATION, "Insert therapy EXPORT_SETTINGS event, error=:${error}, doAlsoAnnouncement=$announceAlert")
-        disposable += persistenceLayer.insertPumpTherapyEventIfNewByTimestamp(
-            therapyEvent = TE.asSettingsExport(error = error),
-            timestamp = dateUtil.now(),
-            action = app.aaps.core.data.ue.Action.EXPORT_SETTINGS, // Signal export was done to automation!
-            source = Sources.Automation,
-            note = exportResultMessage,
-            listValues = listOf()
-        ).subscribe()
+        appScope.launch {
+            persistenceLayer.insertPumpTherapyEventIfNewByTimestamp(
+                therapyEvent = TE.asSettingsExport(error = error),
+                timestamp = dateUtil.now(),
+                action = app.aaps.core.data.ue.Action.EXPORT_SETTINGS, // Signal export was done to automation!
+                source = Sources.Automation,
+                note = exportResultMessage,
+                listValues = listOf()
+            )
+        }
 
         if (announceAlert && preferences.get(BooleanKey.NsClientCreateAnnouncementsFromErrors) && config.APS) {
             // Do additional event type announcement for aapsClient alerting
             val alert = "${rh.gs(app.aaps.core.ui.R.string.export_alert)}(${text.value}): $exportResultMessage"
             aapsLogger.debug(LTag.AUTOMATION, "Insert therapy ALERT/ANNOUNCEMENT event, error=:${alert}")
-            disposable += persistenceLayer.insertPumpTherapyEventIfNewByTimestamp(
-                therapyEvent = TE.asAnnouncement(error = alert),
-                timestamp = dateUtil.now(),
-                action = app.aaps.core.data.ue.Action.EXPORT_SETTINGS,
-                source = Sources.Automation,
-                note = exportResultMessage,
-                listValues = listOf()
-            ).subscribe()
+            appScope.launch {
+                persistenceLayer.insertPumpTherapyEventIfNewByTimestamp(
+                    therapyEvent = TE.asAnnouncement(error = alert),
+                    timestamp = dateUtil.now(),
+                    action = app.aaps.core.data.ue.Action.EXPORT_SETTINGS,
+                    source = Sources.Automation,
+                    note = exportResultMessage,
+                    listValues = listOf()
+                )
+            }
         }
 
         rxBus.send(EventRefreshOverview("ActionSettingsExport"))

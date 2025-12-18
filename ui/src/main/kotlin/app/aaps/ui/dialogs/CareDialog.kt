@@ -8,6 +8,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.annotation.StringRes
 import androidx.fragment.app.FragmentManager
+import androidx.lifecycle.lifecycleScope
 import app.aaps.core.data.configuration.Constants
 import app.aaps.core.data.model.GlucoseUnit
 import app.aaps.core.data.model.TE
@@ -26,8 +27,7 @@ import app.aaps.core.keys.BooleanKey
 import app.aaps.ui.R
 import app.aaps.ui.databinding.DialogCareBinding
 import com.google.common.base.Joiner
-import io.reactivex.rxjava3.disposables.CompositeDisposable
-import io.reactivex.rxjava3.kotlin.plusAssign
+import kotlinx.coroutines.launch
 import java.text.DecimalFormat
 import java.util.LinkedList
 import javax.inject.Inject
@@ -41,8 +41,6 @@ class CareDialog(val fm: FragmentManager) : DialogFragmentWithDate() {
     @Inject lateinit var glucoseStatusProvider: GlucoseStatusProvider
     @Inject lateinit var profileUtil: ProfileUtil
     @Inject lateinit var uiInteraction: UiInteraction
-
-    private val disposable = CompositeDisposable()
 
     private var options: UiInteraction.EventType = UiInteraction.EventType.BGCHECK
 
@@ -230,13 +228,15 @@ class CareDialog(val fm: FragmentManager) : DialogFragmentWithDate() {
             ok = {
                 valuesWithUnit.add(0, ValueWithUnit.Timestamp(eventTime).takeIf { eventTimeChanged })
                 valuesWithUnit.add(1, ValueWithUnit.TEType(therapyEvent.type))
-                disposable += persistenceLayer.insertPumpTherapyEventIfNewByTimestamp(
-                    therapyEvent = therapyEvent,
-                    action = Action.CAREPORTAL,
-                    source = source,
-                    note = notes,
-                    listValues = valuesWithUnit.filterNotNull()
-                ).subscribe()
+                lifecycleScope.launch {
+                    persistenceLayer.insertPumpTherapyEventIfNewByTimestamp(
+                        therapyEvent = therapyEvent,
+                        action = Action.CAREPORTAL,
+                        source = source,
+                        note = notes,
+                        listValues = valuesWithUnit.filterNotNull()
+                    )
+                }
                 if (therapyEvent.type == TE.Type.SENSOR_CHANGE && preferences.get(BooleanKey.SiteRotationManageCgm)) {
                     SiteRotationDialog().also { srd ->
                         srd.arguments = Bundle().also { args ->

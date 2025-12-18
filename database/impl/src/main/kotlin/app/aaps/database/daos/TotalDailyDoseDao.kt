@@ -40,5 +40,5 @@ internal interface TotalDailyDoseDao : TraceableDao<TotalDailyDose> {
     suspend fun getNewEntriesSince(since: Long, until: Long, limit: Int, offset: Int): List<TotalDailyDose>
 
     @Query("DELETE FROM $TABLE_TOTAL_DAILY_DOSES WHERE timestamp >= :since AND pumpType = :pumpType")
-    fun deleteNewerThan(since: Long, pumpType: InterfaceIDs.PumpType)
+    suspend fun deleteNewerThan(since: Long, pumpType: InterfaceIDs.PumpType)
 }

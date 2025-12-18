@@ -20,6 +20,7 @@ import app.aaps.core.interfaces.utils.DecimalFormatter
 import app.aaps.ui.compose.MealLink
 import app.aaps.ui.viewmodels.TreatmentConstants.TREATMENT_HISTORY_DAYS
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -29,6 +30,7 @@ import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
 
 /**
@@ -117,6 +119,7 @@ class BolusCarbsViewModel @Inject constructor(
      * Subscribe to treatment change events using Flow
      * Observes Bolus, Carbs, and BolusCalculatorResult changes
      */
+    @OptIn(FlowPreview::class)
     private fun observeTreatmentChanges() {
         merge(
             persistenceLayer.observeChanges<BS>(),
@@ -222,34 +225,40 @@ class BolusCarbsViewModel @Inject constructor(
             try {
                 selected.forEach { ml ->
                     ml.bolus?.let { bolus ->
-                        persistenceLayer.invalidateBolus(
-                            bolus.id,
-                            action = Action.BOLUS_REMOVED,
-                            source = Sources.Treatments,
-                            listValues = listOf(
-                                ValueWithUnit.Timestamp(bolus.timestamp),
-                                ValueWithUnit.Insulin(bolus.amount)
+                        runBlocking {
+                            persistenceLayer.invalidateBolus(
+                                bolus.id,
+                                action = Action.BOLUS_REMOVED,
+                                source = Sources.Treatments,
+                                listValues = listOf(
+                                    ValueWithUnit.Timestamp(bolus.timestamp),
+                                    ValueWithUnit.Insulin(bolus.amount)
+                                )
                             )
-                        ).blockingGet()
+                        }
                     }
                     ml.carbs?.let { carb ->
-                        persistenceLayer.invalidateCarbs(
-                            carb.id,
-                            action = Action.CARBS_REMOVED,
-                            source = Sources.Treatments,
-                            listValues = listOf(
-                                ValueWithUnit.Timestamp(carb.timestamp),
-                                ValueWithUnit.Gram(carb.amount.toInt())
+                        runBlocking {
+                            persistenceLayer.invalidateCarbs(
+                                carb.id,
+                                action = Action.CARBS_REMOVED,
+                                source = Sources.Treatments,
+                                listValues = listOf(
+                                    ValueWithUnit.Timestamp(carb.timestamp),
+                                    ValueWithUnit.Gram(carb.amount.toInt())
+                                )
                             )
-                        ).blockingGet()
+                        }
                     }
                     ml.bolusCalculatorResult?.let { bolusCalculatorResult ->
-                        persistenceLayer.invalidateBolusCalculatorResult(
-                            bolusCalculatorResult.id,
-                            action = Action.BOLUS_CALCULATOR_RESULT_REMOVED,
-                            source = Sources.Treatments,
-                            listValues = listOf(ValueWithUnit.Timestamp(bolusCalculatorResult.timestamp))
-                        ).blockingGet()
+                        runBlocking {
+                            persistenceLayer.invalidateBolusCalculatorResult(
+                                bolusCalculatorResult.id,
+                                action = Action.BOLUS_CALCULATOR_RESULT_REMOVED,
+                                source = Sources.Treatments,
+                                listValues = listOf(ValueWithUnit.Timestamp(bolusCalculatorResult.timestamp))
+                            )
+                        }
                     }
                 }
                 exitSelectionMode()

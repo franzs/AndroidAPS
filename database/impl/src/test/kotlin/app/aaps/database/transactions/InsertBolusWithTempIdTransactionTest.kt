@@ -5,6 +5,7 @@ import app.aaps.database.daos.BolusDao
 import app.aaps.database.entities.Bolus
 import app.aaps.database.entities.embedments.InterfaceIDs
 import com.google.common.truth.Truth.assertThat
+import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.never
@@ -12,7 +13,6 @@ import org.mockito.Mockito.verify
 import org.mockito.kotlin.any
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
-import kotlinx.coroutines.runBlocking
 
 class InsertBolusWithTempIdTransactionTest {
 
@@ -27,7 +27,7 @@ class InsertBolusWithTempIdTransactionTest {
     }
 
     @Test
-    fun `inserts new bolus when not found by temp id`() = runBlocking {
+    fun `inserts new bolus when not found by temp id`() = runTest {
         val bolus = createBolus(tempId = 500L, amount = 5.0)
 
         whenever(bolusDao.findByPumpTempIds(500L, InterfaceIDs.PumpType.DANA_I, "ABC123")).thenReturn(null)
@@ -44,7 +44,7 @@ class InsertBolusWithTempIdTransactionTest {
     }
 
     @Test
-    fun `does not insert when bolus already exists by temp id`() = runBlocking {
+    fun `does not insert when bolus already exists by temp id`() = runTest {
         val bolus = createBolus(tempId = 500L, amount = 5.0)
         val existing = createBolus(tempId = 500L, amount = 5.0)
 

@@ -254,7 +254,7 @@ fun StatsScreen(
                                 message = rh.gs(R.string.do_you_want_recalculate_tdd_stats),
                                 ok = {
                                     uel.log(Action.STAT_RESET, Sources.Stats)
-                                    scope.launch(Dispatchers.IO) {
+                                    scope.launch {
                                         persistenceLayer.clearCachedTddData(0)
                                         tddRefreshKey++
                                     }

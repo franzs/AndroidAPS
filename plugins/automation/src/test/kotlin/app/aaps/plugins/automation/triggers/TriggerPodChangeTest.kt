@@ -6,6 +6,7 @@ import app.aaps.core.data.pump.defs.PumpDescription
 import app.aaps.core.data.time.T
 import app.aaps.pump.virtual.VirtualPumpPlugin
 import com.google.common.truth.Truth.assertThat
+import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Test
 import org.mockito.Mock
 import org.mockito.kotlin.whenever
@@ -16,7 +17,7 @@ class TriggerPodChangeTest : TriggerTestBase() {
 
     @Mock lateinit var virtualPumpPlugin: VirtualPumpPlugin
 
-    @Test fun shouldRunTest() {
+    @Test fun shouldRunTest() = runTest {
         // Cannula change is "now"
         val cannulaChangeEvent = TE(glucoseUnit = GlucoseUnit.MGDL, timestamp = now, type = TE.Type.CANNULA_CHANGE)
         // Test settings export was 1 minute before or after Cannula change
@@ -34,7 +35,7 @@ class TriggerPodChangeTest : TriggerTestBase() {
         assertThat(t.shouldRun()).isFalse()
     }
 
-    @Test fun shouldRunNotAvailable() {
+    @Test fun shouldRunNotAvailable() = runTest {
         val t = TriggerPodChange(injector)
         // No cannula change and no export events
         whenever(persistenceLayer.getLastTherapyRecordUpToNow(TE.Type.CANNULA_CHANGE)).thenReturn(null)

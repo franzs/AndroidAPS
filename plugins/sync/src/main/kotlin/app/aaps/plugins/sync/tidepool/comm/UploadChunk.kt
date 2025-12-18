@@ -42,7 +42,7 @@ class UploadChunk @Inject constructor(
 
     private val maxUploadSize = T.days(7).msecs() // don't change this
 
-    fun getNext(session: Session?): String? {
+    suspend fun getNext(session: Session?): String? {
         session ?: return null
 
         session.start = getLastEnd()
@@ -57,7 +57,7 @@ class UploadChunk @Inject constructor(
         return result
     }
 
-    fun get(start: Long, end: Long): String {
+    suspend fun get(start: Long, end: Long): String {
 
         aapsLogger.debug(LTag.TIDEPOOL, "Syncing data between: " + dateUtil.dateAndTimeString(start) + " -> " + dateUtil.dateAndTimeString(end))
         if (end <= start) {
@@ -96,7 +96,7 @@ class UploadChunk @Inject constructor(
         }
     }
 
-    private fun getTreatments(start: Long, end: Long): List<BaseElement> {
+    private suspend fun getTreatments(start: Long, end: Long): List<BaseElement> {
         val result = LinkedList<BaseElement>()
         persistenceLayer.getBolusesFromTimeToTime(start, end, true)
             .forEach { bolus ->
@@ -110,8 +110,8 @@ class UploadChunk @Inject constructor(
         return result
     }
 
-    private fun getBloodTests(start: Long, end: Long): List<BloodGlucoseElement> {
-        val readings = persistenceLayer.getTherapyEventDataFromToTime(start, end).blockingGet()
+    private suspend fun getBloodTests(start: Long, end: Long): List<BloodGlucoseElement> {
+        val readings = persistenceLayer.getTherapyEventDataFromToTime(start, end)
         val selection = BloodGlucoseElement.fromCareportalEvents(readings, dateUtil, profileUtil)
         if (selection.isNotEmpty())
             rxBus.send(EventTidepoolStatus("${selection.size} BGs selected for upload"))
@@ -119,7 +119,7 @@ class UploadChunk @Inject constructor(
 
     }
 
-    private fun getBgReadings(start: Long, end: Long): List<SensorGlucoseElement> {
+    private suspend fun getBgReadings(start: Long, end: Long): List<SensorGlucoseElement> {
         val readings = persistenceLayer.getBgReadingsDataFromTimeToTime(start, end, true)
         val selection = SensorGlucoseElement.fromBgReadings(readings, dateUtil)
         if (selection.isNotEmpty())
@@ -138,7 +138,7 @@ class UploadChunk @Inject constructor(
         return results
     }
 
-    private fun getBasals(start: Long, end: Long): List<BasalElement> {
+    private suspend fun getBasals(start: Long, end: Long): List<BasalElement> {
         val temporaryBasals = persistenceLayer.getTemporaryBasalsStartingFromTimeToTime(start, end, true)
         val selection = fromTemporaryBasals(temporaryBasals, start, end)
         if (selection.isNotEmpty())
@@ -152,7 +152,7 @@ class UploadChunk @Inject constructor(
         null
     }
 
-    private fun getProfiles(start: Long, end: Long): List<ProfileElement> {
+    private suspend fun getProfiles(start: Long, end: Long): List<ProfileElement> {
         val pss = persistenceLayer.getEffectiveProfileSwitchesFromTimeToTime(start, end, true)
         val selection = LinkedList<ProfileElement>()
         for (ps in pss) {

@@ -49,6 +49,7 @@ import app.aaps.plugins.main.skins.SkinProvider
 import dagger.android.support.DaggerFragment
 import io.reactivex.rxjava3.disposables.CompositeDisposable
 import io.reactivex.rxjava3.kotlin.plusAssign
+import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
 
 class ActionsFragment : DaggerFragment() {
@@ -123,7 +124,7 @@ class ActionsFragment : DaggerFragment() {
             })
         }
         binding.extendedBolusCancel.setOnClickListener {
-            if (persistenceLayer.getExtendedBolusActiveAt(dateUtil.now()) != null) {
+            if (runBlocking { persistenceLayer.getExtendedBolusActiveAt(dateUtil.now()) } != null) {
                 uel.log(Action.CANCEL_EXTENDED_BOLUS, Sources.Actions)
                 commandQueue.cancelExtended(object : Callback() {
                     override fun run() {
@@ -243,7 +244,7 @@ class ActionsFragment : DaggerFragment() {
             binding.extendedBolus.visibility = View.GONE
             binding.extendedBolusCancel.visibility = View.GONE
         } else {
-            val activeExtendedBolus = persistenceLayer.getExtendedBolusActiveAt(dateUtil.now())
+            val activeExtendedBolus = runBlocking { persistenceLayer.getExtendedBolusActiveAt(dateUtil.now()) }
             if (activeExtendedBolus != null) {
                 binding.extendedBolus.visibility = View.GONE
                 binding.extendedBolusCancel.visibility = View.VISIBLE

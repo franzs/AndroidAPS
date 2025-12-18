@@ -6,6 +6,7 @@ import app.aaps.database.entities.TherapyEvent
 import app.aaps.database.entities.data.GlucoseUnit
 import app.aaps.database.entities.embedments.InterfaceIDs
 import com.google.common.truth.Truth.assertThat
+import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.never
@@ -13,7 +14,6 @@ import org.mockito.Mockito.verify
 import org.mockito.kotlin.any
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
-import kotlinx.coroutines.runBlocking
 
 class InsertIfNewByTimestampTherapyEventTransactionTest {
 
@@ -28,7 +28,7 @@ class InsertIfNewByTimestampTherapyEventTransactionTest {
     }
 
     @Test
-    fun `inserts new therapy event when not found by timestamp and type`() = runBlocking {
+    fun `inserts new therapy event when not found by timestamp and type`() = runTest {
         val therapyEvent = createTherapyEvent(timestamp = 1000L, type = TherapyEvent.Type.NOTE)
 
         whenever(therapyEventDao.findByTimestamp(TherapyEvent.Type.NOTE, 1000L)).thenReturn(null)
@@ -44,7 +44,7 @@ class InsertIfNewByTimestampTherapyEventTransactionTest {
     }
 
     @Test
-    fun `does not insert when therapy event exists by timestamp and type`() = runBlocking {
+    fun `does not insert when therapy event exists by timestamp and type`() = runTest {
         val therapyEvent = createTherapyEvent(timestamp = 1000L, type = TherapyEvent.Type.NOTE)
         val existing = createTherapyEvent(timestamp = 1000L, type = TherapyEvent.Type.NOTE)
 

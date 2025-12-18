@@ -21,6 +21,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -46,6 +47,7 @@ import app.aaps.core.ui.compose.icons.Ns
 import app.aaps.ui.R
 import app.aaps.ui.compose.components.ErrorSnackbar
 import app.aaps.ui.viewmodels.CareportalViewModel
+import kotlinx.coroutines.launch
 
 /**
  * Composable screen displaying therapy events (careportal entries) with delete and show hidden functionality.
@@ -71,6 +73,7 @@ fun CareportalScreen(
 ) {
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val scope = rememberCoroutineScope()
 
     // Update toolbar configuration whenever state changes
     LaunchedEffect(uiState.isRemovingMode, uiState.selectedItems.size, uiState.showInvalidated) {
@@ -97,12 +100,14 @@ fun CareportalScreen(
                                 title = viewModel.rh.gs(app.aaps.core.ui.R.string.careportal),
                                 message = viewModel.rh.gs(R.string.careportal_remove_started_events),
                                 ok = {
-                                    persistenceLayer.invalidateTherapyEventsWithNote(
-                                        viewModel.rh.gs(app.aaps.core.ui.R.string.androidaps_start),
-                                        Action.RESTART_EVENTS_REMOVED,
-                                        Sources.Treatments
-                                    ).subscribe()
-                                    viewModel.loadData()
+                                    scope.launch {
+                                        persistenceLayer.invalidateTherapyEventsWithNote(
+                                            viewModel.rh.gs(app.aaps.core.ui.R.string.androidaps_start),
+                                            Action.RESTART_EVENTS_REMOVED,
+                                            Sources.Treatments
+                                        )
+                                        viewModel.loadData()
+                                    }
                                 }
                             )
                         }

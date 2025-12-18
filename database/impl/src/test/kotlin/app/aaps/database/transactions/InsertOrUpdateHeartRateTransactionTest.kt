@@ -4,6 +4,7 @@ import app.aaps.database.DelegatedAppDatabase
 import app.aaps.database.daos.HeartRateDao
 import app.aaps.database.entities.HeartRate
 import com.google.common.truth.Truth.assertThat
+import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.never
@@ -11,7 +12,6 @@ import org.mockito.Mockito.verify
 import org.mockito.kotlin.any
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
-import kotlinx.coroutines.runBlocking
 
 class InsertOrUpdateHeartRateTransactionTest {
 
@@ -26,7 +26,7 @@ class InsertOrUpdateHeartRateTransactionTest {
     }
 
     @Test
-    fun `inserts new heart rate when id is 0`() = runBlocking {
+    fun `inserts new heart rate when id is 0`() = runTest {
         val heartRate = createHeartRate(id = 0, beatsPerMinute = 75.0)
 
         val transaction = InsertOrUpdateHeartRateTransaction(heartRate)
@@ -42,7 +42,7 @@ class InsertOrUpdateHeartRateTransactionTest {
     }
 
     @Test
-    fun `inserts new heart rate when id not found`() = runBlocking {
+    fun `inserts new heart rate when id not found`() = runTest {
         val heartRate = createHeartRate(id = 1, beatsPerMinute = 75.0)
 
         whenever(heartRateDao.findById(1)).thenReturn(null)
@@ -60,7 +60,7 @@ class InsertOrUpdateHeartRateTransactionTest {
     }
 
     @Test
-    fun `updates existing heart rate when id found`() = runBlocking {
+    fun `updates existing heart rate when id found`() = runTest {
         val heartRate = createHeartRate(id = 1, beatsPerMinute = 85.0)
         val existing = createHeartRate(id = 1, beatsPerMinute = 75.0)
 
@@ -79,7 +79,7 @@ class InsertOrUpdateHeartRateTransactionTest {
     }
 
     @Test
-    fun `updates heart rate value`() = runBlocking {
+    fun `updates heart rate value`() = runTest {
         val existing = createHeartRate(id = 1, beatsPerMinute = 70.0)
         val updated = createHeartRate(id = 1, beatsPerMinute = 90.0)
 

@@ -18,6 +18,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
@@ -85,7 +86,7 @@ class StatusLightHandler @Inject constructor(
             // Depending on the user's configuration, we will either show the battery level reported by the RileyLink or "n/a"
             // Pump instance check is needed because at startup, the pump can still be VirtualPumpPlugin and that will cause a crash
             val erosBatteryLinkAvailable = pump.model() == PumpType.OMNIPOD_EROS && pump.isUseRileyLinkBatteryLevel()
-            val batteryLevelValue  = pump.batteryLevel?.toDouble()
+            val batteryLevelValue = pump.batteryLevel?.toDouble()
             if (batteryLevelValue != null && (pump.model().supportBatteryLevel || erosBatteryLinkAvailable)) {
                 handleLevel(batteryLevel, IntKey.OverviewBattCritical, IntKey.OverviewBattWarning, batteryLevelValue, "%")
             } else {
@@ -98,7 +99,7 @@ class StatusLightHandler @Inject constructor(
     private fun handleAge(view: TextView?, type: TE.Type, warnSettings: IntKey, urgentSettings: IntKey) {
         val warn = preferences.get(warnSettings)
         val urgent = preferences.get(urgentSettings)
-        val therapyEvent = persistenceLayer.getLastTherapyRecordUpToNow(type)
+        val therapyEvent = runBlocking { persistenceLayer.getLastTherapyRecordUpToNow(type) }
         if (therapyEvent != null) {
             warnColors.setColorByAge(view, therapyEvent, warn, urgent)
             view?.text = therapyEvent.age(rh.shortTextMode(), rh, dateUtil)

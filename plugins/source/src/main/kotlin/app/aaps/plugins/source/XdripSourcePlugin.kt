@@ -124,20 +124,25 @@ class XdripSourcePlugin @Inject constructor(
                     aapsLogger.debug(LTag.BGSOURCE, "Sensor start time is within 5 minutes range, skipping update.")
                     null
                 }
+
                 lastStoredSensorStartTime != null && newSensorStartTime != null &&
-                    newSensorStartTime < lastStoredSensorStartTime -> {
+                    newSensorStartTime < lastStoredSensorStartTime                 -> {
                     aapsLogger.debug(LTag.BGSOURCE, "Sensor start time is older than last stored time, skipping update.")
                     null
                 }
-                else -> newSensorStartTime
+
+                else                                                               -> newSensorStartTime
             }
             // Always update glucoseValues, but use the decided sensorStartTime
-            if (glucoseValues[0].timestamp > 0 && glucoseValues[0].value > 0.0)
-                persistenceLayer.insertCgmSourceData(Sources.Xdrip, glucoseValues, emptyList(), finalSensorStartTime)
-                    .doOnError { ret = Result.failure(workDataOf("Error" to it.toString())) }
-                    .blockingGet()
-                    .also { savedValues -> savedValues.all().forEach { xdripSourcePlugin.detectSource(it) } }
-            else return Result.failure(workDataOf("Error" to "missing glucoseValue"))
+            if (glucoseValues[0].timestamp > 0 && glucoseValues[0].value > 0.0) {
+                val savedValues = try {
+                    persistenceLayer.insertCgmSourceData(Sources.Xdrip, glucoseValues, emptyList(), finalSensorStartTime)
+                } catch (e: Exception) {
+                    ret = Result.failure(workDataOf("Error" to e.toString()))
+                    null
+                }
+                savedValues?.all()?.forEach { xdripSourcePlugin.detectSource(it) }
+            } else return Result.failure(workDataOf("Error" to "missing glucoseValue"))
             xdripSourcePlugin.sensorBatteryLevel = bundle.getInt(Intents.EXTRA_SENSOR_BATTERY, -1)
             return ret
         }

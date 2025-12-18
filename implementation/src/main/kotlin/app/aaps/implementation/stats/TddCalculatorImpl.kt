@@ -7,6 +7,7 @@ import app.aaps.core.data.model.TDD
 import app.aaps.core.data.pump.defs.PumpType
 import app.aaps.core.data.time.T
 import app.aaps.core.interfaces.db.PersistenceLayer
+import app.aaps.core.interfaces.di.ApplicationScope
 import app.aaps.core.interfaces.iob.IobCobCalculator
 import app.aaps.core.interfaces.logging.AAPSLogger
 import app.aaps.core.interfaces.logging.LTag
@@ -16,6 +17,9 @@ import app.aaps.core.interfaces.stats.TddCalculator
 import app.aaps.core.interfaces.utils.DateUtil
 import app.aaps.core.interfaces.utils.MidnightTime
 import dagger.Reusable
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import java.time.Instant
 import java.time.ZoneId
 import javax.inject.Inject
@@ -69,7 +73,8 @@ class TddCalculatorImpl @Inject constructor(
     private val profileFunction: ProfileFunction,
     private val dateUtil: DateUtil,
     private val iobCobCalculator: IobCobCalculator,
-    private val persistenceLayer: PersistenceLayer
+    private val persistenceLayer: PersistenceLayer,
+    @ApplicationScope private val appScope: CoroutineScope
 ) : TddCalculator {
 
     override fun calculate(days: Long, allowMissingDays: Boolean): LongSparseArray<TDD>? =
@@ -87,7 +92,7 @@ class TddCalculatorImpl @Inject constructor(
         // Try to load cached values
         while (startTime < endTime) {
             aapsLogger.debug(LTag.APS, "Looking for cached TotalDailyDose for ${dateUtil.dateString(startTime)}")
-            persistenceLayer.getCalculatedTotalDailyDose(startTime)?.let {
+            runBlocking { persistenceLayer.getCalculatedTotalDailyDose(startTime) }?.let {
                 result.put(startTime, it)
                 aapsLogger.debug(LTag.APS, "Loaded cached TotalDailyDose for ${dateUtil.dateString(it.timestamp)} $it")
             } ?: break
@@ -107,7 +112,7 @@ class TddCalculatorImpl @Inject constructor(
             val tdd = result.valueAt(i)
             if (tdd.ids.pumpType != PumpType.CACHE) {
                 tdd.ids.pumpType = PumpType.CACHE
-                persistenceLayer.insertOrUpdateCachedTotalDailyDose(tdd).subscribe()
+                appScope.launch { persistenceLayer.insertOrUpdateCachedTotalDailyDose(tdd) }
             } else {
                 aapsLogger.debug(LTag.APS, "Skipping storing TotalDailyDose for ${dateUtil.dateString(tdd.timestamp)}")
             }
@@ -138,12 +143,12 @@ class TddCalculatorImpl @Inject constructor(
         val endTimeAligned = endTime - endTime % (5 * 60 * 1000)
         val tdd = TDD(timestamp = startTimeAligned)
         var tbrFound = false
-        persistenceLayer.getBolusesFromTimeToTime(startTime, endTime, true)
+        runBlocking { persistenceLayer.getBolusesFromTimeToTime(startTime, endTime, true) }
             .filter { it.type != BS.Type.PRIMING }
             .forEach { t ->
                 tdd.bolusAmount += t.amount
             }
-        persistenceLayer.getCarbsFromTimeToTimeExpanded(startTime, endTime, true).forEach { t ->
+        runBlocking { persistenceLayer.getCarbsFromTimeToTimeExpanded(startTime, endTime, true) }.forEach { t ->
             tdd.carbs += t.amount
         }
         val calculationStep = T.mins(5).msecs()
@@ -156,7 +161,7 @@ class TddCalculatorImpl @Inject constructor(
             tdd.basalAmount += absoluteRate / 60.0 * 5.0
 
             if (!activePlugin.activePump.isFakingTempsByExtendedBoluses) {
-                val eb = persistenceLayer.getExtendedBolusActiveAt(t)
+                val eb = runBlocking { persistenceLayer.getExtendedBolusActiveAt(t) }
                 val absoluteEbRate = eb?.rate ?: 0.0
                 tdd.bolusAmount += absoluteEbRate / 60.0 * 5.0
             }

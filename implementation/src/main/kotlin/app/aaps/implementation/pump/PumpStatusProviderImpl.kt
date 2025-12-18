@@ -12,6 +12,7 @@ import app.aaps.core.interfaces.utils.DecimalFormatter
 import app.aaps.core.interfaces.utils.Translator
 import app.aaps.core.objects.extensions.putIfThereIsValue
 import app.aaps.implementation.R
+import kotlinx.coroutines.runBlocking
 import org.json.JSONObject
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -81,7 +82,7 @@ class PumpStatusProviderImpl @Inject constructor(
         val profile = profileFunction.getProfile() ?: return JSONObject()
         val expectedPumpState = pumpSync.expectedPumpState()
         val now = System.currentTimeMillis()
-        val runningMode = persistenceLayer.getRunningModeActiveAt(now)
+        val runningMode = runBlocking { persistenceLayer.getRunningModeActiveAt(now) }
 
         val pumpJson = JSONObject()
             .put("reservoir", pump.reservoirLevel.toInt())

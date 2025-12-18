@@ -5,6 +5,7 @@ import app.aaps.database.daos.BolusDao
 import app.aaps.database.entities.Bolus
 import app.aaps.database.entities.embedments.InterfaceIDs
 import com.google.common.truth.Truth.assertThat
+import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.never
@@ -12,7 +13,6 @@ import org.mockito.Mockito.verify
 import org.mockito.kotlin.any
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
-import kotlinx.coroutines.runBlocking
 
 class SyncPumpBolusTransactionTest {
 
@@ -27,7 +27,7 @@ class SyncPumpBolusTransactionTest {
     }
 
     @Test
-    fun `inserts new bolus when not found by pump ids`() = runBlocking {
+    fun `inserts new bolus when not found by pump ids`() = runTest {
         val bolus = createBolus(pumpId = 100L, pumpType = InterfaceIDs.PumpType.DANA_I, pumpSerial = "ABC123", amount = 5.0)
 
         whenever(bolusDao.findByPumpIds(100L, InterfaceIDs.PumpType.DANA_I, "ABC123")).thenReturn(null)
@@ -43,7 +43,7 @@ class SyncPumpBolusTransactionTest {
     }
 
     @Test
-    fun `updates existing bolus when found by pump ids`() = runBlocking {
+    fun `updates existing bolus when found by pump ids`() = runTest {
         val bolus = createBolus(pumpId = 100L, pumpType = InterfaceIDs.PumpType.DANA_I, pumpSerial = "ABC123", amount = 7.0, timestamp = 2000L)
         val existing = createBolus(pumpId = 100L, pumpType = InterfaceIDs.PumpType.DANA_I, pumpSerial = "ABC123", amount = 5.0, timestamp = 1000L)
 
@@ -63,7 +63,7 @@ class SyncPumpBolusTransactionTest {
     }
 
     @Test
-    fun `does not update when values are same`() = runBlocking {
+    fun `does not update when values are same`() = runTest {
         val bolus = createBolus(pumpId = 100L, pumpType = InterfaceIDs.PumpType.DANA_I, pumpSerial = "ABC123", amount = 5.0, timestamp = 1000L)
         val existing = createBolus(pumpId = 100L, pumpType = InterfaceIDs.PumpType.DANA_I, pumpSerial = "ABC123", amount = 5.0, timestamp = 1000L)
 
@@ -80,7 +80,7 @@ class SyncPumpBolusTransactionTest {
     }
 
     @Test
-    fun `updates bolus type when provided`() = runBlocking {
+    fun `updates bolus type when provided`() = runTest {
         val bolus = createBolus(pumpId = 100L, pumpType = InterfaceIDs.PumpType.DANA_I, pumpSerial = "ABC123", amount = 5.0, type = Bolus.Type.NORMAL)
         val existing = createBolus(pumpId = 100L, pumpType = InterfaceIDs.PumpType.DANA_I, pumpSerial = "ABC123", amount = 5.0, type = Bolus.Type.NORMAL)
 

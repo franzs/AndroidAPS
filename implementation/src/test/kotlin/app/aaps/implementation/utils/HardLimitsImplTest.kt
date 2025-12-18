@@ -10,7 +10,9 @@ import app.aaps.core.keys.StringKey
 import app.aaps.core.keys.interfaces.Preferences
 import app.aaps.shared.tests.TestBase
 import com.google.common.truth.Truth.assertThat
-import io.reactivex.rxjava3.core.Single
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.Mock
@@ -27,13 +29,16 @@ class HardLimitsImplTest : TestBase() {
     @Mock lateinit var persistenceLayer: PersistenceLayer
     @Mock lateinit var dateUtil: DateUtil
 
+    private val testScope = CoroutineScope(Dispatchers.Unconfined)
     private lateinit var hardLimits: HardLimitsImpl
 
     @BeforeEach
     fun setup() {
-        hardLimits = HardLimitsImpl(aapsLogger, uiInteraction, preferences, rh, context, persistenceLayer, dateUtil)
+        hardLimits = HardLimitsImpl(aapsLogger, uiInteraction, preferences, rh, context, persistenceLayer, dateUtil, testScope)
         whenever(dateUtil.now()).thenReturn(1000L)
-        whenever(persistenceLayer.insertPumpTherapyEventIfNewByTimestamp(any(), any(), any(), any(), any(), any())).thenReturn(Single.just(PersistenceLayer.TransactionResult()))
+        runTest {
+            whenever(persistenceLayer.insertPumpTherapyEventIfNewByTimestamp(any(), any(), any(), any(), any(), any())).thenReturn(PersistenceLayer.TransactionResult())
+        }
         whenever(rh.gs(any())).thenReturn("")
         whenever(rh.gs(any(), any())).thenReturn("")
     }
@@ -215,7 +220,9 @@ class HardLimitsImplTest : TestBase() {
         hardLimits.verifyHardLimits(15.0, app.aaps.core.ui.R.string.bolus, 0.0, 10.0)
 
         verify(uiInteraction).showToastAndNotification(any(), any(), any())
-        verify(persistenceLayer).insertPumpTherapyEventIfNewByTimestamp(any(), any(), any(), any(), any(), any())
+        runTest {
+            verify(persistenceLayer).insertPumpTherapyEventIfNewByTimestamp(any(), any(), any(), any(), any(), any())
+        }
     }
 
     @Test

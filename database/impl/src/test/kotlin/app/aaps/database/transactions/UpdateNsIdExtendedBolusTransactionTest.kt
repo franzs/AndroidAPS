@@ -5,6 +5,7 @@ import app.aaps.database.daos.ExtendedBolusDao
 import app.aaps.database.entities.ExtendedBolus
 import app.aaps.database.entities.embedments.InterfaceIDs
 import com.google.common.truth.Truth.assertThat
+import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.never
@@ -12,7 +13,6 @@ import org.mockito.Mockito.verify
 import org.mockito.kotlin.any
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
-import kotlinx.coroutines.runBlocking
 
 class UpdateNsIdExtendedBolusTransactionTest {
 
@@ -27,7 +27,7 @@ class UpdateNsIdExtendedBolusTransactionTest {
     }
 
     @Test
-    fun `updates NS ID when different`() = runBlocking {
+    fun `updates NS ID when different`() = runTest {
         val newNsId = "new-ns-123"
         val current = createExtendedBolus(id = 1, nsId = "old-ns")
         val update = createExtendedBolus(id = 1, nsId = newNsId)
@@ -45,7 +45,7 @@ class UpdateNsIdExtendedBolusTransactionTest {
     }
 
     @Test
-    fun `does not update when NS ID is same`() = runBlocking {
+    fun `does not update when NS ID is same`() = runTest {
         val sameNsId = "same-ns"
         val current = createExtendedBolus(id = 1, nsId = sameNsId)
         val update = createExtendedBolus(id = 1, nsId = sameNsId)
@@ -62,7 +62,7 @@ class UpdateNsIdExtendedBolusTransactionTest {
     }
 
     @Test
-    fun `skips when extended bolus not found`() = runBlocking {
+    fun `skips when extended bolus not found`() = runTest {
         val update = createExtendedBolus(id = 999, nsId = "new-ns")
 
         whenever(extendedBolusDao.findById(999)).thenReturn(null)

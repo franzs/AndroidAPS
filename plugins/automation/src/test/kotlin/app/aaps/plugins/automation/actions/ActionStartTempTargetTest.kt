@@ -9,7 +9,7 @@ import app.aaps.plugins.automation.R
 import app.aaps.plugins.automation.elements.InputDuration
 import app.aaps.plugins.automation.elements.InputTempTarget
 import com.google.common.truth.Truth.assertThat
-import io.reactivex.rxjava3.core.Single
+import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.anyOrNull
@@ -69,22 +69,26 @@ class ActionStartTempTargetTest : ActionsTestBase() {
         val updated = mutableListOf<TT>().apply {
         }
 
-        whenever(
-            persistenceLayer.insertAndCancelCurrentTemporaryTarget(argThat {
-                copy(timestamp = expectedTarget.timestamp, utcOffset = expectedTarget.utcOffset) // those can be different
-                    .contentEqualsTo(expectedTarget)
-            }, anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull())
-        ).thenReturn(Single.just(PersistenceLayer.TransactionResult<TT>().apply {
-            inserted.addAll(inserted)
-            updated.addAll(updated)
-        }))
+        runTest {
+            whenever(
+                persistenceLayer.insertAndCancelCurrentTemporaryTarget(argThat {
+                    copy(timestamp = expectedTarget.timestamp, utcOffset = expectedTarget.utcOffset) // those can be different
+                        .contentEqualsTo(expectedTarget)
+                }, anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull())
+            ).thenReturn(PersistenceLayer.TransactionResult<TT>().apply {
+                inserted.addAll(inserted)
+                updated.addAll(updated)
+            })
+        }
 
         sut.doAction(object : Callback() {
             override fun run() {
                 assertThat(result.success).isTrue()
             }
         })
-        verify(persistenceLayer, times(1)).insertAndCancelCurrentTemporaryTarget(anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull())
+        runTest {
+            verify(persistenceLayer, times(1)).insertAndCancelCurrentTemporaryTarget(anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull())
+        }
     }
 
     @Test fun hasDialogTest() {

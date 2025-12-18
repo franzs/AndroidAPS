@@ -13,6 +13,7 @@ import androidx.core.util.forEach
 import androidx.core.util.size
 import androidx.core.view.MenuProvider
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.ListAdapter
@@ -23,6 +24,7 @@ import app.aaps.core.data.ue.Action
 import app.aaps.core.data.ue.Sources
 import app.aaps.core.data.ue.ValueWithUnit
 import app.aaps.core.interfaces.db.PersistenceLayer
+import app.aaps.core.interfaces.logging.AAPSLogger
 import app.aaps.core.interfaces.profile.ProfileFunction
 import app.aaps.core.interfaces.profile.ProfileUtil
 import app.aaps.core.interfaces.resources.ResourceHelper
@@ -41,11 +43,13 @@ import app.aaps.plugins.source.databinding.SourceItemBinding
 import dagger.android.support.DaggerFragment
 import io.reactivex.rxjava3.disposables.CompositeDisposable
 import io.reactivex.rxjava3.kotlin.plusAssign
+import kotlinx.coroutines.launch
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 class BGSourceFragment : DaggerFragment(), MenuProvider {
 
+    @Inject lateinit var aapsLogger: AAPSLogger
     @Inject lateinit var rxBus: RxBus
     @Inject lateinit var fabricPrivacy: FabricPrivacy
     @Inject lateinit var rh: ResourceHelper
@@ -107,10 +111,14 @@ class BGSourceFragment : DaggerFragment(), MenuProvider {
 
     private fun load(withScroll: Boolean) {
         val now = System.currentTimeMillis()
-        disposable += persistenceLayer
-            .getBgReadingsDataFromTime(now - millsToThePast, false)
-            .observeOn(aapsSchedulers.main)
-            .subscribe { list -> adapter?.submitList(list.map { it.withLabel() }) { if (withScroll) binding.recyclerview.scrollToPosition(0) } }
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                val list = persistenceLayer.getBgReadingsDataFromTime(now - millsToThePast, false)
+                adapter?.submitList(list.map { it.withLabel() }) { if (withScroll) binding.recyclerview.scrollToPosition(0) }
+            } catch (e: Exception) {
+                aapsLogger.error("Error loadind data", e)
+            }
+        }
     }
 
     override fun onResume() {
@@ -222,11 +230,13 @@ class BGSourceFragment : DaggerFragment(), MenuProvider {
     private fun removeSelected(selectedItems: SparseArray<GV>) {
         uiInteraction.showOkCancelDialog(context = requireActivity(), title = rh.gs(app.aaps.core.ui.R.string.removerecord), message = getConfirmationText(selectedItems), ok = {
             selectedItems.forEach { _, glucoseValue ->
-                disposable += persistenceLayer.invalidateGlucoseValue(
-                    glucoseValue.id, action = Action.BG_REMOVED,
-                    source = Sources.BgFragment, note = null,
-                    listValues = listOf(ValueWithUnit.Timestamp(glucoseValue.timestamp))
-                ).subscribe()
+                lifecycleScope.launch {
+                    persistenceLayer.invalidateGlucoseValue(
+                        glucoseValue.id, action = Action.BG_REMOVED,
+                        source = Sources.BgFragment, note = null,
+                        listValues = listOf(ValueWithUnit.Timestamp(glucoseValue.timestamp))
+                    )
+                }
             }
             actionHelper.finish()
         })

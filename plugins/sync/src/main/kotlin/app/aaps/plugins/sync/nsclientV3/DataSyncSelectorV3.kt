@@ -76,7 +76,6 @@ class DataSyncSelectorV3 @Inject constructor(
 
     override fun queueSize(): Long = queueCounter.size()
 
-
     val bgUploadEnabled @OpenForTesting get() = preferences.get(BooleanKey.BgSourceUploadToNs) && activePlugin.activeBgSource !is NSClientSource
 
     override suspend fun doUpload() {
@@ -118,7 +117,7 @@ class DataSyncSelectorV3 @Inject constructor(
         nsClientMvvmRepository.updateStatus(nsClientV3Plugin.get().status)
     }
 
-    override fun resetToNextFullSync() {
+    override suspend fun resetToNextFullSync() {
         preferences.remove(NsclientLongKey.GlucoseValueLastSyncedId)
         preferences.remove(NsclientLongKey.TemporaryBasalLastSyncedId)
         preferences.remove(NsclientLongKey.TemporaryTargetLastSyncedId)
@@ -159,7 +158,7 @@ class DataSyncSelectorV3 @Inject constructor(
             }
             queueCounter.bolusesRemaining = lastDbId - startId
             nsClientMvvmRepository.updateQueueSize(queueCounter.size())
-            persistenceLayer.getNextSyncElementBolus(startId).blockingGet()?.let { bolus ->
+            persistenceLayer.getNextSyncElementBolus(startId)?.let { bolus ->
                 when {
                     // new record with existing NS id => must be coming from NS => ignore
                     bolus.first.id == bolus.second.id && bolus.first.ids.nightscoutId != null ->
@@ -202,7 +201,7 @@ class DataSyncSelectorV3 @Inject constructor(
             }
             queueCounter.carbsRemaining = lastDbId - startId
             nsClientMvvmRepository.updateQueueSize(queueCounter.size())
-            persistenceLayer.getNextSyncElementCarbs(startId).blockingGet()?.let { carb ->
+            persistenceLayer.getNextSyncElementCarbs(startId)?.let { carb ->
                 when {
                     // new record with existing NS id => must be coming from NS => ignore
                     carb.first.id == carb.second.id && carb.first.ids.nightscoutId != null ->
@@ -245,7 +244,7 @@ class DataSyncSelectorV3 @Inject constructor(
             }
             queueCounter.bcrRemaining = lastDbId - startId
             nsClientMvvmRepository.updateQueueSize(queueCounter.size())
-            persistenceLayer.getNextSyncElementBolusCalculatorResult(startId).blockingGet()?.let { bolusCalculatorResult ->
+            persistenceLayer.getNextSyncElementBolusCalculatorResult(startId)?.let { bolusCalculatorResult ->
                 when {
                     // new record with existing NS id => must be coming from NS => ignore
                     bolusCalculatorResult.first.id == bolusCalculatorResult.second.id && bolusCalculatorResult.first.ids.nightscoutId != null ->
@@ -296,7 +295,7 @@ class DataSyncSelectorV3 @Inject constructor(
             }
             queueCounter.ttsRemaining = lastDbId - startId
             nsClientMvvmRepository.updateQueueSize(queueCounter.size())
-            persistenceLayer.getNextSyncElementTemporaryTarget(startId).blockingGet()?.let { tt ->
+            persistenceLayer.getNextSyncElementTemporaryTarget(startId)?.let { tt ->
                 when {
                     // new record with existing NS id => must be coming from NS => ignore
                     tt.first.id == tt.second.id && tt.first.ids.nightscoutId != null ->
@@ -317,50 +316,51 @@ class DataSyncSelectorV3 @Inject constructor(
             }
         }
     }
-/*
-    @OpenForTesting
-    fun confirmLastFoodIdIfGreater(lastSynced: Long) {
-        if (lastSynced > preferences.get(NsclientLongKey.FoodLastSyncedId)) {
-            preferences.put(NsclientLongKey.FoodLastSyncedId, lastSynced)
-        }
-    }
 
-    @OpenForTesting
-    suspend fun processChangedFoods() {
-        var cont = true
-        while (cont) {
-            if (isPaused) return
-            val lastDbId = persistenceLayer.getLastFoodId() ?: 0L
-            var startId = preferences.get(NsclientLongKey.FoodLastSyncedId)
-            if (startId > lastDbId) {
-                aapsLogger.info(LTag.NSCLIENT, "Resetting startId: $startId lastDbId: $lastDbId")
-                preferences.put(NsclientLongKey.FoodLastSyncedId, 0)
-                startId = 0
-            }
-            queueCounter.foodsRemaining = lastDbId - startId
-            nsClientRepository.updateQueueSize(queueCounter.size())
-            persistenceLayer.getNextSyncElementFood(startId).blockingGet()?.let { food ->
-                when {
-                    // new record with existing NS id => must be coming from NS => ignore
-                    food.first.id == food.second.id && food.first.ids.nightscoutId != null ->
-                        aapsLogger.info(LTag.NSCLIENT, "Ignoring Food. Loaded from NS: ${food.second.id} ")
-                    // only NsId changed, no need to upload
-                    food.first.onlyNsIdAdded(food.second)                                  ->
-                        aapsLogger.info(LTag.NSCLIENT, "Ignoring Food. Only NS id changed ID: ${food.second.id} ")
-                    // without nsId = create new
-                    food.first.ids.nightscoutId == null                                    ->
-                        cont = activePlugin.activeNsClient?.nsAdd("food", DataSyncSelector.PairFood(food.first, food.second.id), "$startId/$lastDbId") == true
-                    // with nsId = update
-                    food.first.ids.nightscoutId != null                                    ->
-                        cont = activePlugin.activeNsClient?.nsUpdate("food", DataSyncSelector.PairFood(food.first, food.second.id), "$startId/$lastDbId") == true
-                }
-                if (cont) confirmLastFoodIdIfGreater(food.second.id)
-            } ?: run {
-                cont = false
+    /*
+        @OpenForTesting
+        fun confirmLastFoodIdIfGreater(lastSynced: Long) {
+            if (lastSynced > preferences.get(NsclientLongKey.FoodLastSyncedId)) {
+                preferences.put(NsclientLongKey.FoodLastSyncedId, lastSynced)
             }
         }
-    }
-*/
+
+        @OpenForTesting
+        suspend fun processChangedFoods() {
+            var cont = true
+            while (cont) {
+                if (isPaused) return
+                val lastDbId = persistenceLayer.getLastFoodId() ?: 0L
+                var startId = preferences.get(NsclientLongKey.FoodLastSyncedId)
+                if (startId > lastDbId) {
+                    aapsLogger.info(LTag.NSCLIENT, "Resetting startId: $startId lastDbId: $lastDbId")
+                    preferences.put(NsclientLongKey.FoodLastSyncedId, 0)
+                    startId = 0
+                }
+                queueCounter.foodsRemaining = lastDbId - startId
+                nsClientRepository.updateQueueSize(queueCounter.size())
+                persistenceLayer.getNextSyncElementFood(startId)?.let { food ->
+                    when {
+                        // new record with existing NS id => must be coming from NS => ignore
+                        food.first.id == food.second.id && food.first.ids.nightscoutId != null ->
+                            aapsLogger.info(LTag.NSCLIENT, "Ignoring Food. Loaded from NS: ${food.second.id} ")
+                        // only NsId changed, no need to upload
+                        food.first.onlyNsIdAdded(food.second)                                  ->
+                            aapsLogger.info(LTag.NSCLIENT, "Ignoring Food. Only NS id changed ID: ${food.second.id} ")
+                        // without nsId = create new
+                        food.first.ids.nightscoutId == null                                    ->
+                            cont = activePlugin.activeNsClient?.nsAdd("food", DataSyncSelector.PairFood(food.first, food.second.id), "$startId/$lastDbId") == true
+                        // with nsId = update
+                        food.first.ids.nightscoutId != null                                    ->
+                            cont = activePlugin.activeNsClient?.nsUpdate("food", DataSyncSelector.PairFood(food.first, food.second.id), "$startId/$lastDbId") == true
+                    }
+                    if (cont) confirmLastFoodIdIfGreater(food.second.id)
+                } ?: run {
+                    cont = false
+                }
+            }
+        }
+    */
     @OpenForTesting
     fun confirmLastGlucoseValueIdIfGreater(lastSynced: Long) {
         if (lastSynced > preferences.get(NsclientLongKey.GlucoseValueLastSyncedId)) {
@@ -382,7 +382,7 @@ class DataSyncSelectorV3 @Inject constructor(
             }
             queueCounter.gvsRemaining = lastDbId - startId
             nsClientMvvmRepository.updateQueueSize(queueCounter.size())
-            persistenceLayer.getNextSyncElementGlucoseValue(startId).blockingGet()?.let { gv ->
+            persistenceLayer.getNextSyncElementGlucoseValue(startId)?.let { gv ->
                 if (bgUploadEnabled) {
                     when {
                         // new record with existing NS id => must be coming from NS => ignore
@@ -427,7 +427,7 @@ class DataSyncSelectorV3 @Inject constructor(
             }
             queueCounter.tesRemaining = lastDbId - startId
             nsClientMvvmRepository.updateQueueSize(queueCounter.size())
-            persistenceLayer.getNextSyncElementTherapyEvent(startId).blockingGet()?.let { te ->
+            persistenceLayer.getNextSyncElementTherapyEvent(startId)?.let { te ->
                 when {
                     // new record with existing NS id => must be coming from NS => ignore
                     te.first.id == te.second.id && te.first.ids.nightscoutId != null ->
@@ -470,7 +470,7 @@ class DataSyncSelectorV3 @Inject constructor(
             }
             queueCounter.dssRemaining = lastDbId - startId
             nsClientMvvmRepository.updateQueueSize(queueCounter.size())
-            persistenceLayer.getNextSyncElementDeviceStatus(startId).blockingGet()?.let { deviceStatus ->
+            persistenceLayer.getNextSyncElementDeviceStatus(startId)?.let { deviceStatus ->
                 cont = activePlugin.activeNsClient?.nsAdd("devicestatus", DataSyncSelector.PairDeviceStatus(deviceStatus, lastDbId), "$startId/$lastDbId") == true
                 if (cont) confirmLastDeviceStatusIdIfGreater(deviceStatus.id)
                 // with nsId = ignore
@@ -501,7 +501,7 @@ class DataSyncSelectorV3 @Inject constructor(
             }
             queueCounter.tbrsRemaining = lastDbId - startId
             nsClientMvvmRepository.updateQueueSize(queueCounter.size())
-            persistenceLayer.getNextSyncElementTemporaryBasal(startId).blockingGet()?.let { tb ->
+            persistenceLayer.getNextSyncElementTemporaryBasal(startId)?.let { tb ->
                 val profile = profileFunction.getProfile(tb.first.timestamp)
                 when {
                     // new record with existing NS id => must be coming from NS => ignore
@@ -545,7 +545,7 @@ class DataSyncSelectorV3 @Inject constructor(
             }
             queueCounter.ebsRemaining = lastDbId - startId
             nsClientMvvmRepository.updateQueueSize(queueCounter.size())
-            persistenceLayer.getNextSyncElementExtendedBolus(startId).blockingGet()?.let { eb ->
+            persistenceLayer.getNextSyncElementExtendedBolus(startId)?.let { eb ->
                 val profile = profileFunction.getProfile(eb.first.timestamp)
                 if (profile != null) {
                     when {
@@ -591,7 +591,7 @@ class DataSyncSelectorV3 @Inject constructor(
             }
             queueCounter.pssRemaining = lastDbId - startId
             nsClientMvvmRepository.updateQueueSize(queueCounter.size())
-            persistenceLayer.getNextSyncElementProfileSwitch(startId).blockingGet()?.let { ps ->
+            persistenceLayer.getNextSyncElementProfileSwitch(startId)?.let { ps ->
                 when {
                     // new record with existing NS id => must be coming from NS => ignore
                     ps.first.id == ps.second.id && ps.first.ids.nightscoutId != null ->
@@ -634,7 +634,7 @@ class DataSyncSelectorV3 @Inject constructor(
             }
             queueCounter.epssRemaining = lastDbId - startId
             nsClientMvvmRepository.updateQueueSize(queueCounter.size())
-            persistenceLayer.getNextSyncElementEffectiveProfileSwitch(startId).blockingGet()?.let { ps ->
+            persistenceLayer.getNextSyncElementEffectiveProfileSwitch(startId)?.let { ps ->
                 when {
                     // new record with existing NS id => must be coming from NS => ignore
                     ps.first.id == ps.second.id && ps.first.ids.nightscoutId != null ->
@@ -677,7 +677,7 @@ class DataSyncSelectorV3 @Inject constructor(
             }
             queueCounter.rmsRemaining = lastDbId - startId
             nsClientMvvmRepository.updateQueueSize(queueCounter.size())
-            persistenceLayer.getNextSyncElementRunningMode(startId).blockingGet()?.let { rm ->
+            persistenceLayer.getNextSyncElementRunningMode(startId)?.let { rm ->
                 when {
                     // new record with existing NS id => must be coming from NS => ignore
                     rm.first.id == rm.second.id && rm.first.ids.nightscoutId != null ->

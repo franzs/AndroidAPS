@@ -25,6 +25,7 @@ import app.aaps.core.objects.extensions.store
 import app.aaps.core.utils.MidnightUtils
 import app.aaps.plugins.sensitivity.extensions.isPSEvent5minBack
 import app.aaps.plugins.sensitivity.extensions.isTherapyEventEvent5minBack
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.JsonObject
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -66,8 +67,8 @@ class SensitivityWeightedAveragePlugin @Inject constructor(
             aapsLogger.debug(LTag.AUTOSENS, "No profile available")
             return AutosensResult()
         }
-        val siteChanges = persistenceLayer.getTherapyEventDataFromTime(fromTime, TE.Type.CANNULA_CHANGE, true)
-        val profileSwitches = persistenceLayer.getProfileSwitchesFromTimeBlocking(fromTime, true).blockingGet()
+        val siteChanges = runBlocking { persistenceLayer.getTherapyEventDataFromTime(fromTime, TE.Type.CANNULA_CHANGE, true) }
+        val profileSwitches = runBlocking { persistenceLayer.getProfileSwitchesFromTime(fromTime, true) }
         var pastSensitivity = ""
         var index = 0
         val data = LongSparseArray<Double>()

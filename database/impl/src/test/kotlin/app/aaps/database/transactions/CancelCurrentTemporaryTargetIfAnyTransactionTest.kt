@@ -6,7 +6,7 @@ import app.aaps.database.entities.TemporaryTarget
 import app.aaps.database.entities.embedments.InterfaceIDs
 import app.aaps.database.entities.interfaces.end
 import com.google.common.truth.Truth.assertThat
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.never
@@ -28,7 +28,7 @@ class CancelCurrentTemporaryTargetIfAnyTransactionTest {
     }
 
     @Test
-    fun `cancels running temporary target`() = runBlocking {
+    fun `cancels running temporary target`() = runTest {
         val timestamp = 31_000L
         val running = createTemporaryTarget(timestamp = 1000L, duration = 60_000L)
 
@@ -45,7 +45,7 @@ class CancelCurrentTemporaryTargetIfAnyTransactionTest {
     }
 
     @Test
-    fun `does not cancel when no running temporary target`() = runBlocking {
+    fun `does not cancel when no running temporary target`() = runTest {
         val timestamp = 31_000L
 
         whenever(temporaryTargetDao.getTemporaryTargetActiveAt(31_000L)).thenReturn(null)

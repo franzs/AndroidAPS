@@ -1,5 +1,6 @@
 package app.aaps.pump.danarkorean.services
 
+import app.aaps.core.data.pump.defs.PumpDescription
 import app.aaps.core.interfaces.constraints.ConstraintsChecker
 import app.aaps.core.interfaces.profile.Profile
 import app.aaps.core.interfaces.pump.DetailedBolusInfo
@@ -136,8 +137,8 @@ class DanaRKoreanExecutionServiceTest : TestBaseWithProfile() {
         assertThat(result).isFalse()
     }
 
-    private fun mockPumpDescription(): app.aaps.core.data.pump.defs.PumpDescription {
-        return app.aaps.core.data.pump.defs.PumpDescription().apply {
+    private fun mockPumpDescription(): PumpDescription {
+        return PumpDescription().apply {
             basalStep = 0.01
         }
     }

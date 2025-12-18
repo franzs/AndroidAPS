@@ -47,6 +47,7 @@ import app.aaps.core.objects.extensions.highValueToUnitsToString
 import app.aaps.core.objects.extensions.lowValueToUnitsToString
 import app.aaps.core.objects.extensions.round
 import app.aaps.core.utils.JsonHelper
+import kotlinx.coroutines.runBlocking
 import java.util.Calendar
 import java.util.LinkedList
 import javax.inject.Inject
@@ -545,7 +546,7 @@ class BolusWizard @Inject constructor(
                             }
                         })
                     }
-                    bolusCalculatorResult?.let { persistenceLayer.insertOrUpdateBolusCalculatorResult(it).blockingGet() }
+                    bolusCalculatorResult?.let { runBlocking { persistenceLayer.insertOrUpdateBolusCalculatorResult(it) } }
                 }
             }
             if (quickWizardEntry != null) {

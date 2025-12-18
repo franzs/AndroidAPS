@@ -15,6 +15,7 @@ dependencies {
     testImplementationFromCatalog("joda-time")
     testImplementationFromCatalog("com-google-truth")
     testImplementationFromCatalog("org-skyscreamer-jsonassert")
+    testImplementationFromCatalog("kotlinx-coroutines-test")
 
     androidTestImplementationFromCatalog("androidx-espresso-core")
     androidTestImplementationFromCatalog("androidx-test-ext")

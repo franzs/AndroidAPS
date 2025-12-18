@@ -27,6 +27,7 @@ import app.aaps.core.interfaces.configuration.Config
 import app.aaps.core.interfaces.configuration.ConfigBuilder
 import app.aaps.core.interfaces.constraints.ConstraintsChecker
 import app.aaps.core.interfaces.db.PersistenceLayer
+import app.aaps.core.interfaces.di.ApplicationScope
 import app.aaps.core.interfaces.iob.GlucoseStatusProvider
 import app.aaps.core.interfaces.iob.IobCobCalculator
 import app.aaps.core.interfaces.logging.AAPSLogger
@@ -79,7 +80,9 @@ import app.aaps.plugins.main.general.smsCommunicator.events.EventSmsCommunicator
 import app.aaps.plugins.main.general.smsCommunicator.otp.OneTimePassword
 import io.reactivex.rxjava3.disposables.CompositeDisposable
 import io.reactivex.rxjava3.kotlin.plusAssign
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.apache.commons.lang3.Strings
 import org.joda.time.DateTime
 import java.text.Normalizer
@@ -118,7 +121,8 @@ class SmsCommunicatorPlugin @Inject constructor(
     private val decimalFormatter: DecimalFormatter,
     private val configBuilder: ConfigBuilder,
     private val authRequestProvider: Provider<AuthRequest>,
-    private val pumpStatusProvider: PumpStatusProvider
+    private val pumpStatusProvider: PumpStatusProvider,
+    @ApplicationScope private val appScope: CoroutineScope
 ) : PluginBase(
     PluginDescription()
         .mainType(PluginType.GENERAL)
@@ -984,23 +988,25 @@ class SmsCommunicatorPlugin @Inject constructor(
                                             profileFunction.getProfile()?.let { currentProfile ->
                                                 val eatingSoonTTDuration = preferences.get(IntKey.OverviewEatingSoonDuration)
                                                 val eatingSoonTT = preferences.get(UnitDoubleKey.OverviewEatingSoonTarget)
-                                                disposable += persistenceLayer.insertAndCancelCurrentTemporaryTarget(
-                                                    temporaryTarget = TT(
-                                                        timestamp = dateUtil.now(),
-                                                        duration = TimeUnit.MINUTES.toMillis(eatingSoonTTDuration.toLong()),
-                                                        reason = TT.Reason.EATING_SOON,
-                                                        lowTarget = profileUtil.convertToMgdl(eatingSoonTT, profileUtil.units),
-                                                        highTarget = profileUtil.convertToMgdl(eatingSoonTT, profileUtil.units)
-                                                    ),
-                                                    action = Action.TT,
-                                                    source = Sources.SMS,
-                                                    note = null,
-                                                    listValues = listOf(
-                                                        ValueWithUnit.TETTReason(TT.Reason.EATING_SOON),
-                                                        ValueWithUnit.Mgdl(profileUtil.convertToMgdl(eatingSoonTT, profileUtil.units)),
-                                                        ValueWithUnit.Minute(TimeUnit.MILLISECONDS.toMinutes(TimeUnit.MINUTES.toMillis(eatingSoonTTDuration.toLong())).toInt())
+                                                appScope.launch {
+                                                    persistenceLayer.insertAndCancelCurrentTemporaryTarget(
+                                                        temporaryTarget = TT(
+                                                            timestamp = dateUtil.now(),
+                                                            duration = TimeUnit.MINUTES.toMillis(eatingSoonTTDuration.toLong()),
+                                                            reason = TT.Reason.EATING_SOON,
+                                                            lowTarget = profileUtil.convertToMgdl(eatingSoonTT, profileUtil.units),
+                                                            highTarget = profileUtil.convertToMgdl(eatingSoonTT, profileUtil.units)
+                                                        ),
+                                                        action = Action.TT,
+                                                        source = Sources.SMS,
+                                                        note = null,
+                                                        listValues = listOf(
+                                                            ValueWithUnit.TETTReason(TT.Reason.EATING_SOON),
+                                                            ValueWithUnit.Mgdl(profileUtil.convertToMgdl(eatingSoonTT, profileUtil.units)),
+                                                            ValueWithUnit.Minute(TimeUnit.MILLISECONDS.toMinutes(TimeUnit.MINUTES.toMillis(eatingSoonTTDuration.toLong())).toInt())
+                                                        )
                                                     )
-                                                ).subscribe()
+                                                }
                                                 val tt = if (currentProfile.units == GlucoseUnit.MMOL) {
                                                     decimalFormatter.to1Decimal(eatingSoonTT)
                                                 } else decimalFormatter.to0Decimal(eatingSoonTT)
@@ -1127,22 +1133,24 @@ class SmsCommunicatorPlugin @Inject constructor(
                             reason = TT.Reason.HYPOGLYCEMIA
                         }
                     }
-                    disposable += persistenceLayer.insertAndCancelCurrentTemporaryTarget(
-                        temporaryTarget = TT(
-                            timestamp = dateUtil.now(),
-                            duration = TimeUnit.MINUTES.toMillis(ttDuration.toLong()),
-                            reason = reason,
-                            lowTarget = profileUtil.convertToMgdl(tt, profileUtil.units),
-                            highTarget = profileUtil.convertToMgdl(tt, profileUtil.units)
-                        ),
-                        action = Action.TT,
-                        source = Sources.SMS,
-                        note = null,
-                        listValues = listOf(
-                            ValueWithUnit.fromGlucoseUnit(tt, units),
-                            ValueWithUnit.Minute(ttDuration)
+                    appScope.launch {
+                        persistenceLayer.insertAndCancelCurrentTemporaryTarget(
+                            temporaryTarget = TT(
+                                timestamp = dateUtil.now(),
+                                duration = TimeUnit.MINUTES.toMillis(ttDuration.toLong()),
+                                reason = reason,
+                                lowTarget = profileUtil.convertToMgdl(tt, profileUtil.units),
+                                highTarget = profileUtil.convertToMgdl(tt, profileUtil.units)
+                            ),
+                            action = Action.TT,
+                            source = Sources.SMS,
+                            note = null,
+                            listValues = listOf(
+                                ValueWithUnit.fromGlucoseUnit(tt, units),
+                                ValueWithUnit.Minute(ttDuration)
+                            )
                         )
-                    ).subscribe()
+                    }
                     val ttString = if (units == GlucoseUnit.MMOL) decimalFormatter.to1Decimal(tt) else decimalFormatter.to0Decimal(tt)
                     val replyText = rh.gs(R.string.smscommunicator_tt_set, ttString, ttDuration)
                     sendSMSToAllNumbers(Sms(receivedSms.phoneNumber, replyText))
@@ -1154,13 +1162,15 @@ class SmsCommunicatorPlugin @Inject constructor(
             receivedSms.processed = true
             messageToConfirm = authRequestProvider.get().with(receivedSms, reply, passCode, object : SmsAction(pumpCommand = false) {
                 override fun run() {
-                    disposable += persistenceLayer.cancelCurrentTemporaryTargetIfAny(
-                        timestamp = dateUtil.now(),
-                        action = Action.CANCEL_TT,
-                        source = Sources.SMS,
-                        note = rh.gs(R.string.smscommunicator_tt_canceled),
-                        listValues = listOf(ValueWithUnit.SimpleString(rh.gsNotLocalised(R.string.smscommunicator_tt_canceled)))
-                    ).subscribe()
+                    appScope.launch {
+                        persistenceLayer.cancelCurrentTemporaryTargetIfAny(
+                            timestamp = dateUtil.now(),
+                            action = Action.CANCEL_TT,
+                            source = Sources.SMS,
+                            note = rh.gs(R.string.smscommunicator_tt_canceled),
+                            listValues = listOf(ValueWithUnit.SimpleString(rh.gsNotLocalised(R.string.smscommunicator_tt_canceled)))
+                        )
+                    }
                     val replyText = rh.gs(R.string.smscommunicator_tt_canceled)
                     sendSMSToAllNumbers(Sms(receivedSms.phoneNumber, replyText))
                     uel.log(

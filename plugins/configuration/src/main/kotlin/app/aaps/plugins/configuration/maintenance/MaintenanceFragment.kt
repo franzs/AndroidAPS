@@ -7,6 +7,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.core.text.toSpanned
 import androidx.fragment.app.FragmentActivity
+import androidx.lifecycle.lifecycleScope
 import app.aaps.core.data.ue.Action
 import app.aaps.core.data.ue.Sources
 import app.aaps.core.interfaces.db.PersistenceLayer
@@ -41,6 +42,9 @@ import io.reactivex.rxjava3.core.Completable
 import io.reactivex.rxjava3.disposables.CompositeDisposable
 import io.reactivex.rxjava3.kotlin.plusAssign
 import io.reactivex.rxjava3.kotlin.subscribeBy
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 class MaintenanceFragment : DaggerFragment() {
@@ -107,50 +111,47 @@ class MaintenanceFragment : DaggerFragment() {
         binding.navResetdb.setOnClickListener {
             activity?.let { activity ->
                 uiInteraction.showOkCancelDialog(context = activity, title = R.string.maintenance, message = R.string.reset_db_confirm, ok = {
-                    disposable +=
-                        Completable.fromAction {
-                            persistenceLayer.clearDatabases()
-                            for (plugin in activePlugin.getSpecificPluginsListByInterface(OwnDatabasePlugin::class.java)) {
-                                (plugin as OwnDatabasePlugin).clearAllTables()
-                            }
-                            activePlugin.activeNsClient?.dataSyncSelector?.resetToNextFullSync()
-                            dataSyncSelectorXdrip.resetToNextFullSync()
-                            pumpSync.connectNewPump()
-                            overviewData.reset()
-                            iobCobCalculator.ads.reset()
-                            iobCobCalculator.clearCache()
-                        }
-                            .subscribeOn(aapsSchedulers.io)
-                            .subscribeBy(
-                                onError = { aapsLogger.error("Error clearing databases", it) },
-                                onComplete = {
-                                    rxBus.send(EventPreferenceChange(StringKey.GeneralUnits.key))
-                                    runOnUiThread { activity.recreate() }
+                    lifecycleScope.launch {
+                        try {
+                            withContext(Dispatchers.IO) {
+                                persistenceLayer.clearDatabases()
+                                for (plugin in activePlugin.getSpecificPluginsListByInterface(OwnDatabasePlugin::class.java)) {
+                                    (plugin as OwnDatabasePlugin).clearAllTables()
                                 }
-                            )
+                                activePlugin.activeNsClient?.dataSyncSelector?.resetToNextFullSync()
+                                dataSyncSelectorXdrip.resetToNextFullSync()
+                                pumpSync.connectNewPump()
+                                overviewData.reset()
+                                iobCobCalculator.ads.reset()
+                                iobCobCalculator.clearCache()
+                            }
+                            rxBus.send(EventPreferenceChange(StringKey.GeneralUnits.key))
+                            runOnUiThread { activity.recreate() }
+                        } catch (e: Exception) {
+                            aapsLogger.error("Error clearing databases", e)
+                        }
+                    }
                     uel.log(Action.RESET_DATABASES, Sources.Maintenance)
                 })
             }
         }
         binding.cleanupDb.setOnClickListener {
-            var result = ""
             uiInteraction.showOkCancelDialog(context = requireActivity(), title = R.string.maintenance, message = app.aaps.core.ui.R.string.cleanup_db_confirm, ok = {
-                disposable += Completable.fromAction { result = persistenceLayer.cleanupDatabase(93, deleteTrackedChanges = true) }
-                    .subscribeOn(aapsSchedulers.io)
-                    .observeOn(aapsSchedulers.main)
-                    .subscribeBy(
-                        onError = { aapsLogger.error("Error cleaning up databases", it) },
-                        onComplete = {
-                            if (result.isNotEmpty())
-                                uiInteraction.showOkDialog(
-                                    context = requireActivity(),
-                                    title = rh.gs(app.aaps.core.ui.R.string.result),
-                                    message = "<b>" + rh.gs(app.aaps.core.ui.R.string.cleared_entries) + "</b><br>" + result
-                                        .toSpanned()
-                                )
-                            aapsLogger.info(LTag.CORE, "Cleaned up databases with result: $result")
-                        }
-                    )
+                lifecycleScope.launch {
+                    try {
+                        val result = persistenceLayer.cleanupDatabase(93, deleteTrackedChanges = true)
+                        if (result.isNotEmpty())
+                            uiInteraction.showOkDialog(
+                                context = requireActivity(),
+                                title = rh.gs(app.aaps.core.ui.R.string.result),
+                                message = "<b>" + rh.gs(app.aaps.core.ui.R.string.cleared_entries) + "</b><br>" + result
+                                    .toSpanned()
+                            )
+                        aapsLogger.info(LTag.CORE, "Cleaned up databases with result: $result")
+                    } catch (e: Exception) {
+                        aapsLogger.error("Error cleaning up databases", e)
+                    }
+                }
                 uel.log(Action.CLEANUP_DATABASES, Sources.Maintenance)
             })
         }

@@ -63,9 +63,11 @@ class GlimpPlugin @Inject constructor(
                 trendArrow = TrendArrow.fromString(inputData.getString("myTrend")),
                 sourceSensor = SourceSensor.LIBRE_1_GLIMP
             )
-            persistenceLayer.insertCgmSourceData(Sources.Glimp, glucoseValues, emptyList(), null)
-                .doOnError { ret = Result.failure(workDataOf("Error" to it.toString())) }
-                .blockingGet()
+            try {
+                persistenceLayer.insertCgmSourceData(Sources.Glimp, glucoseValues, emptyList(), null)
+            } catch (e: Exception) {
+                ret = Result.failure(workDataOf("Error" to e.toString()))
+            }
             return ret
         }
     }

@@ -22,6 +22,7 @@ import app.aaps.ui.compose.ToolbarConfig
 import app.aaps.ui.compose.TreatmentScreenToolbar
 import app.aaps.ui.viewmodels.TreatmentConstants.TREATMENT_HISTORY_DAYS
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -30,6 +31,7 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
@@ -116,6 +118,7 @@ class TempBasalViewModel @Inject constructor(
     /**
      * Subscribe to temp basal change events using Flow
      */
+    @OptIn(FlowPreview::class)
     private fun observeTempBasalChanges() {
         persistenceLayer
             .observeChanges<TB>()
@@ -215,30 +218,34 @@ class TempBasalViewModel @Inject constructor(
                         // For fake extended boluses, delete the underlying extended bolus
                         val extendedBolus = persistenceLayer.getExtendedBolusActiveAt(tempBasal.timestamp)
                         if (extendedBolus != null) {
-                            persistenceLayer.invalidateExtendedBolus(
-                                id = extendedBolus.id,
-                                action = Action.EXTENDED_BOLUS_REMOVED,
-                                source = Sources.Treatments,
-                                listValues = listOf(
-                                    ValueWithUnit.Timestamp(extendedBolus.timestamp),
-                                    ValueWithUnit.Insulin(extendedBolus.amount),
-                                    ValueWithUnit.UnitPerHour(extendedBolus.rate),
-                                    ValueWithUnit.Minute(TimeUnit.MILLISECONDS.toMinutes(extendedBolus.duration).toInt())
+                            runBlocking {
+                                persistenceLayer.invalidateExtendedBolus(
+                                    id = extendedBolus.id,
+                                    action = Action.EXTENDED_BOLUS_REMOVED,
+                                    source = Sources.Treatments,
+                                    listValues = listOf(
+                                        ValueWithUnit.Timestamp(extendedBolus.timestamp),
+                                        ValueWithUnit.Insulin(extendedBolus.amount),
+                                        ValueWithUnit.UnitPerHour(extendedBolus.rate),
+                                        ValueWithUnit.Minute(TimeUnit.MILLISECONDS.toMinutes(extendedBolus.duration).toInt())
+                                    )
                                 )
-                            ).blockingGet()
+                            }
                         }
                     } else {
                         // Delete regular temp basal
-                        persistenceLayer.invalidateTemporaryBasal(
-                            id = tempBasal.id,
-                            action = Action.TEMP_BASAL_REMOVED,
-                            source = Sources.Treatments,
-                            listValues = listOf(
-                                ValueWithUnit.Timestamp(tempBasal.timestamp),
-                                if (tempBasal.isAbsolute) ValueWithUnit.UnitPerHour(tempBasal.rate) else ValueWithUnit.Percent(tempBasal.rate.toInt()),
-                                ValueWithUnit.Minute(T.msecs(tempBasal.duration).mins().toInt())
+                        runBlocking {
+                            persistenceLayer.invalidateTemporaryBasal(
+                                id = tempBasal.id,
+                                action = Action.TEMP_BASAL_REMOVED,
+                                source = Sources.Treatments,
+                                listValues = listOf(
+                                    ValueWithUnit.Timestamp(tempBasal.timestamp),
+                                    if (tempBasal.isAbsolute) ValueWithUnit.UnitPerHour(tempBasal.rate) else ValueWithUnit.Percent(tempBasal.rate.toInt()),
+                                    ValueWithUnit.Minute(T.msecs(tempBasal.duration).mins().toInt())
+                                )
                             )
-                        ).blockingGet()
+                        }
                     }
                 }
                 exitSelectionMode()

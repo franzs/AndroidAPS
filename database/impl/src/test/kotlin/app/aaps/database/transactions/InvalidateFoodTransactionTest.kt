@@ -5,6 +5,7 @@ import app.aaps.database.daos.FoodDao
 import app.aaps.database.entities.Food
 import app.aaps.database.entities.embedments.InterfaceIDs
 import com.google.common.truth.Truth.assertThat
+import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.never
@@ -12,7 +13,6 @@ import org.mockito.Mockito.verify
 import org.mockito.kotlin.any
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
-import kotlinx.coroutines.runBlocking
 
 class InvalidateFoodTransactionTest {
 
@@ -27,7 +27,7 @@ class InvalidateFoodTransactionTest {
     }
 
     @Test
-    fun `invalidates valid food`() = runBlocking {
+    fun `invalidates valid food`() = runTest {
         val food = createFood(id = 1, isValid = true)
 
         whenever(foodDao.findById(1)).thenReturn(food)
@@ -43,7 +43,7 @@ class InvalidateFoodTransactionTest {
     }
 
     @Test
-    fun `does not update already invalid food`() = runBlocking {
+    fun `does not update already invalid food`() = runTest {
         val food = createFood(id = 1, isValid = false)
 
         whenever(foodDao.findById(1)).thenReturn(food)
@@ -58,7 +58,7 @@ class InvalidateFoodTransactionTest {
     }
 
     @Test
-    fun `throws exception when food not found`() = runBlocking {
+    fun `throws exception when food not found`() = runTest {
         whenever(foodDao.findById(999)).thenReturn(null)
 
         val transaction = InvalidateFoodTransaction(id = 999)

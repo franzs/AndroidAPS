@@ -75,9 +75,11 @@ class PoctechPlugin @Inject constructor(
                         sourceSensor = SourceSensor.POCTECH_NATIVE
                     )
                 }
-                persistenceLayer.insertCgmSourceData(Sources.PocTech, glucoseValues, emptyList(), null)
-                    .doOnError { ret = Result.failure(workDataOf("Error" to it.toString())) }
-                    .blockingGet()
+                try {
+                    persistenceLayer.insertCgmSourceData(Sources.PocTech, glucoseValues, emptyList(), null)
+                } catch (e: Exception) {
+                    ret = Result.failure(workDataOf("Error" to e.toString()))
+                }
             } catch (e: JSONException) {
                 aapsLogger.error("Exception: ", e)
                 ret = Result.failure(workDataOf("Error" to e.toString()))

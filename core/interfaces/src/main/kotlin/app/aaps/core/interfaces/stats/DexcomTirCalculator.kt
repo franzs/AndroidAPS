@@ -34,5 +34,5 @@ interface DexcomTirCalculator {
      *
      * @return DexcomTIR object containing all calculated statistics and percentages
      */
-    fun calculate(): DexcomTIR
+    suspend fun calculate(): DexcomTIR
 }

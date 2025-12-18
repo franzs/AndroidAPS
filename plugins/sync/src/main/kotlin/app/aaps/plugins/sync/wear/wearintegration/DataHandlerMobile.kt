@@ -27,6 +27,7 @@ import app.aaps.core.interfaces.configuration.Config
 import app.aaps.core.interfaces.constraints.ConstraintsChecker
 import app.aaps.core.interfaces.db.PersistenceLayer
 import app.aaps.core.interfaces.db.ProcessedTbrEbData
+import app.aaps.core.interfaces.di.ApplicationScope
 import app.aaps.core.interfaces.iob.GlucoseStatusProvider
 import app.aaps.core.interfaces.iob.IobCobCalculator
 import app.aaps.core.interfaces.logging.AAPSLogger
@@ -84,6 +85,9 @@ import app.aaps.plugins.sync.R
 import io.reactivex.rxjava3.core.Completable
 import io.reactivex.rxjava3.disposables.CompositeDisposable
 import io.reactivex.rxjava3.kotlin.plusAssign
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import java.text.DateFormat
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -128,7 +132,8 @@ class DataHandlerMobile @Inject constructor(
     private val importExportPrefs: ImportExportPrefs,
     private val decimalFormatter: DecimalFormatter,
     private val bolusWizardProvider: Provider<BolusWizard>,
-    private val pumpStatusProvider: PumpStatusProvider
+    private val pumpStatusProvider: PumpStatusProvider,
+    @ApplicationScope private val appScope: CoroutineScope
 ) {
 
     @Inject lateinit var automation: Automation
@@ -679,7 +684,7 @@ class DataHandlerMobile @Inject constructor(
             sendError(rh.gs(app.aaps.core.ui.R.string.wizard_no_cob))
             return
         }
-        val tempTarget = persistenceLayer.getTemporaryTargetActiveAt(dateUtil.now())
+        val tempTarget = runBlocking { persistenceLayer.getTemporaryTargetActiveAt(dateUtil.now()) }
 
         // Store the preference values before calling doCalc
         val useBgPref = preferences.get(BooleanKey.WearWizardBg)
@@ -959,7 +964,7 @@ class DataHandlerMobile @Inject constructor(
     }
 
     private fun handleProfileSwitchSendInitialData() {
-        val activeProfileSwitch = persistenceLayer.getEffectiveProfileSwitchActiveAt(dateUtil.now())
+        val activeProfileSwitch = runBlocking { persistenceLayer.getEffectiveProfileSwitchActiveAt(dateUtil.now()) }
         if (activeProfileSwitch != null) { // read CPP values
             rxBus.send(
                 EventMobileToWear(EventData.ActionProfileSwitchOpenActivity(T.msecs(activeProfileSwitch.originalTimeshift).hours().toInt(), activeProfileSwitch.originalPercentage, activeProfileSwitch.originalDuration.toInt()))
@@ -972,7 +977,7 @@ class DataHandlerMobile @Inject constructor(
     }
 
     private fun handleProfileSwitchPreCheck(command: EventData.ActionProfileSwitchPreCheck) {
-        val activeProfileSwitch = persistenceLayer.getEffectiveProfileSwitchActiveAt(dateUtil.now())
+        val activeProfileSwitch = runBlocking { persistenceLayer.getEffectiveProfileSwitchActiveAt(dateUtil.now()) }
         if (activeProfileSwitch == null) {
             sendError(rh.gs(R.string.no_active_profile))
         }
@@ -1408,13 +1413,14 @@ class DataHandlerMobile @Inject constructor(
                 temps.add(EventData.TreatmentData.TempBasal(now - 60 * 1000, endBasalValue, runningTime + 5 * 60 * 1000, currentAmount, currentAmount))
             }
         }
-        persistenceLayer.getBolusesFromTimeIncludingInvalidBlocking(startTimeWindow, true).blockingGet()
-            .stream()
-            .filter { (_, _, _, _, _, _, _, _, _, type) -> type !== BS.Type.PRIMING }
-            .forEach { (_, _, _, isValid, _, _, timestamp, _, amount, type) -> boluses.add(EventData.TreatmentData.Treatment(timestamp, amount, 0.0, type === BS.Type.SMB, isValid)) }
-        persistenceLayer.getCarbsFromTimeExpanded(startTimeWindow, true)
-            .forEach { (_, _, _, isValid, _, _, timestamp, _, _, amount) -> boluses.add(EventData.TreatmentData.Treatment(timestamp, 0.0, amount, false, isValid)) }
-
+        runBlocking {
+            persistenceLayer.getBolusesFromTimeIncludingInvalid(startTimeWindow, true)
+                .stream()
+                .filter { (_, _, _, _, _, _, _, _, _, type) -> type !== BS.Type.PRIMING }
+                .forEach { (_, _, _, isValid, _, _, timestamp, _, amount, type) -> boluses.add(EventData.TreatmentData.Treatment(timestamp, amount, 0.0, type === BS.Type.SMB, isValid)) }
+            persistenceLayer.getCarbsFromTimeExpanded(startTimeWindow, true)
+                .forEach { (_, _, _, isValid, _, _, timestamp, _, _, amount) -> boluses.add(EventData.TreatmentData.Treatment(timestamp, 0.0, amount, false, isValid)) }
+        }
         val apsResult = if (config.APS) {
             val lastRun = loop.lastRun
             if (lastRun?.request?.hasPredictions == true) {
@@ -1491,7 +1497,7 @@ class DataHandlerMobile @Inject constructor(
         //temptarget
         val units = profileFunction.getUnits()
         var tempTargetLevel = 0
-        val tempTarget = persistenceLayer.getTemporaryTargetActiveAt(dateUtil.now())?.let { tempTarget ->
+        val tempTarget = runBlocking { persistenceLayer.getTemporaryTargetActiveAt(dateUtil.now()) }?.let { tempTarget ->
             tempTargetLevel = 2     // Yellow
             profileUtil.toTargetRangeString(tempTarget.lowTarget, tempTarget.highTarget, GlucoseUnit.MGDL, units)
         } ?: profileFunction.getProfile()?.let { profile ->
@@ -1602,7 +1608,7 @@ class DataHandlerMobile @Inject constructor(
             }
             val profile = profileFunction.getProfile() ?: return rh.gs(R.string.no_profile)
             //Check for Temp-Target:
-            val tempTarget = persistenceLayer.getTemporaryTargetActiveAt(dateUtil.now())
+            val tempTarget = runBlocking { persistenceLayer.getTemporaryTargetActiveAt(dateUtil.now()) }
             if (tempTarget != null) {
                 val target = profileUtil.toTargetRangeString(tempTarget.lowTarget, tempTarget.lowTarget, GlucoseUnit.MGDL)
                 ret += rh.gs(R.string.temp_target) + ": " + target
@@ -1668,7 +1674,7 @@ class DataHandlerMobile @Inject constructor(
     }
 
     private fun getTDDList(returnDummies: List<TDD>): MutableList<TDD> {
-        var historyList = persistenceLayer.getLastTotalDailyDoses(10, false).toMutableList()
+        var historyList = runBlocking { persistenceLayer.getLastTotalDailyDoses(10, false) }.toMutableList()
         //var historyList = databaseHelper.getTDDs().toMutableList()
         historyList = historyList.subList(0, min(10, historyList.size))
         // fill single gaps - only needed for Dana*R data
@@ -1747,33 +1753,36 @@ class DataHandlerMobile @Inject constructor(
 
     private fun doTempTarget(command: EventData.ActionTempTargetConfirmed) {
         if (command.duration != 0)
-            disposable += persistenceLayer.insertAndCancelCurrentTemporaryTarget(
-                temporaryTarget = TT(
-                    timestamp = System.currentTimeMillis(),
-                    duration = TimeUnit.MINUTES.toMillis(command.duration.toLong()),
-                    reason = TT.Reason.WEAR,
-                    lowTarget = profileUtil.convertToMgdl(command.low, profileFunction.getUnits()),
-                    highTarget = profileUtil.convertToMgdl(command.high, profileFunction.getUnits())
-                ),
-                action = Action.TT,
-                source = Sources.Wear,
-                note = null,
-                listValues = listOfNotNull(
-                    ValueWithUnit.TETTReason(TT.Reason.WEAR),
-                    ValueWithUnit.fromGlucoseUnit(command.low, profileFunction.getUnits()),
-                    ValueWithUnit.fromGlucoseUnit(command.high, profileFunction.getUnits()).takeIf { command.low != command.high },
-                    ValueWithUnit.Minute(command.duration)
+            appScope.launch {
+                persistenceLayer.insertAndCancelCurrentTemporaryTarget(
+                    temporaryTarget = TT(
+                        timestamp = System.currentTimeMillis(),
+                        duration = TimeUnit.MINUTES.toMillis(command.duration.toLong()),
+                        reason = TT.Reason.WEAR,
+                        lowTarget = profileUtil.convertToMgdl(command.low, profileFunction.getUnits()),
+                        highTarget = profileUtil.convertToMgdl(command.high, profileFunction.getUnits())
+                    ),
+                    action = Action.TT,
+                    source = Sources.Wear,
+                    note = null,
+                    listValues = listOfNotNull(
+                        ValueWithUnit.TETTReason(TT.Reason.WEAR),
+                        ValueWithUnit.fromGlucoseUnit(command.low, profileFunction.getUnits()),
+                        ValueWithUnit.fromGlucoseUnit(command.high, profileFunction.getUnits()).takeIf { command.low != command.high },
+                        ValueWithUnit.Minute(command.duration)
+                    )
                 )
-            ).subscribe()
+            }
         else
-            disposable += persistenceLayer.cancelCurrentTemporaryTargetIfAny(
-                timestamp = dateUtil.now(),
-                action = Action.CANCEL_TT,
-                source = Sources.Wear,
-                note = null,
-                listValues = listOf(ValueWithUnit.TETTReason(TT.Reason.WEAR))
-            )
-                .subscribe()
+            appScope.launch {
+                persistenceLayer.cancelCurrentTemporaryTargetIfAny(
+                    timestamp = dateUtil.now(),
+                    action = Action.CANCEL_TT,
+                    source = Sources.Wear,
+                    note = null,
+                    listValues = listOf(ValueWithUnit.TETTReason(TT.Reason.WEAR))
+                )
+            }
     }
 
     private fun doBolus(amount: Double, carbs: Int, carbsTime: Long?, carbsDuration: Int, bolusCalculatorResult: BCR?, notes: String? = null) {
@@ -1806,7 +1815,7 @@ class DataHandlerMobile @Inject constructor(
                         sendError(rh.gs(app.aaps.core.ui.R.string.treatmentdeliveryerror) + "\n" + result.comment)
                 }
             })
-            bolusCalculatorResult?.let { persistenceLayer.insertOrUpdateBolusCalculatorResult(it).blockingGet() }
+            bolusCalculatorResult?.let { runBlocking { persistenceLayer.insertOrUpdateBolusCalculatorResult(it) } }
             lastQuickWizardEntry?.let { lastQuickWizardEntry ->
                 if (lastQuickWizardEntry.useSuperBolus() == QuickWizardEntry.YES) {
                     val profile = profileFunction.getProfile() ?: return
@@ -1889,7 +1898,7 @@ class DataHandlerMobile @Inject constructor(
             beatsPerMinute = actionHeartRate.beatsPerMinute,
             device = actionHeartRate.device
         )
-        disposable += persistenceLayer.insertOrUpdateHeartRate(hr).subscribe()
+        appScope.launch { persistenceLayer.insertOrUpdateHeartRate(hr) }
     }
 
     private fun handleStepsCount(actionStepsRate: EventData.ActionStepsRate) {
@@ -1905,7 +1914,7 @@ class DataHandlerMobile @Inject constructor(
             steps180min = actionStepsRate.steps180min,
             device = actionStepsRate.device
         )
-        disposable += persistenceLayer.insertOrUpdateStepsCount(stepsCount).subscribe()
+        appScope.launch { persistenceLayer.insertOrUpdateStepsCount(stepsCount) }
     }
 
     private fun handleGetCustomWatchface(command: EventData.ActionGetCustomWatchface) {

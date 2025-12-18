@@ -62,9 +62,11 @@ class TomatoPlugin @Inject constructor(
                 trendArrow = TrendArrow.NONE,
                 sourceSensor = SourceSensor.LIBRE_1_TOMATO
             )
-            persistenceLayer.insertCgmSourceData(Sources.Tomato, glucoseValues, emptyList(), null)
-                .doOnError { ret = Result.failure(workDataOf("Error" to it.toString())) }
-                .blockingGet()
+            try {
+                persistenceLayer.insertCgmSourceData(Sources.Tomato, glucoseValues, emptyList(), null)
+            } catch (e: Exception) {
+                ret = Result.failure(workDataOf("Error" to e.toString()))
+            }
             return ret
         }
     }

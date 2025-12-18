@@ -28,6 +28,7 @@ import app.aaps.core.objects.extensions.toTemporaryBasal
 import app.aaps.core.utils.MidnightUtils
 import app.aaps.plugins.aps.autotune.data.ATProfile
 import app.aaps.plugins.aps.autotune.data.LocalInsulin
+import kotlinx.coroutines.runBlocking
 import org.json.JSONArray
 import org.json.JSONObject
 import javax.inject.Inject
@@ -54,7 +55,7 @@ open class AutotuneIob @Inject constructor(
     private var endBG: Long = 0
     private fun range(): Long = (60 * 60 * 1000L * dia + T.hours(2).msecs()).toLong()
 
-    fun initializeData(from: Long, to: Long, tunedProfile: ATProfile) {
+    suspend fun initializeData(from: Long, to: Long, tunedProfile: ATProfile) {
         dia = tunedProfile.dia
         startBG = from
         endBG = to
@@ -90,7 +91,7 @@ open class AutotuneIob @Inject constructor(
         boluses = ArrayList(boluses.toList().sortedWith { o1: BS, o2: BS -> if (o2.timestamp > o1.timestamp) 1 else -1 })
     }
 
-    private fun initializeBgReadings(from: Long, to: Long) {
+    private suspend fun initializeBgReadings(from: Long, to: Long) {
         glucose = persistenceLayer.getBgReadingsDataFromTimeToTime(from, to, false)
     }
 
@@ -101,7 +102,7 @@ open class AutotuneIob @Inject constructor(
             LTag.AUTOTUNE,
             "Check BG date: BG Size: " + glucose.size + " OldestBG: " + dateUtil.dateAndTimeAndSecondsString(oldestBgDate) + " to: " + dateUtil.dateAndTimeAndSecondsString(to)
         )
-        val tmpCarbs = persistenceLayer.getCarbsFromTimeToTimeExpanded(from, to, false)
+        val tmpCarbs = runBlocking { persistenceLayer.getCarbsFromTimeToTimeExpanded(from, to, false) }
         aapsLogger.debug(LTag.AUTOTUNE, "Nb treatments after query: " + tmpCarbs.size)
         var nbCarbs = 0
         for (i in tmpCarbs.indices) {
@@ -114,7 +115,7 @@ open class AutotuneIob @Inject constructor(
                     nbCarbs++
             }
         }
-        val tmpBolus = persistenceLayer.getBolusesFromTimeToTime(from, to, false)
+        val tmpBolus = runBlocking { persistenceLayer.getBolusesFromTimeToTime(from, to, false) }
         var nbSMB = 0
         var nbBolus = 0
         for (i in tmpBolus.indices) {
@@ -136,7 +137,7 @@ open class AutotuneIob @Inject constructor(
 
     //nsTreatment is used only for export data
     private fun initializeTempBasalData(from: Long, to: Long, tunedProfile: ATProfile) {
-        val tBRs = persistenceLayer.getTemporaryBasalsStartingFromTimeToTime(from, to, false)
+        val tBRs = runBlocking { persistenceLayer.getTemporaryBasalsStartingFromTimeToTime(from, to, false) }
         //log.debug("D/AutotunePlugin tempBasal size before cleaning:" + tBRs.size);
         for (i in tBRs.indices) {
             if (tBRs[i].isValid)
@@ -147,7 +148,7 @@ open class AutotuneIob @Inject constructor(
 
     //nsTreatment is used only for export data
     private fun initializeExtendedBolusData(from: Long, to: Long, tunedProfile: ATProfile) {
-        val extendedBoluses = persistenceLayer.getExtendedBolusesStartingFromTimeToTime(from, to, false)
+        val extendedBoluses = runBlocking { persistenceLayer.getExtendedBolusesStartingFromTimeToTime(from, to, false) }
         for (i in extendedBoluses.indices) {
             val eb = extendedBoluses[i]
             if (eb.isValid)

@@ -26,6 +26,7 @@ import app.aaps.core.interfaces.utils.fabric.FabricPrivacy
 import app.aaps.core.keys.interfaces.Preferences
 import app.aaps.plugins.source.keys.GlunovoLongKey
 import io.reactivex.rxjava3.disposables.CompositeDisposable
+import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -147,7 +148,7 @@ class GlunovoPlugin @Inject constructor(
                 cr.close()
 
                 if (glucoseValues.isNotEmpty() || calibrations.isNotEmpty())
-                    persistenceLayer.insertCgmSourceData(Sources.Glunovo, glucoseValues, calibrations, null).blockingGet()
+                    runBlocking { persistenceLayer.insertCgmSourceData(Sources.Glunovo, glucoseValues, calibrations, null) }
             }
         } catch (e: SecurityException) {
             aapsLogger.error(LTag.CORE, "Exception", e)

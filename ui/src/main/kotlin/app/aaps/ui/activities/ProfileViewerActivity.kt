@@ -49,6 +49,7 @@ import app.aaps.ui.compose.ProfileSingleContent
 import app.aaps.ui.compose.ProfileViewerData
 import app.aaps.ui.compose.ProfileViewerScreen
 import dagger.android.support.DaggerAppCompatActivity
+import kotlinx.coroutines.runBlocking
 import org.json.JSONObject
 import java.text.DecimalFormat
 import javax.inject.Inject
@@ -258,7 +259,7 @@ class ProfileViewerActivity : DaggerAppCompatActivity() {
         return when (mode) {
             // Show the effective profile that was active at the specified time
             UiInteraction.Mode.RUNNING_PROFILE -> {
-                val eps = persistenceLayer.getEffectiveProfileSwitchActiveAt(time)
+                val eps = runBlocking { persistenceLayer.getEffectiveProfileSwitchActiveAt(time) }
                 if (eps == null) {
                     finish()
                     ProfileViewerData(
@@ -314,7 +315,7 @@ class ProfileViewerActivity : DaggerAppCompatActivity() {
             }
 
             UiInteraction.Mode.DB_PROFILE      -> {
-                val profileList = persistenceLayer.getProfileSwitches()
+                val profileList = runBlocking { persistenceLayer.getProfileSwitches() }
                 val profile = if (profileList.isNotEmpty()) ProfileSealed.PS(profileList[0], activePlugin) else null
                 val validity = profile?.isValid("ProfileViewDialog", activePlugin.activePump, config, rh, rxBus, hardLimits, false)
                 ProfileViewerData(

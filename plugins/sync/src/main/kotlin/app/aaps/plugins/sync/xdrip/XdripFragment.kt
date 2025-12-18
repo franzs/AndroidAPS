@@ -12,6 +12,7 @@ import android.view.ViewGroup
 import androidx.core.view.MenuCompat
 import androidx.core.view.MenuProvider
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
 import app.aaps.core.interfaces.configuration.Config
 import app.aaps.core.interfaces.logging.AAPSLogger
 import app.aaps.core.interfaces.plugin.PluginBase
@@ -28,6 +29,7 @@ import app.aaps.plugins.sync.xdrip.events.EventXdripUpdateGUI
 import dagger.android.support.DaggerFragment
 import io.reactivex.rxjava3.disposables.CompositeDisposable
 import io.reactivex.rxjava3.kotlin.plusAssign
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 class XdripFragment : DaggerFragment(), MenuProvider, PluginFragment {
@@ -81,7 +83,7 @@ class XdripFragment : DaggerFragment(), MenuProvider, PluginFragment {
             ID_MENU_FULL_SYNC -> {
                 uiInteraction.showOkCancelDialog(
                     context = requireActivity(), title = R.string.xdrip, message = R.string.full_xdrip_sync_comment,
-                    ok = { handler.post { dataSyncSelector.resetToNextFullSync() } }
+                    ok = { lifecycleScope.launch { dataSyncSelector.resetToNextFullSync() } }
                 )
                 true
             }

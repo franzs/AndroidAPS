@@ -13,6 +13,7 @@ import app.aaps.core.interfaces.aps.Loop
 import app.aaps.core.interfaces.constraints.ConstraintsChecker
 import app.aaps.core.interfaces.db.PersistenceLayer
 import app.aaps.core.interfaces.db.ProcessedTbrEbData
+import app.aaps.core.interfaces.di.ApplicationScope
 import app.aaps.core.interfaces.iob.IobCobCalculator
 import app.aaps.core.interfaces.logging.AAPSLogger
 import app.aaps.core.interfaces.logging.LTag
@@ -27,7 +28,9 @@ import app.aaps.core.keys.UnitDoubleKey
 import app.aaps.core.keys.interfaces.Preferences
 import app.aaps.core.objects.extensions.convertedToPercent
 import io.reactivex.rxjava3.disposables.CompositeDisposable
-import io.reactivex.rxjava3.kotlin.plusAssign
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import java.time.Clock
 import java.time.Instant
 import javax.inject.Inject
@@ -48,7 +51,8 @@ class LoopHubImpl @Inject constructor(
     private val persistenceLayer: PersistenceLayer,
     private val userEntryLogger: UserEntryLogger,
     private val preferences: Preferences,
-    private val processedTbrEbData: ProcessedTbrEbData
+    private val processedTbrEbData: ProcessedTbrEbData,
+    @ApplicationScope private val appScope: CoroutineScope
 ) : LoopHub {
 
     val disposable = CompositeDisposable()
@@ -85,7 +89,7 @@ class LoopHubImpl @Inject constructor(
     /** Returns true if the current profile is set of a limited amount of time. */
     override val isTemporaryProfile: Boolean
         get() {
-            val ps = persistenceLayer.getEffectiveProfileSwitchActiveAt(clock.millis())
+            val ps = runBlocking { persistenceLayer.getEffectiveProfileSwitchActiveAt(clock.millis()) }
             return ps != null && ps.originalDuration > 0
         }
 
@@ -110,7 +114,9 @@ class LoopHubImpl @Inject constructor(
 
     /** Tells the loop algorithm that the pump is physically connected. */
     override fun connectPump() {
-        disposable += persistenceLayer.cancelCurrentRunningMode(clock.millis(), Action.RECONNECT, Sources.Garmin).subscribe()
+        appScope.launch {
+            persistenceLayer.cancelCurrentRunningMode(clock.millis(), Action.RECONNECT, Sources.Garmin)
+        }
         commandQueue.cancelTempBasal(enforceNew = true, callback = null)
     }
 
@@ -130,9 +136,8 @@ class LoopHubImpl @Inject constructor(
     }
 
     /** Retrieves the glucose values starting at from. */
-    override fun getGlucoseValues(from: Instant, ascending: Boolean): List<GV> {
-        return persistenceLayer.getBgReadingsDataFromTime(from.toEpochMilli(), ascending)
-            .blockingGet()
+    override fun getGlucoseValues(from: Instant, ascending: Boolean): List<GV> = runBlocking {
+        persistenceLayer.getBgReadingsDataFromTime(from.toEpochMilli(), ascending)
     }
 
     /** Notifies the system that carbs were eaten and stores the value. */
@@ -166,6 +171,8 @@ class LoopHubImpl @Inject constructor(
             beatsPerMinute = avgHeartRate.toDouble(),
             device = device ?: "Garmin",
         )
-        disposable += persistenceLayer.insertOrUpdateHeartRate(hr).subscribe()
+        appScope.launch {
+            persistenceLayer.insertOrUpdateHeartRate(hr)
+        }
     }
 }

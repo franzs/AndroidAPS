@@ -27,6 +27,7 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
 
 /**
@@ -180,16 +181,18 @@ class CareportalViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 selected.forEach { te ->
-                    persistenceLayer.invalidateTherapyEvent(
-                        id = te.id,
-                        action = Action.CAREPORTAL_REMOVED,
-                        source = Sources.Treatments,
-                        note = te.note,
-                        listValues = listOf(
-                            ValueWithUnit.Timestamp(te.timestamp),
-                            ValueWithUnit.TEType(te.type)
+                    runBlocking {
+                        persistenceLayer.invalidateTherapyEvent(
+                            id = te.id,
+                            action = Action.CAREPORTAL_REMOVED,
+                            source = Sources.Treatments,
+                            note = te.note,
+                            listValues = listOf(
+                                ValueWithUnit.Timestamp(te.timestamp),
+                                ValueWithUnit.TEType(te.type)
+                            )
                         )
-                    ).blockingGet()
+                    }
                 }
                 exitSelectionMode()
                 loadData()
