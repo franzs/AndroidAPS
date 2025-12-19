@@ -24,9 +24,12 @@ import app.aaps.core.interfaces.db.PersistenceLayer
 import app.aaps.core.interfaces.logging.AAPSLogger
 import app.aaps.core.interfaces.plugin.PluginBase
 import app.aaps.core.interfaces.plugin.PluginDescription
+import app.aaps.core.interfaces.profile.ProfileUtil
 import app.aaps.core.interfaces.pump.VirtualPump
 import app.aaps.core.interfaces.resources.ResourceHelper
 import app.aaps.core.interfaces.source.BgSource
+import app.aaps.core.interfaces.ui.UiInteraction
+import app.aaps.core.interfaces.utils.DateUtil
 import app.aaps.core.keys.BooleanKey
 import app.aaps.core.keys.IntKey
 import app.aaps.core.keys.interfaces.Preferences
@@ -51,11 +54,25 @@ class RandomBgPlugin @Inject constructor(
     private val persistenceLayer: PersistenceLayer,
     private val virtualPump: VirtualPump,
     private val preferences: Preferences,
-    private val config: Config
+    private val config: Config,
+    dateUtil: DateUtil,
+    profileUtil: ProfileUtil,
+    uiInteraction: UiInteraction
 ) : PluginBase(
     PluginDescription()
         .mainType(PluginType.BGSOURCE)
         .fragmentClass(BGSourceFragment::class.java.name)
+        .composeContent {
+            BgSourceComposeContent(
+                persistenceLayer = persistenceLayer,
+                rh = rh,
+                dateUtil = dateUtil,
+                profileUtil = profileUtil,
+                aapsLogger = aapsLogger,
+                uiInteraction = uiInteraction,
+                title = rh.gs(R.string.random_bg)
+            )
+        }
         .pluginIcon(R.drawable.ic_dice)
         .preferencesId(PluginDescription.PREFERENCE_SCREEN)
         .pluginName(R.string.random_bg)

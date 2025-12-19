@@ -14,11 +14,11 @@ import androidx.compose.ui.unit.dp
 import app.aaps.ui.R
 
 /**
- * Container for treatment screen content that handles loading and empty states.
+ * Container for screen content that handles loading and empty states.
  * Shows loading indicator, empty message, or content based on state.
  */
 @Composable
-fun TreatmentContentContainer(
+fun ContentContainer(
     isLoading: Boolean,
     isEmpty: Boolean,
     modifier: Modifier = Modifier,

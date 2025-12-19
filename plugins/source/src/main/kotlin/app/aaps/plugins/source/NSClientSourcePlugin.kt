@@ -5,12 +5,16 @@ import app.aaps.core.data.model.GV
 import app.aaps.core.data.model.SourceSensor
 import app.aaps.core.data.plugin.PluginType
 import app.aaps.core.interfaces.configuration.Config
+import app.aaps.core.interfaces.db.PersistenceLayer
 import app.aaps.core.interfaces.logging.AAPSLogger
 import app.aaps.core.interfaces.plugin.PluginBase
 import app.aaps.core.interfaces.plugin.PluginDescription
+import app.aaps.core.interfaces.profile.ProfileUtil
 import app.aaps.core.interfaces.resources.ResourceHelper
 import app.aaps.core.interfaces.source.BgSource
 import app.aaps.core.interfaces.source.NSClientSource
+import app.aaps.core.interfaces.ui.UiInteraction
+import app.aaps.core.interfaces.utils.DateUtil
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -18,11 +22,26 @@ import javax.inject.Singleton
 class NSClientSourcePlugin @Inject constructor(
     rh: ResourceHelper,
     aapsLogger: AAPSLogger,
-    config: Config
+    config: Config,
+    persistenceLayer: PersistenceLayer,
+    dateUtil: DateUtil,
+    profileUtil: ProfileUtil,
+    uiInteraction: UiInteraction
 ) : PluginBase(
     PluginDescription()
         .mainType(PluginType.BGSOURCE)
         .fragmentClass(BGSourceFragment::class.java.name)
+        .composeContent {
+            BgSourceComposeContent(
+                persistenceLayer = persistenceLayer,
+                rh = rh,
+                dateUtil = dateUtil,
+                profileUtil = profileUtil,
+                aapsLogger = aapsLogger,
+                uiInteraction = uiInteraction,
+                title = rh.gs(R.string.ns_client_bg)
+            )
+        }
         .pluginIcon(app.aaps.core.objects.R.drawable.ic_nsclient_bg)
         .pluginName(R.string.ns_client_bg)
         .shortName(R.string.ns_client_bg_short)

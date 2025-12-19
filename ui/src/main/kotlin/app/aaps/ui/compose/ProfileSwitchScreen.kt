@@ -46,6 +46,7 @@ import app.aaps.core.interfaces.utils.DecimalFormatter
 import app.aaps.core.objects.extensions.getCustomizedName
 import app.aaps.core.objects.profile.ProfileSealed
 import app.aaps.core.ui.compose.AapsTheme
+import app.aaps.core.ui.compose.ToolbarConfig
 import app.aaps.core.ui.compose.icons.Ns
 import app.aaps.core.ui.compose.icons.Pump
 import app.aaps.ui.R
@@ -104,7 +105,7 @@ fun ProfileSwitchScreen(
 
     AapsTheme {
         Box(modifier = Modifier.fillMaxSize()) {
-            TreatmentContentContainer(
+            ContentContainer(
                 isLoading = uiState.isLoading,
                 isEmpty = uiState.profileSwitches.isEmpty()
             ) {

@@ -9,6 +9,7 @@ import app.aaps.core.data.model.TrendArrow
 import app.aaps.core.data.plugin.PluginType
 import app.aaps.core.data.ue.Sources
 import app.aaps.core.interfaces.db.PersistenceLayer
+import app.aaps.core.interfaces.ui.UiInteraction
 import app.aaps.plugins.source.keys.GlunovoLongKey
 import app.aaps.shared.tests.TestBaseWithProfile
 import kotlinx.coroutines.test.runTest
@@ -27,6 +28,7 @@ class GlunovoPluginTest : TestBaseWithProfile() {
     @Mock lateinit var persistenceLayer: PersistenceLayer
     @Mock lateinit var contentResolver: ContentResolver
     @Mock lateinit var cursor: Cursor
+    @Mock lateinit var uiInteraction: UiInteraction
 
     private lateinit var glunovoPlugin: GlunovoPlugin
 
@@ -38,7 +40,7 @@ class GlunovoPluginTest : TestBaseWithProfile() {
             whenever(persistenceLayer.insertCgmSourceData(anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull())).thenReturn(PersistenceLayer.TransactionResult())
         }
 
-        glunovoPlugin = GlunovoPlugin(rh, aapsLogger, preferences, context, persistenceLayer, dateUtil, fabricPrivacy)
+        glunovoPlugin = GlunovoPlugin(rh, aapsLogger, preferences, context, persistenceLayer, dateUtil, fabricPrivacy, profileUtil, uiInteraction)
 
         // Default cursor to be empty
         whenever(cursor.isAfterLast).thenReturn(true)

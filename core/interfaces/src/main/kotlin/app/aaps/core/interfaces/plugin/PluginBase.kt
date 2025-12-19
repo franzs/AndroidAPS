@@ -73,6 +73,14 @@ abstract class PluginBase(
         return pluginDescription.fragmentClass != null
     }
 
+    fun hasComposeContent(): Boolean {
+        return pluginDescription.composeContentProvider != null
+    }
+
+    fun getComposeContent(): PluginComposeContent? {
+        return pluginDescription.composeContentProvider?.invoke()
+    }
+
     fun isDefault() = pluginDescription.defaultPlugin
 
     /**

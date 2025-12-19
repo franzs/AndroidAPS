@@ -1,0 +1,338 @@
+package app.aaps.plugins.source.compose
+
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.aaps.core.data.model.GV
+import app.aaps.core.data.time.T
+import app.aaps.core.interfaces.resources.ResourceHelper
+import app.aaps.core.interfaces.ui.UiInteraction
+import app.aaps.core.interfaces.utils.DateUtil
+import app.aaps.core.objects.extensions.directionToIcon
+import app.aaps.core.ui.compose.AapsTheme
+import app.aaps.core.ui.compose.ToolbarConfig
+import app.aaps.core.ui.compose.icons.Ns
+import app.aaps.plugins.source.viewmodels.BgSourceViewModel
+import app.aaps.ui.compose.ContentContainer
+import app.aaps.ui.compose.SelectableListToolbar
+import app.aaps.ui.compose.components.ErrorSnackbar
+import kotlinx.coroutines.flow.distinctUntilChanged
+
+/**
+ * Composable screen displaying blood glucose readings in a list grouped by day.
+ *
+ * @param viewModel ViewModel managing state and business logic
+ * @param uiInteraction UI interaction helper for showing dialogs
+ * @param title Title to display in the toolbar
+ * @param setToolbarConfig Lambda to set toolbar configuration
+ * @param onNavigateBack Lambda to handle back navigation
+ */
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+fun BgSourceScreen(
+    viewModel: BgSourceViewModel,
+    uiInteraction: UiInteraction,
+    title: String,
+    setToolbarConfig: (ToolbarConfig) -> Unit,
+    onNavigateBack: () -> Unit = { },
+    onSettings: (() -> Unit)? = null
+) {
+    val context = LocalContext.current
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    // Update toolbar configuration whenever state changes
+    LaunchedEffect(uiState.isRemovingMode, uiState.selectedItems.size) {
+        setToolbarConfig(
+            SelectableListToolbar(
+                isRemovingMode = uiState.isRemovingMode,
+                selectedCount = uiState.selectedItems.size,
+                onExitRemovingMode = { viewModel.exitSelectionMode() },
+                onNavigateBack = onNavigateBack,
+                onDelete = {
+                    if (uiState.selectedItems.isNotEmpty()) {
+                        uiInteraction.showOkCancelDialog(
+                            context = context,
+                            title = viewModel.rh.gs(app.aaps.core.ui.R.string.removerecord),
+                            message = viewModel.getDeleteConfirmationMessage(),
+                            ok = { viewModel.deleteSelected() }
+                        )
+                    }
+                },
+                rh = viewModel.rh,
+                title = title,
+                onSettings = onSettings
+            )
+        )
+    }
+
+    AapsTheme {
+        Box(modifier = Modifier.fillMaxSize()) {
+            ContentContainer(
+                isLoading = uiState.isLoading,
+                isEmpty = uiState.glucoseValues.isEmpty()
+            ) {
+                val haptic = LocalHapticFeedback.current
+
+                BgSourceLazyColumn(
+                    items = uiState.glucoseValues,
+                    dateUtil = viewModel.dateUtil,
+                    rh = viewModel.rh,
+                    onLoadMore = { viewModel.loadMoreData() },
+                    itemContent = { gv, isDuplicate ->
+                        GlucoseValueItem(
+                            glucoseValue = gv,
+                            isRemovingMode = uiState.isRemovingMode,
+                            isSelected = gv in uiState.selectedItems,
+                            isDuplicate = isDuplicate,
+                            onClick = {
+                                if (uiState.isRemovingMode && gv.isValid) {
+                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                    viewModel.toggleSelection(gv)
+                                }
+                            },
+                            onLongPress = {
+                                if (gv.isValid && !uiState.isRemovingMode) {
+                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                    viewModel.enterSelectionMode(gv)
+                                }
+                            },
+                            dateUtil = viewModel.dateUtil,
+                            viewModel = viewModel
+                        )
+                    }
+                )
+            }
+
+            // Error display
+            ErrorSnackbar(
+                error = uiState.error,
+                onDismiss = { viewModel.clearError() },
+                modifier = Modifier.align(Alignment.BottomCenter)
+            )
+        }
+    }
+}
+
+/**
+ * LazyColumn with sticky date headers and infinite scroll support.
+ * Loads more data when scrolling near the bottom of the list.
+ */
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun BgSourceLazyColumn(
+    items: List<GV>,
+    dateUtil: DateUtil,
+    rh: ResourceHelper,
+    onLoadMore: () -> Unit,
+    itemContent: @Composable (GV, Boolean) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val listState = rememberLazyListState()
+
+    // Group items by day
+    val groupedByDay by remember(items) {
+        derivedStateOf {
+            items.groupBy { gv ->
+                dateUtil.dateString(gv.timestamp)
+            }
+        }
+    }
+
+    // Detect when scrolled near bottom and load more data
+    LaunchedEffect(listState) {
+        snapshotFlow {
+            val layoutInfo = listState.layoutInfo
+            val totalItemsCount = layoutInfo.totalItemsCount
+            val lastVisibleItemIndex = layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
+            lastVisibleItemIndex >= totalItemsCount - 3 && totalItemsCount > 0
+        }
+            .distinctUntilChanged()
+            .collect { isNearBottom ->
+                if (isNearBottom) {
+                    onLoadMore()
+                }
+            }
+    }
+
+    LazyColumn(
+        state = listState,
+        modifier = modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.spacedBy(2.dp)
+    ) {
+        groupedByDay.forEach { (dateString, itemsForDay) ->
+            stickyHeader(key = dateString) {
+                Text(
+                    text = dateUtil.dateStringRelative(itemsForDay.first().timestamp, rh),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(MaterialTheme.colorScheme.surface)
+                        .padding(horizontal = 8.dp, vertical = 6.dp),
+                    textAlign = TextAlign.Center,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
+
+            items(
+                items = itemsForDay,
+                key = { it.id }
+            ) { gv ->
+                // Check if this item is too close to the previous one (duplicate detection)
+                val index = items.indexOf(gv)
+                val isDuplicate = if (index > 0) {
+                    val previous = items[index - 1]
+                    (previous.timestamp - gv.timestamp) < T.secs(20).msecs()
+                } else false
+
+                Box(modifier = Modifier.animateItem()) {
+                    itemContent(gv, isDuplicate)
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun GlucoseValueItem(
+    glucoseValue: GV,
+    isRemovingMode: Boolean,
+    isSelected: Boolean,
+    isDuplicate: Boolean,
+    onClick: () -> Unit,
+    onLongPress: () -> Unit,
+    dateUtil: DateUtil,
+    viewModel: BgSourceViewModel
+) {
+    val duplicateColor = AapsTheme.generalColors.invalidatedRecord
+    val backgroundColor = when {
+        isSelected -> MaterialTheme.colorScheme.secondaryContainer
+        isDuplicate -> duplicateColor.copy(alpha = 0.3f)
+        else -> MaterialTheme.colorScheme.surface
+    }
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 2.dp)
+            .combinedClickable(
+                onClick = onClick,
+                onLongClick = onLongPress
+            ),
+        colors = CardDefaults.cardColors(
+            containerColor = backgroundColor
+        )
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp, vertical = 6.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Time
+            Text(
+                text = dateUtil.timeStringWithSeconds(glucoseValue.timestamp),
+                fontSize = 14.sp,
+                maxLines = 1
+            )
+
+            // Glucose value + Arrow together
+            Text(
+                text = viewModel.profileUtil.fromMgdlToStringInUnits(glucoseValue.value),
+                modifier = Modifier.padding(start = 12.dp),
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold,
+                maxLines = 1
+            )
+
+            Icon(
+                painter = painterResource(id = glucoseValue.trendArrow.directionToIcon()),
+                contentDescription = glucoseValue.trendArrow.name,
+                modifier = Modifier
+                    .padding(start = 4.dp)
+                    .size(20.dp)
+            )
+
+            // Source sensor
+            Text(
+                text = glucoseValue.sourceSensor.text,
+                modifier = Modifier.padding(start = 12.dp),
+                fontSize = 12.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1
+            )
+
+            // Spacer to push badges to the right
+            Box(modifier = Modifier.weight(1f))
+
+            // NS badge
+            if (glucoseValue.ids.nightscoutId != null) {
+                Icon(
+                    imageVector = Ns,
+                    contentDescription = stringResource(app.aaps.core.ui.R.string.ns),
+                    modifier = Modifier
+                        .size(21.dp)
+                        .padding(start = 5.dp)
+                )
+            }
+
+            // Invalid badge (shown if record was invalidated)
+            if (!glucoseValue.isValid) {
+                Icon(
+                    imageVector = Icons.Filled.Delete,
+                    contentDescription = stringResource(app.aaps.core.ui.R.string.invalid),
+                    modifier = Modifier
+                        .size(21.dp)
+                        .padding(start = 5.dp),
+                    tint = AapsTheme.generalColors.invalidatedRecord
+                )
+            }
+
+            // Checkbox for removal mode
+            if (isRemovingMode && glucoseValue.isValid) {
+                Checkbox(
+                    checked = isSelected,
+                    onCheckedChange = { onClick() },
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+        }
+    }
+}

@@ -11,10 +11,12 @@ import app.aaps.core.data.model.SourceSensor
 import app.aaps.core.data.model.TrendArrow
 import app.aaps.core.interfaces.db.PersistenceLayer
 import app.aaps.core.interfaces.logging.L
+import app.aaps.core.interfaces.logging.UserEntryLogger
 import app.aaps.core.interfaces.nsclient.NSClientMvvmRepository
 import app.aaps.core.interfaces.nsclient.StoreDataForDb
 import app.aaps.core.interfaces.receivers.ReceiverStatusStore
 import app.aaps.core.interfaces.source.NSClientSource
+import app.aaps.core.interfaces.ui.UiInteraction
 import app.aaps.core.keys.BooleanKey
 import app.aaps.core.nssdk.interfaces.NSAndroidClient
 import app.aaps.core.nssdk.remotemodel.LastModified
@@ -52,6 +54,8 @@ internal class LoadBgWorkerTest : TestBaseWithProfile() {
     @Mock lateinit var l: L
     @Mock lateinit var nsIncomingDataProcessor: NsIncomingDataProcessor
     @Mock lateinit var nsClientMvvmRepository: NSClientMvvmRepository
+    @Mock lateinit var uiInteraction: UiInteraction
+    @Mock lateinit var uel: UserEntryLogger
 
     private lateinit var nsClientV3Plugin: NSClientV3Plugin
     private lateinit var receiverDelegate: ReceiverDelegate
@@ -82,7 +86,7 @@ internal class LoadBgWorkerTest : TestBaseWithProfile() {
         nsClientV3Plugin = NSClientV3Plugin(
             aapsLogger, rh, preferences, aapsSchedulers, rxBus, context, fabricPrivacy,
             receiverDelegate, config, dateUtil, dataSyncSelectorV3, persistenceLayer,
-            nsClientSource, storeDataForDb, decimalFormatter, l, nsClientMvvmRepository
+            nsClientSource, storeDataForDb, decimalFormatter, l, nsClientMvvmRepository, uiInteraction, uel, activePlugin
         )
         nsClientV3Plugin.newestDataOnServer = LastModified(LastModified.Collections())
     }

@@ -10,9 +10,9 @@ import app.aaps.core.interfaces.logging.AAPSLogger
 import app.aaps.core.interfaces.logging.LTag
 import app.aaps.core.interfaces.resources.ResourceHelper
 import app.aaps.core.interfaces.utils.DateUtil
+import app.aaps.core.ui.compose.ToolbarConfig
 import app.aaps.ui.compose.MenuItemData
-import app.aaps.ui.compose.ToolbarConfig
-import app.aaps.ui.compose.TreatmentScreenToolbar
+import app.aaps.ui.compose.SelectableListToolbar
 import app.aaps.ui.viewmodels.TreatmentConstants.USER_ENTRY_FILTERED_DAYS
 import app.aaps.ui.viewmodels.TreatmentConstants.USER_ENTRY_UNFILTERED_DAYS
 import kotlinx.coroutines.FlowPreview
@@ -117,7 +117,7 @@ class UserEntryViewModel @Inject constructor(
      */
     fun getToolbarConfig(onNavigateBack: () -> Unit, menuItems: List<MenuItemData>): ToolbarConfig {
         val state = _uiState.value
-        return TreatmentScreenToolbar(
+        return SelectableListToolbar(
             isRemovingMode = false,
             selectedCount = 0,
             onExitRemovingMode = { },

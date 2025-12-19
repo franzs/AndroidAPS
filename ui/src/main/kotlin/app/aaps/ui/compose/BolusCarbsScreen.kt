@@ -48,6 +48,7 @@ import app.aaps.core.interfaces.utils.DateUtil
 import app.aaps.core.interfaces.utils.DecimalFormatter
 import app.aaps.core.objects.extensions.iobCalc
 import app.aaps.core.ui.compose.AapsTheme
+import app.aaps.core.ui.compose.ToolbarConfig
 import app.aaps.core.ui.compose.icons.Calculator
 import app.aaps.core.ui.compose.icons.Carbs
 import app.aaps.core.ui.compose.icons.Ns
@@ -83,7 +84,7 @@ fun BolusCarbsScreen(
     // Update toolbar configuration whenever state changes
     LaunchedEffect(uiState.isRemovingMode, uiState.selectedItems.size, uiState.showInvalidated) {
         setToolbarConfig(
-            TreatmentScreenToolbar(
+            SelectableListToolbar(
                 isRemovingMode = uiState.isRemovingMode,
                 selectedCount = uiState.selectedItems.size,
                 onExitRemovingMode = { viewModel.exitSelectionMode() },
@@ -107,7 +108,7 @@ fun BolusCarbsScreen(
 
     AapsTheme {
         Box(modifier = Modifier.fillMaxSize()) {
-            TreatmentContentContainer(
+            ContentContainer(
                 isLoading = uiState.isLoading,
                 isEmpty = uiState.mealLinks.isEmpty()
             ) {

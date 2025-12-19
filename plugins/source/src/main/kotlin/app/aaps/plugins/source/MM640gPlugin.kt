@@ -13,8 +13,10 @@ import app.aaps.core.interfaces.db.PersistenceLayer
 import app.aaps.core.interfaces.logging.AAPSLogger
 import app.aaps.core.interfaces.logging.LTag
 import app.aaps.core.interfaces.plugin.PluginDescription
+import app.aaps.core.interfaces.profile.ProfileUtil
 import app.aaps.core.interfaces.resources.ResourceHelper
 import app.aaps.core.interfaces.source.BgSource
+import app.aaps.core.interfaces.ui.UiInteraction
 import app.aaps.core.interfaces.utils.DateUtil
 import app.aaps.core.keys.interfaces.Preferences
 import app.aaps.core.objects.workflow.LoggingWorker
@@ -28,11 +30,26 @@ import javax.inject.Singleton
 class MM640gPlugin @Inject constructor(
     rh: ResourceHelper,
     aapsLogger: AAPSLogger,
-    preferences: Preferences
+    preferences: Preferences,
+    persistenceLayer: PersistenceLayer,
+    dateUtil: DateUtil,
+    profileUtil: ProfileUtil,
+    uiInteraction: UiInteraction
 ) : AbstractBgSourcePlugin(
     pluginDescription = PluginDescription()
         .mainType(PluginType.BGSOURCE)
         .fragmentClass(BGSourceFragment::class.java.name)
+        .composeContent {
+            BgSourceComposeContent(
+                persistenceLayer = persistenceLayer,
+                rh = rh,
+                dateUtil = dateUtil,
+                profileUtil = profileUtil,
+                aapsLogger = aapsLogger,
+                uiInteraction = uiInteraction,
+                title = rh.gs(R.string.mm640g)
+            )
+        }
         .preferencesId(PluginDescription.PREFERENCE_SCREEN)
         .pluginIcon(app.aaps.core.objects.R.drawable.ic_generic_cgm)
         .pluginName(R.string.mm640g)

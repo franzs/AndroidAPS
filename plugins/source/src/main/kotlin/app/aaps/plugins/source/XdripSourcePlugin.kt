@@ -17,10 +17,12 @@ import app.aaps.core.interfaces.db.PersistenceLayer
 import app.aaps.core.interfaces.logging.AAPSLogger
 import app.aaps.core.interfaces.logging.LTag
 import app.aaps.core.interfaces.plugin.PluginDescription
+import app.aaps.core.interfaces.profile.ProfileUtil
 import app.aaps.core.interfaces.receivers.Intents
 import app.aaps.core.interfaces.resources.ResourceHelper
 import app.aaps.core.interfaces.source.BgSource
 import app.aaps.core.interfaces.source.XDripSource
+import app.aaps.core.interfaces.ui.UiInteraction
 import app.aaps.core.interfaces.utils.DateUtil
 import app.aaps.core.keys.BooleanKey
 import app.aaps.core.keys.interfaces.Preferences
@@ -35,11 +37,26 @@ import kotlin.math.round
 @Singleton
 class XdripSourcePlugin @Inject constructor(
     rh: ResourceHelper,
-    aapsLogger: AAPSLogger
+    aapsLogger: AAPSLogger,
+    persistenceLayer: PersistenceLayer,
+    dateUtil: DateUtil,
+    profileUtil: ProfileUtil,
+    uiInteraction: UiInteraction
 ) : AbstractBgSourceWithSensorInsertLogPlugin(
     PluginDescription()
         .mainType(PluginType.BGSOURCE)
         .fragmentClass(BGSourceFragment::class.java.name)
+        .composeContent {
+            BgSourceComposeContent(
+                persistenceLayer = persistenceLayer,
+                rh = rh,
+                dateUtil = dateUtil,
+                profileUtil = profileUtil,
+                aapsLogger = aapsLogger,
+                uiInteraction = uiInteraction,
+                title = rh.gs(R.string.source_xdrip)
+            )
+        }
         .pluginIcon((app.aaps.core.objects.R.drawable.ic_blooddrop_48))
         .preferencesId(PluginDescription.PREFERENCE_SCREEN)
         .pluginName(R.string.source_xdrip)

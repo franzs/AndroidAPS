@@ -6,6 +6,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.DropdownMenu
@@ -20,9 +21,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import app.aaps.core.interfaces.resources.ResourceHelper
+import app.aaps.core.ui.compose.ToolbarConfig
 
 /**
- * Reusable toolbar builder for treatment screens with two modes:
+ * Reusable toolbar builder for screens with selectable list items.
+ * Supports two modes:
  * - Normal mode: Shows title, back button, and optional toggle/menu actions
  * - Selection mode: Shows selected count, close button, and delete action
  *
@@ -32,23 +35,27 @@ import app.aaps.core.interfaces.resources.ResourceHelper
  * @param onNavigateBack Called when user presses back button (normal mode)
  * @param onDelete Called when user presses delete button (selection mode)
  * @param rh Resource helper for string resources
+ * @param title Title to display in normal mode
  * @param showInvalidated Optional: Current state of show/hide invalidated toggle (null to hide toggle)
  * @param onToggleInvalidated Optional: Called when show/hide invalidated is toggled
  * @param showLoop Optional: Current state of show/hide loop toggle (null to hide toggle)
  * @param onToggleLoop Optional: Called when show/hide loop is toggled
+ * @param onSettings Optional: Called when settings icon is clicked (null to hide icon)
  * @param menuItems Optional: List of dropdown menu items with label and onClick
  */
-fun TreatmentScreenToolbar(
+fun SelectableListToolbar(
     isRemovingMode: Boolean,
     selectedCount: Int,
     onExitRemovingMode: () -> Unit,
     onNavigateBack: () -> Unit,
     onDelete: () -> Unit,
     rh: ResourceHelper,
+    title: String = "",
     showInvalidated: Boolean? = null,
     onToggleInvalidated: (() -> Unit)? = null,
     showLoop: Boolean? = null,
     onToggleLoop: (() -> Unit)? = null,
+    onSettings: (() -> Unit)? = null,
     menuItems: List<MenuItemData> = emptyList()
 ): ToolbarConfig {
     return if (isRemovingMode) {
@@ -77,7 +84,7 @@ fun TreatmentScreenToolbar(
     } else {
         // Normal mode: show title, back icon, and optional actions
         ToolbarConfig(
-            title = rh.gs(app.aaps.core.ui.R.string.treatments),
+            title = title,
             navigationIcon = {
                 IconButton(onClick = onNavigateBack) {
                     Icon(
@@ -113,6 +120,16 @@ fun TreatmentScreenToolbar(
                 // Dropdown menu (if menu items provided)
                 if (menuItems.isNotEmpty()) {
                     MenuDropdown(menuItems = menuItems, rh = rh)
+                }
+
+                // Settings button (if provided)
+                if (onSettings != null) {
+                    IconButton(onClick = onSettings) {
+                        Icon(
+                            imageVector = Icons.Default.Settings,
+                            contentDescription = rh.gs(app.aaps.core.ui.R.string.nav_plugin_preferences)
+                        )
+                    }
                 }
             }
         )

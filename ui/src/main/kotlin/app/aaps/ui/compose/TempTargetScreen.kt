@@ -42,6 +42,7 @@ import app.aaps.core.interfaces.utils.Translator
 import app.aaps.core.objects.extensions.highValueToUnitsToString
 import app.aaps.core.objects.extensions.lowValueToUnitsToString
 import app.aaps.core.ui.compose.AapsTheme
+import app.aaps.core.ui.compose.ToolbarConfig
 import app.aaps.core.ui.compose.icons.Ns
 import app.aaps.ui.R
 import app.aaps.ui.compose.components.ErrorSnackbar
@@ -98,7 +99,7 @@ fun TempTargetScreen(
 
     AapsTheme {
         Box(modifier = Modifier.fillMaxSize()) {
-            TreatmentContentContainer(
+            ContentContainer(
                 isLoading = uiState.isLoading,
                 isEmpty = uiState.tempTargets.isEmpty()
             ) {

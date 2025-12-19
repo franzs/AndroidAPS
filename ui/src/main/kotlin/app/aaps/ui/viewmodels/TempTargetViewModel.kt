@@ -15,8 +15,8 @@ import app.aaps.core.interfaces.profile.ProfileUtil
 import app.aaps.core.interfaces.resources.ResourceHelper
 import app.aaps.core.interfaces.utils.DateUtil
 import app.aaps.core.objects.extensions.friendlyDescription
-import app.aaps.ui.compose.ToolbarConfig
-import app.aaps.ui.compose.TreatmentScreenToolbar
+import app.aaps.core.ui.compose.ToolbarConfig
+import app.aaps.ui.compose.SelectableListToolbar
 import app.aaps.ui.viewmodels.TreatmentConstants.TREATMENT_HISTORY_DAYS
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
@@ -218,7 +218,7 @@ class TempTargetViewModel @Inject constructor(
      */
     fun getToolbarConfig(onNavigateBack: () -> Unit, onDeleteClick: () -> Unit): ToolbarConfig {
         val state = _uiState.value
-        return TreatmentScreenToolbar(
+        return SelectableListToolbar(
             isRemovingMode = state.isRemovingMode,
             selectedCount = state.selectedItems.size,
             onExitRemovingMode = { exitSelectionMode() },

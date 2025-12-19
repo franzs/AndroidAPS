@@ -2,7 +2,6 @@ package app.aaps.ui.compose
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -37,13 +36,13 @@ import app.aaps.core.interfaces.plugin.ActivePlugin
 import app.aaps.core.interfaces.profile.ProfileFunction
 import app.aaps.core.interfaces.profile.ProfileUtil
 import app.aaps.core.interfaces.resources.ResourceHelper
-import app.aaps.core.interfaces.rx.AapsSchedulers
 import app.aaps.core.interfaces.ui.UiInteraction
 import app.aaps.core.interfaces.userEntry.UserEntryPresentationHelper
 import app.aaps.core.interfaces.utils.DateUtil
 import app.aaps.core.interfaces.utils.DecimalFormatter
 import app.aaps.core.interfaces.utils.Translator
 import app.aaps.core.ui.compose.AapsTheme
+import app.aaps.core.ui.compose.ToolbarConfig
 import app.aaps.core.ui.compose.icons.Carbs
 import app.aaps.core.ui.compose.icons.Careportal
 import app.aaps.core.ui.compose.icons.ExtendedBolus
@@ -62,19 +61,6 @@ import app.aaps.ui.viewmodels.TempBasalViewModel
 import app.aaps.ui.viewmodels.TempTargetViewModel
 import app.aaps.ui.viewmodels.UserEntryViewModel
 import kotlinx.coroutines.launch
-
-/**
- * Configuration for the toolbar state.
- *
- * @param title The title to display in the toolbar
- * @param navigationIcon The navigation icon composable (back arrow or close icon)
- * @param actions The action buttons to display in the toolbar
- */
-data class ToolbarConfig(
-    val title: String,
-    val navigationIcon: @Composable () -> Unit,
-    val actions: @Composable RowScope.() -> Unit
-)
 
 /**
  * Composable screen displaying treatments with tab navigation.

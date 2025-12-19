@@ -21,6 +21,14 @@ open class PluginDescription {
 
     var mainType = PluginType.GENERAL
     var fragmentClass: String? = null
+
+    /**
+     * Compose content provider for plugins migrated to Jetpack Compose.
+     * When set, SingleFragmentActivity will use this instead of fragmentClass.
+     * This is a lazy provider that creates the content only when needed, avoiding
+     * early memory allocation for screens the user may never open.
+     */
+    var composeContentProvider: (() -> PluginComposeContent)? = null
     var alwaysVisible = false
     var neverVisible = false
     var alwaysEnabled = false
@@ -54,4 +62,5 @@ open class PluginDescription {
     fun setDefault(value: Boolean = true): PluginDescription = this.also { it.defaultPlugin = value }
     fun preferencesVisibleInSimpleMode(value: Boolean): PluginDescription = this.also { it.preferencesVisibleInSimpleMode = value }
     fun simpleModePosition(value: Position = Position.MENU): PluginDescription = this.also { it.simpleModePosition = value }
+    fun composeContent(provider: () -> PluginComposeContent): PluginDescription = this.also { it.composeContentProvider = provider }
 }

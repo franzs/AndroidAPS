@@ -13,15 +13,14 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Send
-import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.ExtendedFloatingActionButton
-import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -49,7 +48,9 @@ import androidx.compose.ui.text.withLink
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.aaps.core.interfaces.resources.ResourceHelper
 import app.aaps.core.interfaces.utils.DateUtil
+import app.aaps.core.ui.compose.ToolbarConfig
 import app.aaps.plugins.sync.R
 import app.aaps.plugins.sync.nsShared.mvvm.NSClientViewModel
 import kotlinx.serialization.json.Json
@@ -64,234 +65,216 @@ private const val JSON_COLLAPSED = "json_collapsed"
 fun NSClientScreen(
     viewModel: NSClientViewModel,
     dateUtil: DateUtil,
+    rh: ResourceHelper,
+    title: String,
+    setToolbarConfig: (ToolbarConfig) -> Unit,
+    onNavigateBack: () -> Unit,
     onPauseChanged: (Boolean) -> Unit,
     onClearLog: () -> Unit,
     onSendNow: () -> Unit,
     onFullSync: () -> Unit,
-    onSettings: () -> Unit,
+    onSettings: (() -> Unit)?,
     modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    var fabExpanded by remember { mutableStateOf(false) }
 
-    Box(
-        modifier = modifier.fillMaxSize()
+    // Set up toolbar
+    LaunchedEffect(Unit) {
+        setToolbarConfig(
+            ToolbarConfig(
+                title = title,
+                navigationIcon = {
+                    IconButton(onClick = onNavigateBack) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = rh.gs(app.aaps.core.ui.R.string.back)
+                        )
+                    }
+                },
+                actions = {
+                    // Settings button first (more accessible)
+                    if (onSettings != null) {
+                        IconButton(onClick = onSettings) {
+                            Icon(
+                                imageVector = Icons.Default.Settings,
+                                contentDescription = rh.gs(app.aaps.core.ui.R.string.nav_plugin_preferences)
+                            )
+                        }
+                    }
+                    // Overflow menu at far right (Material Design convention)
+                    NSClientMenu(
+                        rh = rh,
+                        onClearLog = onClearLog,
+                        onSendNow = onSendNow,
+                        onFullSync = onFullSync
+                    )
+                }
+            )
+        )
+    }
+
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
+        // URL row - only URL text is clickable
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            // URL row - only URL text is clickable
+            Text(
+                text = stringResource(R.string.ns_client_url),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+
+            ClickableUrlText(url = uiState.url)
+        }
+
+        // Status and Queue with Pause button on right
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                LabelValueRow(label = stringResource(R.string.status), value = uiState.status)
+                LabelValueRow(label = stringResource(R.string.queue), value = uiState.queue)
+            }
+
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                modifier = Modifier
+                    .padding(start = 16.dp)
+                    .align(Alignment.CenterVertically),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = stringResource(R.string.ns_client_url),
+                    text = stringResource(if (uiState.paused) app.aaps.core.ui.R.string.paused else app.aaps.core.ui.R.string.running),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurface
                 )
-
-                ClickableUrlText(url = uiState.url)
+                Switch(
+                    checked = !uiState.paused,
+                    onCheckedChange = { isRunning -> onPauseChanged(!isRunning) }
+                )
             }
+        }
 
-            // Status and Queue with Pause button on right
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Column(
-                    modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    LabelValueRow(label = stringResource(R.string.status), value = uiState.status)
-                    LabelValueRow(label = stringResource(R.string.queue), value = uiState.queue)
-                }
+        HorizontalDivider()
 
-                Row(
-                    modifier = Modifier
-                        .padding(start = 16.dp)
-                        .align(Alignment.CenterVertically),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = stringResource(if (uiState.paused) app.aaps.core.ui.R.string.paused else app.aaps.core.ui.R.string.running),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Switch(
-                        checked = !uiState.paused,
-                        onCheckedChange = { isRunning -> onPauseChanged(!isRunning) }
-                    )
-                }
+        // Logs
+        val listState = rememberLazyListState()
+
+        // Auto-scroll to top when new log arrives
+        LaunchedEffect(uiState.logList.firstOrNull()?.date) {
+            if (uiState.logList.isNotEmpty()) {
+                listState.scrollToItem(0)
             }
+        }
 
-            HorizontalDivider()
+        LazyColumn(
+            state = listState,
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f),
+            verticalArrangement = Arrangement.spacedBy(2.dp)
+        ) {
+            items(
+                items = uiState.logList,
+                key = { it.id }
+            ) { log ->
+                var isJsonExpanded by remember { mutableStateOf(false) }
+                var isOverflowing by remember(log) { mutableStateOf(false) }
 
-            // Logs
-            val listState = rememberLazyListState()
-
-            // Auto-scroll to top when new log arrives
-            LaunchedEffect(uiState.logList.firstOrNull()?.date) {
-                if (uiState.logList.isNotEmpty()) {
-                    listState.scrollToItem(0)
-                }
-            }
-
-            LazyColumn(
-                state = listState,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f),
-                verticalArrangement = Arrangement.spacedBy(2.dp)
-            ) {
-                items(
-                    items = uiState.logList,
-                    key = { it.id }
-                ) { log ->
-                    var isJsonExpanded by remember { mutableStateOf(false) }
-                    var isOverflowing by remember(log) { mutableStateOf(false) }
-
-                    if (isOverflowing) {
-                        Column(modifier = Modifier.fillMaxWidth()) {
-                            Text(
-                                text = buildAnnotatedString {
-                                    append(dateUtil.timeStringWithSeconds(log.date))
-                                    append(" ")
-                                    withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
-                                        append(log.action)
-                                    }
-                                },
-                                style = MaterialTheme.typography.bodySmall.copy(color = MaterialTheme.colorScheme.onSurface)
-                            )
-
-                            val bodyText = buildAnnotatedString {
-                                append(log.logText ?: "")
+                if (isOverflowing) {
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        Text(
+                            text = buildAnnotatedString {
+                                append(dateUtil.timeStringWithSeconds(log.date))
                                 append(" ")
-                                log.json?.let { json ->
-                                    if (isJsonExpanded) {
-                                        pushStringAnnotation(JSON_EXPANDED, annotation = JSON_EXPANDED)
-                                        withStyle(style = SpanStyle(fontFamily = FontFamily.Monospace)) {
-                                            append("\n" + jsonPrettyPrint.encodeToString(JsonElement.serializer(), json))
-                                        }
-                                        pop()
-                                    } else {
-                                        pushStringAnnotation(JSON_COLLAPSED, annotation = JSON_COLLAPSED)
-                                        withStyle(style = SpanStyle(color = MaterialTheme.colorScheme.primary, textDecoration = TextDecoration.Underline)) {
-                                            append("{...}")
-                                        }
-                                        pop()
-                                    }
+                                withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
+                                    append(log.action)
                                 }
-                            }
-                            ClickableAnnotatedText(
-                                text = bodyText,
-                                style = MaterialTheme.typography.bodySmall.copy(color = MaterialTheme.colorScheme.onSurface),
-                                modifier = Modifier.padding(start = 16.dp),
-                                onClick = { offset ->
-                                    if (bodyText.getStringAnnotations(JSON_COLLAPSED, offset, offset).any()) {
-                                        isJsonExpanded = true
-                                    } else if (bodyText.getStringAnnotations(JSON_EXPANDED, offset, offset).any()) {
-                                        isJsonExpanded = false
-                                        isOverflowing = false
-                                    }
-                                }
-                            )
-                        }
-                    } else {
-                        val fullText = buildAnnotatedString {
-                            append(dateUtil.timeStringWithSeconds(log.date))
-                            append(" ")
-                            withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
-                                append(log.action)
-                            }
-                            append(" ")
+                            },
+                            style = MaterialTheme.typography.bodySmall.copy(color = MaterialTheme.colorScheme.onSurface)
+                        )
+
+                        val bodyText = buildAnnotatedString {
                             append(log.logText ?: "")
                             append(" ")
-                            log.json?.let {
-                                pushStringAnnotation(JSON_COLLAPSED, annotation = JSON_COLLAPSED)
-                                withStyle(style = SpanStyle(color = MaterialTheme.colorScheme.primary, textDecoration = TextDecoration.Underline)) {
-                                    append("{...}")
+                            log.json?.let { json ->
+                                if (isJsonExpanded) {
+                                    pushStringAnnotation(JSON_EXPANDED, annotation = JSON_EXPANDED)
+                                    withStyle(style = SpanStyle(fontFamily = FontFamily.Monospace)) {
+                                        append("\n" + jsonPrettyPrint.encodeToString(JsonElement.serializer(), json))
+                                    }
+                                    pop()
+                                } else {
+                                    pushStringAnnotation(JSON_COLLAPSED, annotation = JSON_COLLAPSED)
+                                    withStyle(style = SpanStyle(color = MaterialTheme.colorScheme.primary, textDecoration = TextDecoration.Underline)) {
+                                        append("{...}")
+                                    }
+                                    pop()
                                 }
-                                pop()
                             }
                         }
                         ClickableAnnotatedText(
-                            text = fullText,
+                            text = bodyText,
                             style = MaterialTheme.typography.bodySmall.copy(color = MaterialTheme.colorScheme.onSurface),
-                            modifier = Modifier.fillMaxWidth(),
-                            maxLines = 1,
-                            overflow = TextOverflow.Clip,
-                            onTextLayout = { textLayoutResult ->
-                                if (textLayoutResult.hasVisualOverflow) {
-                                    isOverflowing = true
-                                }
-                            },
+                            modifier = Modifier.padding(start = 16.dp),
                             onClick = { offset ->
-                                if (fullText.getStringAnnotations(JSON_COLLAPSED, offset, offset).any()) {
+                                if (bodyText.getStringAnnotations(JSON_COLLAPSED, offset, offset).any()) {
                                     isJsonExpanded = true
-                                    isOverflowing = true
+                                } else if (bodyText.getStringAnnotations(JSON_EXPANDED, offset, offset).any()) {
+                                    isJsonExpanded = false
+                                    isOverflowing = false
                                 }
                             }
                         )
                     }
+                } else {
+                    val fullText = buildAnnotatedString {
+                        append(dateUtil.timeStringWithSeconds(log.date))
+                        append(" ")
+                        withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
+                            append(log.action)
+                        }
+                        append(" ")
+                        append(log.logText ?: "")
+                        append(" ")
+                        log.json?.let {
+                            pushStringAnnotation(JSON_COLLAPSED, annotation = JSON_COLLAPSED)
+                            withStyle(style = SpanStyle(color = MaterialTheme.colorScheme.primary, textDecoration = TextDecoration.Underline)) {
+                                append("{...}")
+                            }
+                            pop()
+                        }
+                    }
+                    ClickableAnnotatedText(
+                        text = fullText,
+                        style = MaterialTheme.typography.bodySmall.copy(color = MaterialTheme.colorScheme.onSurface),
+                        modifier = Modifier.fillMaxWidth(),
+                        maxLines = 1,
+                        overflow = TextOverflow.Clip,
+                        onTextLayout = { textLayoutResult ->
+                            if (textLayoutResult.hasVisualOverflow) {
+                                isOverflowing = true
+                            }
+                        },
+                        onClick = { offset ->
+                            if (fullText.getStringAnnotations(JSON_COLLAPSED, offset, offset).any()) {
+                                isJsonExpanded = true
+                                isOverflowing = true
+                            }
+                        }
+                    )
                 }
-            }
-        }
-
-        // Expandable FAB
-        Column(
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(16.dp),
-            horizontalAlignment = Alignment.End,
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            if (fabExpanded) {
-                ExtendedFloatingActionButton(
-                    onClick = {
-                        fabExpanded = false
-                        onSettings()
-                    },
-                    text = { Icon(Icons.Filled.Settings, contentDescription = null) },
-                    icon = { Text(stringResource(app.aaps.core.ui.R.string.settings)) }
-                )
-                ExtendedFloatingActionButton(
-                    onClick = {
-                        fabExpanded = false
-                        onClearLog()
-                    },
-                    text = { Icon(Icons.Filled.Clear, contentDescription = null) },
-                    icon = { Text(stringResource(R.string.clear_log)) }
-                )
-                ExtendedFloatingActionButton(
-                    onClick = {
-                        fabExpanded = false
-                        onFullSync()
-                    },
-                    text = { Icon(Icons.Filled.Refresh, contentDescription = null) },
-                    icon = { Text(stringResource(R.string.full_sync)) }
-                )
-                ExtendedFloatingActionButton(
-                    onClick = {
-                        fabExpanded = false
-                        onSendNow()
-                    },
-                    text = { Icon(Icons.AutoMirrored.Filled.Send, contentDescription = null) },
-                    icon = { Text(stringResource(R.string.deliver_now)) }
-                )
-            }
-            FloatingActionButton(
-                onClick = { fabExpanded = !fabExpanded }
-            ) {
-                Icon(
-                    Icons.Filled.MoreVert,
-                    contentDescription = stringResource(if (fabExpanded) app.aaps.core.ui.R.string.close_menu else app.aaps.core.ui.R.string.open_menu)
-                )
             }
         }
     }
@@ -371,5 +354,50 @@ private fun LabelValueRow(
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurface
         )
+    }
+}
+
+@Composable
+private fun NSClientMenu(
+    rh: ResourceHelper,
+    onClearLog: () -> Unit,
+    onSendNow: () -> Unit,
+    onFullSync: () -> Unit
+) {
+    var showMenu by remember { mutableStateOf(false) }
+
+    Box {
+        IconButton(onClick = { showMenu = true }) {
+            Icon(
+                imageVector = Icons.Default.MoreVert,
+                contentDescription = rh.gs(app.aaps.core.ui.R.string.more_options)
+            )
+        }
+        DropdownMenu(
+            expanded = showMenu,
+            onDismissRequest = { showMenu = false }
+        ) {
+            DropdownMenuItem(
+                text = { Text(rh.gs(R.string.clear_log)) },
+                onClick = {
+                    showMenu = false
+                    onClearLog()
+                }
+            )
+            DropdownMenuItem(
+                text = { Text(rh.gs(R.string.deliver_now)) },
+                onClick = {
+                    showMenu = false
+                    onSendNow()
+                }
+            )
+            DropdownMenuItem(
+                text = { Text(rh.gs(R.string.full_sync)) },
+                onClick = {
+                    showMenu = false
+                    onFullSync()
+                }
+            )
+        }
     }
 }

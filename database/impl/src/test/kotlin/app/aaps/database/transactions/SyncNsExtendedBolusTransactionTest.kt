@@ -132,7 +132,7 @@ class SyncNsExtendedBolusTransactionTest {
     }
 
     @Test
-    fun `updates nsId when composite key matches but nsId not in DB`() {
+    fun `updates nsId when composite key matches but nsId not in DB`() = runTest {
         val pumpId = 12345L
         val pumpType = InterfaceIDs.PumpType.DANA_I
         val pumpSerial = "ABC123"
@@ -162,7 +162,7 @@ class SyncNsExtendedBolusTransactionTest {
 
         whenever(extendedBolusDao.findByNSId(nsId)).thenReturn(null)
         whenever(extendedBolusDao.findByPumpIds(pumpId, pumpType, pumpSerial)).thenReturn(existing)
-        whenever(extendedBolusDao.getExtendedBolusActiveAt(1000L)).thenReturn(Maybe.empty())
+        whenever(extendedBolusDao.getExtendedBolusActiveAt(1000L)).thenReturn(null)
 
         val transaction = SyncNsExtendedBolusTransaction(listOf(incoming), nsClientMode = false)
         transaction.database = database
@@ -178,7 +178,7 @@ class SyncNsExtendedBolusTransactionTest {
     }
 
     @Test
-    fun `inserts both records when same pumpId but different pumpType`() {
+    fun `inserts both records when same pumpId but different pumpType`() = runTest {
         val pumpId = 12345L
 
         val eb1 = createExtendedBolus(
@@ -207,8 +207,8 @@ class SyncNsExtendedBolusTransactionTest {
         whenever(extendedBolusDao.findByNSId("ns-2")).thenReturn(null)
         whenever(extendedBolusDao.findByPumpIds(pumpId, InterfaceIDs.PumpType.DANA_I, "DANA-ABC")).thenReturn(null)
         whenever(extendedBolusDao.findByPumpIds(pumpId, InterfaceIDs.PumpType.MEDTRONIC_522_722, "MEDTRONIC-XYZ")).thenReturn(null)
-        whenever(extendedBolusDao.getExtendedBolusActiveAt(1000L)).thenReturn(Maybe.empty())
-        whenever(extendedBolusDao.getExtendedBolusActiveAt(2000L)).thenReturn(Maybe.empty())
+        whenever(extendedBolusDao.getExtendedBolusActiveAt(1000L)).thenReturn(null)
+        whenever(extendedBolusDao.getExtendedBolusActiveAt(2000L)).thenReturn(null)
 
         val transaction = SyncNsExtendedBolusTransaction(listOf(eb1, eb2), nsClientMode = false)
         transaction.database = database
@@ -221,7 +221,7 @@ class SyncNsExtendedBolusTransactionTest {
     }
 
     @Test
-    fun `ignores duplicate NS record when composite key has different nsId`() {
+    fun `ignores duplicate NS record when composite key has different nsId`() = runTest {
         val pumpId = 12345L
         val pumpType = InterfaceIDs.PumpType.DANA_I
         val pumpSerial = "ABC123"
@@ -250,7 +250,7 @@ class SyncNsExtendedBolusTransactionTest {
 
         whenever(extendedBolusDao.findByNSId("ns-NEW")).thenReturn(null)
         whenever(extendedBolusDao.findByPumpIds(pumpId, pumpType, pumpSerial)).thenReturn(existing)
-        whenever(extendedBolusDao.getExtendedBolusActiveAt(1000L)).thenReturn(Maybe.empty())
+        whenever(extendedBolusDao.getExtendedBolusActiveAt(1000L)).thenReturn(null)
 
         val transaction = SyncNsExtendedBolusTransaction(listOf(incoming), nsClientMode = false)
         transaction.database = database
@@ -266,7 +266,7 @@ class SyncNsExtendedBolusTransactionTest {
     }
 
     @Test
-    fun `falls back to active check when partial pump data is null`() {
+    fun `falls back to active check when partial pump data is null`() = runTest {
         val nsId = "ns-123"
         val timestamp = 1000L
 
@@ -294,7 +294,7 @@ class SyncNsExtendedBolusTransactionTest {
 
         whenever(extendedBolusDao.findByNSId(nsId)).thenReturn(null)
         // Composite key check should NOT be called (null check fails)
-        whenever(extendedBolusDao.getExtendedBolusActiveAt(timestamp)).thenReturn(Maybe.just(existing))
+        whenever(extendedBolusDao.getExtendedBolusActiveAt(timestamp)).thenReturn(existing)
 
         val transaction = SyncNsExtendedBolusTransaction(listOf(incoming), nsClientMode = false)
         transaction.database = database

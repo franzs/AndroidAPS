@@ -243,7 +243,7 @@ class SyncNsBolusTransactionTest {
     }
 
     @Test
-    fun `updates nsId when composite key matches but nsId not in DB`() {
+    fun `updates nsId when composite key matches but nsId not in DB`() = runTest {
         val pumpId = 12345L
         val pumpType = InterfaceIDs.PumpType.DANA_I
         val pumpSerial = "ABC123"
@@ -286,7 +286,7 @@ class SyncNsBolusTransactionTest {
     }
 
     @Test
-    fun `inserts both records when same pumpId but different pumpType`() {
+    fun `inserts both records when same pumpId but different pumpType`() = runTest {
         val pumpId = 12345L
 
         val bolus1 = createBolus(
@@ -327,7 +327,7 @@ class SyncNsBolusTransactionTest {
     }
 
     @Test
-    fun `ignores duplicate NS record when composite key has different nsId`() {
+    fun `ignores duplicate NS record when composite key has different nsId`() = runTest {
         val pumpId = 12345L
         val pumpType = InterfaceIDs.PumpType.DANA_I
         val pumpSerial = "ABC123"
@@ -369,7 +369,7 @@ class SyncNsBolusTransactionTest {
     }
 
     @Test
-    fun `falls back to timestamp when partial pump data is null`() {
+    fun `falls back to timestamp when partial pump data is null`() = runTest {
         val nsId = "ns-123"
         val timestamp = 1000L
 

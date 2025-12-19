@@ -3,6 +3,7 @@ package app.aaps.plugins.source
 import app.aaps.core.data.plugin.PluginType
 import app.aaps.core.interfaces.db.PersistenceLayer
 import app.aaps.core.interfaces.pump.VirtualPump
+import app.aaps.core.interfaces.ui.UiInteraction
 import app.aaps.core.keys.IntKey
 import app.aaps.shared.tests.TestBaseWithProfile
 import com.google.common.truth.Truth.assertThat
@@ -19,11 +20,12 @@ class RandomBgPluginTest : TestBaseWithProfile() {
 
     @Mock lateinit var persistenceLayer: PersistenceLayer
     @Mock lateinit var virtualPump: VirtualPump
+    @Mock lateinit var uiInteraction: UiInteraction
 
     private lateinit var randomBgPlugin: RandomBgPlugin
 
     @BeforeEach fun prepare() {
-        randomBgPlugin = RandomBgPlugin(context, rh, aapsLogger, persistenceLayer, virtualPump, preferences, config)
+        randomBgPlugin = RandomBgPlugin(context, rh, aapsLogger, persistenceLayer, virtualPump, preferences, config, dateUtil, profileUtil, uiInteraction)
     }
 
     @Test

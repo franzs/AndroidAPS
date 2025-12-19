@@ -375,6 +375,7 @@ class OverviewFragment : DaggerFragment(), View.OnClickListener, OnLongClickList
 
     fun refreshAll() {
         if (!config.appInitialized) return
+        if (_binding == null) return  // View destroyed, skip refresh
         runOnUiThread {
             _binding ?: return@runOnUiThread
             updateTime()
@@ -395,6 +396,8 @@ class OverviewFragment : DaggerFragment(), View.OnClickListener, OnLongClickList
     @Synchronized
     override fun onDestroyView() {
         super.onDestroyView()
+        // Remove handler callbacks before nulling view to prevent crashes
+        handler.removeCallbacksAndMessages(null)
         // Remove listeners and detach series to prevent memory leaks
         _binding?.graphsLayout?.bgGraph?.let { graph ->
             graph.setOnLongClickListener(null)
@@ -413,7 +416,6 @@ class OverviewFragment : DaggerFragment(), View.OnClickListener, OnLongClickList
 
     override fun onDestroy() {
         super.onDestroy()
-        handler.removeCallbacksAndMessages(null)
         handler.looper.quitSafely()
     }
 
@@ -997,6 +999,7 @@ class OverviewFragment : DaggerFragment(), View.OnClickListener, OnLongClickList
 
     @SuppressLint("SetTextI18n")
     fun updateTemporaryTarget() {
+        if (_binding == null) return  // View destroyed, skip update
         viewLifecycleOwner.lifecycleScope.launch {
             val units = profileFunction.getUnits()
             val tempTarget = persistenceLayer.getTemporaryTargetActiveAt(dateUtil.now())

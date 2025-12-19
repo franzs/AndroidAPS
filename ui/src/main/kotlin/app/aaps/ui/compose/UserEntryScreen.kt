@@ -49,6 +49,7 @@ import app.aaps.core.interfaces.userEntry.UserEntryPresentationHelper
 import app.aaps.core.interfaces.utils.DateUtil
 import app.aaps.core.interfaces.utils.Translator
 import app.aaps.core.ui.compose.AapsTheme
+import app.aaps.core.ui.compose.ToolbarConfig
 import app.aaps.ui.R
 import app.aaps.ui.compose.components.ErrorSnackbar
 import app.aaps.ui.viewmodels.UserEntryViewModel
@@ -83,7 +84,7 @@ fun UserEntryScreen(
     // Update toolbar configuration
     LaunchedEffect(uiState.showLoop) {
         setToolbarConfig(
-            TreatmentScreenToolbar(
+            SelectableListToolbar(
                 isRemovingMode = false,
                 selectedCount = 0,
                 onExitRemovingMode = { },

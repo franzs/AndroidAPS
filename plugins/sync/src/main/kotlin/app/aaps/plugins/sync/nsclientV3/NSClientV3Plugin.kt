@@ -24,9 +24,11 @@ import app.aaps.core.interfaces.db.PersistenceLayer
 import app.aaps.core.interfaces.logging.AAPSLogger
 import app.aaps.core.interfaces.logging.L
 import app.aaps.core.interfaces.logging.LTag
+import app.aaps.core.interfaces.logging.UserEntryLogger
 import app.aaps.core.interfaces.nsclient.NSAlarm
 import app.aaps.core.interfaces.nsclient.NSClientMvvmRepository
 import app.aaps.core.interfaces.nsclient.StoreDataForDb
+import app.aaps.core.interfaces.plugin.ActivePlugin
 import app.aaps.core.interfaces.plugin.PluginBaseWithPreferences
 import app.aaps.core.interfaces.plugin.PluginDescription
 import app.aaps.core.interfaces.profile.Profile
@@ -47,6 +49,7 @@ import app.aaps.core.interfaces.source.NSClientSource
 import app.aaps.core.interfaces.sync.DataSyncSelector
 import app.aaps.core.interfaces.sync.NsClient
 import app.aaps.core.interfaces.sync.Sync
+import app.aaps.core.interfaces.ui.UiInteraction
 import app.aaps.core.interfaces.utils.DateUtil
 import app.aaps.core.interfaces.utils.DecimalFormatter
 import app.aaps.core.interfaces.utils.fabric.FabricPrivacy
@@ -65,6 +68,7 @@ import app.aaps.core.validators.preferences.AdaptiveIntPreference
 import app.aaps.core.validators.preferences.AdaptiveStringPreference
 import app.aaps.core.validators.preferences.AdaptiveSwitchPreference
 import app.aaps.plugins.sync.R
+import app.aaps.plugins.sync.nsShared.NSClientComposeContent
 import app.aaps.plugins.sync.nsShared.NSClientFragment
 import app.aaps.plugins.sync.nsShared.events.EventConnectivityOptionChanged
 import app.aaps.plugins.sync.nsclient.ReceiverDelegate
@@ -120,7 +124,10 @@ class NSClientV3Plugin @Inject constructor(
     private val storeDataForDb: StoreDataForDb,
     private val decimalFormatter: DecimalFormatter,
     private val l: L,
-    private val nsClientMvvmRepository: NSClientMvvmRepository
+    private val nsClientMvvmRepository: NSClientMvvmRepository,
+    private val uiInteraction: UiInteraction,
+    private val uel: UserEntryLogger,
+    private val activePlugin: ActivePlugin
 ) : NsClient, Sync, PluginBaseWithPreferences(
     PluginDescription()
         .mainType(PluginType.SYNC)
@@ -133,6 +140,24 @@ class NSClientV3Plugin @Inject constructor(
     ownPreferences = listOf(NsclientBooleanKey::class.java, NsclientStringKey::class.java, NsclientLongKey::class.java),
     aapsLogger, rh, preferences
 ) {
+
+    init {
+        pluginDescription.composeContentProvider = {
+            NSClientComposeContent(
+                rh = rh,
+                dateUtil = dateUtil,
+                aapsLogger = aapsLogger,
+                uiInteraction = uiInteraction,
+                persistenceLayer = persistenceLayer,
+                uel = uel,
+                nsClientMvvmRepository = nsClientMvvmRepository,
+                activePlugin = activePlugin,
+                preferences = preferences,
+                nsClient = { this },
+                title = rh.gs(R.string.ns_client_v3_title)
+            )
+        }
+    }
 
     @Suppress("PrivatePropertyName")
     private val JOB_NAME: String = this::class.java.simpleName

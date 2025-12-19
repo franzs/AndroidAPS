@@ -19,8 +19,10 @@ import app.aaps.core.interfaces.db.PersistenceLayer
 import app.aaps.core.interfaces.logging.AAPSLogger
 import app.aaps.core.interfaces.logging.LTag
 import app.aaps.core.interfaces.plugin.PluginDescription
+import app.aaps.core.interfaces.profile.ProfileUtil
 import app.aaps.core.interfaces.resources.ResourceHelper
 import app.aaps.core.interfaces.source.BgSource
+import app.aaps.core.interfaces.ui.UiInteraction
 import app.aaps.core.interfaces.utils.DateUtil
 import app.aaps.core.interfaces.utils.fabric.FabricPrivacy
 import app.aaps.core.keys.interfaces.Preferences
@@ -38,11 +40,24 @@ class IntelligoPlugin @Inject constructor(
     private val context: Context,
     private val persistenceLayer: PersistenceLayer,
     private val dateUtil: DateUtil,
-    private val fabricPrivacy: FabricPrivacy
+    private val fabricPrivacy: FabricPrivacy,
+    profileUtil: ProfileUtil,
+    uiInteraction: UiInteraction
 ) : AbstractBgSourcePlugin(
     pluginDescription = PluginDescription()
         .mainType(PluginType.BGSOURCE)
         .fragmentClass(BGSourceFragment::class.java.name)
+        .composeContent {
+            BgSourceComposeContent(
+                persistenceLayer = persistenceLayer,
+                rh = resourceHelper,
+                dateUtil = dateUtil,
+                profileUtil = profileUtil,
+                aapsLogger = aapsLogger,
+                uiInteraction = uiInteraction,
+                title = resourceHelper.gs(R.string.intelligo)
+            )
+        }
         .pluginIcon(app.aaps.core.ui.R.drawable.ic_intelligo)
         .preferencesId(PluginDescription.PREFERENCE_SCREEN)
         .pluginName(R.string.intelligo)

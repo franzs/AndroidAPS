@@ -44,6 +44,7 @@ import app.aaps.core.interfaces.utils.DateUtil
 import app.aaps.core.objects.extensions.iobCalc
 import app.aaps.core.objects.extensions.isInProgress
 import app.aaps.core.ui.compose.AapsTheme
+import app.aaps.core.ui.compose.ToolbarConfig
 import app.aaps.core.ui.compose.icons.Ns
 import app.aaps.core.ui.compose.icons.Pump
 import app.aaps.ui.R
@@ -95,7 +96,7 @@ fun ExtendedBolusScreen(
 
     AapsTheme {
         Box(modifier = Modifier.fillMaxSize()) {
-            TreatmentContentContainer(
+            ContentContainer(
                 isLoading = uiState.isLoading,
                 isEmpty = uiState.extendedBoluses.isEmpty()
             ) {

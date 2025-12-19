@@ -22,6 +22,7 @@ import app.aaps.core.interfaces.profile.ProfileUtil
 import app.aaps.core.interfaces.resources.ResourceHelper
 import app.aaps.core.interfaces.source.BgSource
 import app.aaps.core.interfaces.source.DexcomBoyda
+import app.aaps.core.interfaces.ui.UiInteraction
 import app.aaps.core.interfaces.utils.DateUtil
 import app.aaps.core.keys.BooleanKey
 import app.aaps.core.keys.interfaces.Preferences
@@ -38,11 +39,26 @@ class DexcomPlugin @Inject constructor(
     rh: ResourceHelper,
     aapsLogger: AAPSLogger,
     private val context: Context,
-    config: Config
+    config: Config,
+    persistenceLayer: PersistenceLayer,
+    dateUtil: DateUtil,
+    profileUtil: ProfileUtil,
+    uiInteraction: UiInteraction
 ) : AbstractBgSourceWithSensorInsertLogPlugin(
     PluginDescription()
         .mainType(PluginType.BGSOURCE)
         .fragmentClass(BGSourceFragment::class.java.name)
+        .composeContent {
+            BgSourceComposeContent(
+                persistenceLayer = persistenceLayer,
+                rh = rh,
+                dateUtil = dateUtil,
+                profileUtil = profileUtil,
+                aapsLogger = aapsLogger,
+                uiInteraction = uiInteraction,
+                title = rh.gs(R.string.dexcom_app_patched)
+            )
+        }
         .pluginIcon(app.aaps.core.objects.R.drawable.ic_dexcom_g6)
         .preferencesId(PluginDescription.PREFERENCE_SCREEN)
         .pluginName(R.string.dexcom_app_patched)

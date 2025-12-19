@@ -43,6 +43,7 @@ import app.aaps.core.interfaces.ui.UiInteraction
 import app.aaps.core.interfaces.utils.DateUtil
 import app.aaps.core.interfaces.utils.Translator
 import app.aaps.core.ui.compose.AapsTheme
+import app.aaps.core.ui.compose.ToolbarConfig
 import app.aaps.core.ui.compose.icons.Ns
 import app.aaps.ui.R
 import app.aaps.ui.compose.components.ErrorSnackbar
@@ -119,7 +120,7 @@ fun CareportalScreen(
 
     AapsTheme {
         Box(modifier = Modifier.fillMaxSize()) {
-            TreatmentContentContainer(
+            ContentContainer(
                 isLoading = uiState.isLoading,
                 isEmpty = uiState.therapyEvents.isEmpty()
             ) {
