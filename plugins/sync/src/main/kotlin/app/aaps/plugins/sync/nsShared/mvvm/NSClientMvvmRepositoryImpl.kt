@@ -14,6 +14,15 @@ import kotlinx.serialization.json.JsonElement
 import javax.inject.Inject
 import javax.inject.Singleton
 
+/**
+ * Repository for NSClient UI state management.
+ *
+ * Holds reactive state flows for queue size, connection status, URL,
+ * and log entries that are collected by the ViewModel and displayed in NSClientScreen.
+ *
+ * Note: Interface [NSClientMvvmRepository] is in core:interfaces module
+ * to allow cross-module dependency injection.
+ */
 @Singleton
 class NSClientMvvmRepositoryImpl @Inject constructor(
     private val rxBus: RxBus,
@@ -25,7 +34,6 @@ class NSClientMvvmRepositoryImpl @Inject constructor(
         private const val MAX_LOG_ENTRIES = 100
     }
 
-    // State flows - always hold a current value
     private val _queueSize = MutableStateFlow(-1L)
     override val queueSize: StateFlow<Long> = _queueSize.asStateFlow()
 
@@ -35,7 +43,6 @@ class NSClientMvvmRepositoryImpl @Inject constructor(
     private val _urlUpdate = MutableStateFlow("")
     override val urlUpdate: StateFlow<String> = _urlUpdate.asStateFlow()
 
-    // Log list as state - maintains history
     private val _logList = MutableStateFlow<List<NSClientLog>>(emptyList())
     override val logList: StateFlow<List<NSClientLog>> = _logList.asStateFlow()
 
@@ -45,7 +52,6 @@ class NSClientMvvmRepositoryImpl @Inject constructor(
 
     override fun updateStatus(status: String) {
         _statusUpdate.value = status
-        // Pass new status to SetupWizard if open
         rxBus.send(EventSWSyncStatus(status))
     }
 
@@ -56,12 +62,7 @@ class NSClientMvvmRepositoryImpl @Inject constructor(
     override fun addLog(action: String, logText: String?, json: JsonElement?) {
         _logList.update { currentList ->
             aapsLogger.debug(LTag.NSCLIENT, "$action $logText")
-            val newLog = NSClientLog(
-                action = action,
-                logText = logText,
-                json = json
-            )
-            // Add to beginning and keep only last MAX_LOG_ENTRIES
+            val newLog = NSClientLog(action = action, logText = logText, json = json)
             listOf(newLog) + currentList.take(MAX_LOG_ENTRIES - 1)
         }
     }

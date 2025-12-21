@@ -7,68 +7,52 @@ import kotlinx.serialization.json.JsonObject
 import org.json.JSONObject
 
 /**
- * Interface for NSClient MVVM repository
+ * Repository interface for NSClient UI state management.
+ *
+ * Provides reactive state flows for queue size, connection status, URL,
+ * and log entries that are collected by the ViewModel and displayed in NSClientScreen.
+ *
+ * This interface is in core:interfaces to allow cross-module dependency injection.
+ * Implementation is in plugins:sync module.
  */
 interface NSClientMvvmRepository {
 
-    /**
-     * Queue size state flow - always has a current value
-     */
+    /** Current sync queue size */
     val queueSize: StateFlow<Long>
 
-    /**
-     * Status state flow - always has a current value
-     */
+    /** Current connection status */
     val statusUpdate: StateFlow<String>
 
-    /**
-     * URL state flow - always has a current value
-     */
+    /** Current Nightscout URL */
     val urlUpdate: StateFlow<String>
 
-    /**
-     * Log list state flow - always has current log history
-     */
+    /** Log entries displayed in the UI, newest first */
     val logList: StateFlow<List<NSClientLog>>
 
-    /**
-     * Update queue size in NSClient fragment
-     */
+    /** Update the queue size */
     fun updateQueueSize(size: Long)
 
-    /**
-     * Update status in NSClient fragment
-     */
+    /** Update the connection status */
     fun updateStatus(status: String)
 
-    /**
-     * Update url in NSClient fragment
-     */
+    /** Update the Nightscout URL */
     fun updateUrl(url: String)
 
-    /**
-     * Add new log entry to NSClient fragment
-     */
+    /** Add a new log entry with optional JSON payload */
     fun addLog(action: String, logText: String?, json: JsonElement?)
 
-    /**
-     * Add new log entry to NSClient fragment
-     */
+    /** Add a new log entry without JSON payload */
     fun addLog(action: String, logText: String?) {
         addLog(action, logText, null as JsonElement?)
     }
 
-    /**
-     * Add new log entry to NSClient fragment
-     */
+    /** Add a new log entry with JSONObject payload */
     @Deprecated("Migrate to kotlin's JsonObject")
     fun addLog(action: String, logText: String?, json: JSONObject) {
         val jsonObject = json.let { Json.parseToJsonElement(it.toString()) as JsonObject }
         addLog(action, logText, jsonObject)
     }
 
-    /**
-     * Clear all log entries
-     */
+    /** Clear all log entries */
     fun clearLog()
 }

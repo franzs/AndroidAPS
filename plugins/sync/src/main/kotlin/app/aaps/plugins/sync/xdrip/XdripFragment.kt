@@ -2,11 +2,17 @@ package app.aaps.plugins.sync.xdrip
 
 import android.os.Bundle
 import android.view.LayoutInflater
+import android.view.Menu
+import android.view.MenuInflater
+import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
+import androidx.core.view.MenuCompat
+import androidx.core.view.MenuProvider
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import app.aaps.core.interfaces.plugin.PluginBase
 import app.aaps.core.interfaces.plugin.PluginFragment
@@ -26,7 +32,7 @@ import dagger.android.support.DaggerFragment
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-class XdripFragment : DaggerFragment(), PluginFragment {
+class XdripFragment : DaggerFragment(), MenuProvider, PluginFragment {
 
     @Inject lateinit var rh: ResourceHelper
     @Inject lateinit var dateUtil: DateUtil
@@ -37,11 +43,19 @@ class XdripFragment : DaggerFragment(), PluginFragment {
     @Inject lateinit var preferences: Preferences
     @Inject lateinit var rxBus: RxBus
 
+    companion object {
+
+        const val ID_MENU_CLEAR_LOG = 511
+        const val ID_MENU_FULL_SYNC = 512
+    }
+
     override var plugin: PluginBase? = null
 
     private var viewModel: XdripViewModel? = null
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
+        requireActivity().addMenuProvider(this, viewLifecycleOwner, Lifecycle.State.RESUMED)
+
         viewModel = XdripViewModel(
             rh = rh,
             xdripMvvmRepository = xdripMvvmRepository,
@@ -60,21 +74,7 @@ class XdripFragment : DaggerFragment(), PluginFragment {
                             XdripScreen(
                                 viewModel = vm,
                                 dateUtil = dateUtil,
-                                rh = rh,
-                                title = rh.gs(R.string.xdrip),
-                                setToolbarConfig = { },
-                                onNavigateBack = {
-                                    activity?.onBackPressedDispatcher?.onBackPressed()
-                                },
-                                onClearLog = {
-                                    xdripMvvmRepository.clearLog()
-                                },
-                                onFullSync = {
-                                    handleFullSync()
-                                },
-                                onSettings = {
-                                    uiInteraction.runPreferencesForPlugin(requireActivity(), xdripPlugin.javaClass.simpleName)
-                                }
+                                rh = rh
                             )
                         }
                     }
@@ -92,6 +92,27 @@ class XdripFragment : DaggerFragment(), PluginFragment {
         super.onDestroyView()
         viewModel = null
     }
+
+    override fun onCreateMenu(menu: Menu, inflater: MenuInflater) {
+        menu.add(Menu.FIRST, ID_MENU_CLEAR_LOG, 0, rh.gs(R.string.clear_log)).setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER)
+        menu.add(Menu.FIRST, ID_MENU_FULL_SYNC, 0, rh.gs(R.string.full_sync)).setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER)
+        MenuCompat.setGroupDividerEnabled(menu, true)
+    }
+
+    override fun onMenuItemSelected(item: MenuItem): Boolean =
+        when (item.itemId) {
+            ID_MENU_CLEAR_LOG -> {
+                xdripMvvmRepository.clearLog()
+                true
+            }
+
+            ID_MENU_FULL_SYNC -> {
+                handleFullSync()
+                true
+            }
+
+            else              -> false
+        }
 
     private fun handleFullSync() {
         uiInteraction.showOkCancelDialog(

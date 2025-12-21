@@ -1,4 +1,4 @@
-package app.aaps.plugins.sync.xdrip
+package app.aaps.plugins.sync.tidepool
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -27,11 +27,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.aaps.core.interfaces.resources.ResourceHelper
 import app.aaps.core.interfaces.utils.DateUtil
 import app.aaps.plugins.sync.R
-import app.aaps.plugins.sync.xdrip.mvvm.XdripViewModel
+import app.aaps.plugins.sync.tidepool.mvvm.TidepoolViewModel
 
 @Composable
-fun XdripScreen(
-    viewModel: XdripViewModel,
+fun TidepoolScreen(
+    viewModel: TidepoolViewModel,
     dateUtil: DateUtil,
     rh: ResourceHelper,
     modifier: Modifier = Modifier
@@ -44,19 +44,19 @@ fun XdripScreen(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
-        // Queue row
+        // Status row
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Text(
-                text = stringResource(R.string.queue),
+                text = stringResource(R.string.status),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurface
             )
             Text(
-                text = uiState.queue,
-                style = MaterialTheme.typography.bodyMedium,
+                text = uiState.connectionStatus,
+                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
                 color = MaterialTheme.colorScheme.onSurface
             )
         }
@@ -66,7 +66,6 @@ fun XdripScreen(
         // Logs
         val listState = rememberLazyListState()
 
-        // Auto-scroll to top when new log arrives
         LaunchedEffect(uiState.logList.firstOrNull()?.date) {
             if (uiState.logList.isNotEmpty()) {
                 listState.scrollToItem(0)
@@ -89,10 +88,8 @@ fun XdripScreen(
                         append(dateUtil.timeStringWithSeconds(log.date))
                         append(" ")
                         withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
-                            append(log.action)
+                            append(log.status)
                         }
-                        append(" ")
-                        append(log.logText ?: "")
                     },
                     style = MaterialTheme.typography.bodySmall.copy(color = MaterialTheme.colorScheme.onSurface),
                     maxLines = 2,

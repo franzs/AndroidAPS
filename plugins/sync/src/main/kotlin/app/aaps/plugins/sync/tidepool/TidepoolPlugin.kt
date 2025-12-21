@@ -1,11 +1,9 @@
 package app.aaps.plugins.sync.tidepool
 
 import android.content.Context
-import android.text.Spanned
 import androidx.preference.PreferenceCategory
 import androidx.preference.PreferenceManager
 import androidx.preference.PreferenceScreen
-import app.aaps.core.data.configuration.Constants
 import app.aaps.core.data.plugin.PluginType
 import app.aaps.core.data.time.T
 import app.aaps.core.interfaces.logging.AAPSLogger
@@ -20,12 +18,10 @@ import app.aaps.core.interfaces.rx.events.EventPreferenceChange
 import app.aaps.core.interfaces.rx.events.EventSWSyncStatus
 import app.aaps.core.interfaces.sync.Sync
 import app.aaps.core.interfaces.sync.Tidepool
-import app.aaps.core.interfaces.ui.UiInteraction
 import app.aaps.core.interfaces.utils.fabric.FabricPrivacy
 import app.aaps.core.keys.BooleanKey
 import app.aaps.core.keys.StringKey
 import app.aaps.core.keys.interfaces.Preferences
-import app.aaps.core.utils.HtmlHelper
 import app.aaps.core.validators.preferences.AdaptiveStringPreference
 import app.aaps.core.validators.preferences.AdaptiveSwitchPreference
 import app.aaps.plugins.sync.R
@@ -36,10 +32,10 @@ import app.aaps.plugins.sync.tidepool.comm.TidepoolUploader
 import app.aaps.plugins.sync.tidepool.comm.UploadChunk
 import app.aaps.plugins.sync.tidepool.events.EventTidepoolDoUpload
 import app.aaps.plugins.sync.tidepool.events.EventTidepoolStatus
-import app.aaps.plugins.sync.tidepool.events.EventTidepoolUpdateGUI
 import app.aaps.plugins.sync.tidepool.keys.TidepoolBooleanKey
 import app.aaps.plugins.sync.tidepool.keys.TidepoolLongNonKey
 import app.aaps.plugins.sync.tidepool.keys.TidepoolStringNonKey
+import app.aaps.plugins.sync.tidepool.mvvm.TidepoolMvvmRepository
 import app.aaps.plugins.sync.tidepool.utils.RateLimit
 import io.reactivex.rxjava3.disposables.CompositeDisposable
 import io.reactivex.rxjava3.kotlin.plusAssign
@@ -57,14 +53,13 @@ class TidepoolPlugin @Inject constructor(
     preferences: Preferences,
     private val aapsSchedulers: AapsSchedulers,
     private val rxBus: RxBus,
-    private val context: Context,
     private val fabricPrivacy: FabricPrivacy,
     private val tidepoolUploader: TidepoolUploader,
     private val uploadChunk: UploadChunk,
     private val rateLimit: RateLimit,
     private val receiverDelegate: ReceiverDelegate,
-    private val uiInteraction: UiInteraction,
     private val authFlowOut: AuthFlowOut,
+    private val tidepoolMvvmRepository: TidepoolMvvmRepository,
 ) : Sync, Tidepool, PluginBaseWithPreferences(
     PluginDescription()
         .mainType(PluginType.SYNC)
@@ -83,8 +78,6 @@ class TidepoolPlugin @Inject constructor(
     private var disposable: CompositeDisposable = CompositeDisposable()
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
-    private val listLog = ArrayList<EventTidepoolStatus>()
-    var textLog: Spanned = HtmlHelper.fromHtml("")
     private val isAllowed get() = receiverDelegate.allowed
 
     override fun onStart() {
@@ -105,7 +98,8 @@ class TidepoolPlugin @Inject constructor(
             .toObservable(EventTidepoolStatus::class.java)
             .observeOn(aapsSchedulers.io)
             .subscribe({ event ->
-                           addToLog(event)
+                           tidepoolMvvmRepository.addLog(event.status)
+                           tidepoolMvvmRepository.updateConnectionStatus(authFlowOut.connectionStatus)
                            // Pass to setup wizard
                            rxBus.send(EventSWSyncStatus(event.status))
                        }, fabricPrivacy::logException)
@@ -146,33 +140,6 @@ class TidepoolPlugin @Inject constructor(
             AuthFlowOut.ConnectionStatus.SESSION_ESTABLISHED -> scope.launch { tidepoolUploader.doUpload(from) }
 
             else                                             -> aapsLogger.debug(LTag.TIDEPOOL, "doUpload $from do nothing ${authFlowOut.connectionStatus}")
-        }
-    }
-
-    @Synchronized
-    private fun addToLog(ev: EventTidepoolStatus) {
-        synchronized(listLog) {
-            listLog.add(ev)
-            // remove the first line if log is too large
-            if (listLog.size >= Constants.MAX_LOG_LINES) {
-                listLog.removeAt(0)
-            }
-        }
-        rxBus.send(EventTidepoolUpdateGUI())
-    }
-
-    @Synchronized
-    fun updateLog() {
-        try {
-            val newTextLog = StringBuilder()
-            synchronized(listLog) {
-                for (log in listLog) {
-                    newTextLog.append(log.toPreparedHtml())
-                }
-            }
-            textLog = HtmlHelper.fromHtml(newTextLog.toString())
-        } catch (_: OutOfMemoryError) {
-            uiInteraction.showToastAndNotification(context, "Out of memory!\nStop using this phone !!!", app.aaps.core.ui.R.raw.error)
         }
     }
 

@@ -34,6 +34,7 @@ import app.aaps.plugins.sync.nsclientV3.workers.LoadStatusWorker
 import app.aaps.plugins.sync.nsclientV3.workers.LoadTreatmentsWorker
 import app.aaps.plugins.sync.tidepool.TidepoolFragment
 import app.aaps.plugins.sync.tidepool.auth.AuthFlowIn
+import app.aaps.plugins.sync.tidepool.mvvm.TidepoolViewModel
 import app.aaps.plugins.sync.wear.WearFragment
 import app.aaps.plugins.sync.wear.activities.CwfInfosActivity
 import app.aaps.plugins.sync.wear.receivers.WearDataReceiver
@@ -41,8 +42,6 @@ import app.aaps.plugins.sync.wear.wearintegration.DataLayerListenerServiceMobile
 import app.aaps.plugins.sync.xdrip.DataSyncSelectorXdripImpl
 import app.aaps.plugins.sync.xdrip.XdripFragment
 import app.aaps.plugins.sync.xdrip.XdripPlugin
-import app.aaps.plugins.sync.xdrip.mvvm.XdripMvvmRepository
-import app.aaps.plugins.sync.xdrip.mvvm.XdripMvvmRepositoryImpl
 import app.aaps.plugins.sync.xdrip.mvvm.XdripViewModel
 import app.aaps.plugins.sync.xdrip.workers.XdripDataSyncWorker
 import dagger.Binds
@@ -115,12 +114,15 @@ abstract class SyncModule {
         @ViewModelKey(NSClientViewModel::class)
         fun bindNSClientViewModel(nsClientViewModel: NSClientViewModel): ViewModel
 
-        @Binds fun bindXdripMvvmRepository(xdripMvvmRepositoryImpl: XdripMvvmRepositoryImpl): XdripMvvmRepository
-
         @Binds
         @IntoMap
         @ViewModelKey(XdripViewModel::class)
         fun bindXdripViewModel(xdripViewModel: XdripViewModel): ViewModel
+
+        @Binds
+        @IntoMap
+        @ViewModelKey(TidepoolViewModel::class)
+        fun bindTidepoolViewModel(tidepoolViewModel: TidepoolViewModel): ViewModel
     }
 
 }
