@@ -41,6 +41,9 @@ import app.aaps.plugins.sync.wear.wearintegration.DataLayerListenerServiceMobile
 import app.aaps.plugins.sync.xdrip.DataSyncSelectorXdripImpl
 import app.aaps.plugins.sync.xdrip.XdripFragment
 import app.aaps.plugins.sync.xdrip.XdripPlugin
+import app.aaps.plugins.sync.xdrip.mvvm.XdripMvvmRepository
+import app.aaps.plugins.sync.xdrip.mvvm.XdripMvvmRepositoryImpl
+import app.aaps.plugins.sync.xdrip.mvvm.XdripViewModel
 import app.aaps.plugins.sync.xdrip.workers.XdripDataSyncWorker
 import dagger.Binds
 import dagger.Module
@@ -111,6 +114,13 @@ abstract class SyncModule {
         @IntoMap
         @ViewModelKey(NSClientViewModel::class)
         fun bindNSClientViewModel(nsClientViewModel: NSClientViewModel): ViewModel
+
+        @Binds fun bindXdripMvvmRepository(xdripMvvmRepositoryImpl: XdripMvvmRepositoryImpl): XdripMvvmRepository
+
+        @Binds
+        @IntoMap
+        @ViewModelKey(XdripViewModel::class)
+        fun bindXdripViewModel(xdripViewModel: XdripViewModel): ViewModel
     }
 
 }

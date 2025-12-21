@@ -6,7 +6,6 @@ import app.aaps.core.interfaces.logging.AAPSLogger
 import app.aaps.core.interfaces.logging.LTag
 import app.aaps.core.interfaces.plugin.ActivePlugin
 import app.aaps.core.interfaces.profile.ProfileFunction
-import app.aaps.core.interfaces.rx.bus.RxBus
 import app.aaps.core.interfaces.sync.DataSyncSelector
 import app.aaps.core.interfaces.sync.DataSyncSelectorXdrip
 import app.aaps.core.interfaces.sync.XDripBroadcast
@@ -14,8 +13,8 @@ import app.aaps.core.interfaces.utils.DateUtil
 import app.aaps.core.keys.LongNonKey
 import app.aaps.core.keys.interfaces.Preferences
 import app.aaps.core.utils.JsonHelper
-import app.aaps.plugins.sync.xdrip.events.EventXdripNewLog
 import app.aaps.plugins.sync.xdrip.keys.XdripLongKey
+import app.aaps.plugins.sync.xdrip.mvvm.XdripMvvmRepository
 import dagger.Lazy
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -29,8 +28,8 @@ class DataSyncSelectorXdripImpl @Inject constructor(
     private val activePlugin: ActivePlugin,
     private val xdripBroadcast: Lazy<XDripBroadcast>,
     private val persistenceLayer: PersistenceLayer,
-    private val rxBus: RxBus,
     private val preferences: Preferences,
+    private val xdripMvvmRepository: XdripMvvmRepository
 ) : DataSyncSelectorXdrip {
 
     class QueueCounter(
@@ -83,7 +82,7 @@ class DataSyncSelectorXdripImpl @Inject constructor(
     override suspend fun doUpload() {
         synchronized(sync) {
             if (running) {
-                rxBus.send(EventXdripNewLog("RUN", "Already running"))
+                xdripMvvmRepository.addLog("RUN", "Already running")
                 return
             }
             running = true

@@ -6,6 +6,7 @@ import app.aaps.core.interfaces.ui.UiInteraction
 import app.aaps.core.validators.preferences.AdaptiveIntentPreference
 import app.aaps.core.validators.preferences.AdaptiveSwitchPreference
 import app.aaps.plugins.sync.tidepool.utils.RateLimit
+import app.aaps.plugins.sync.xdrip.mvvm.XdripMvvmRepository
 import app.aaps.shared.tests.TestBaseWithProfile
 import com.google.common.truth.Truth.assertThat
 import org.junit.jupiter.api.BeforeEach
@@ -17,6 +18,7 @@ class XdripPluginTest : TestBaseWithProfile() {
     @Mock lateinit var loop: Loop
     @Mock lateinit var uiInteraction: UiInteraction
     @Mock lateinit var glucoseStatusProvider: GlucoseStatusProvider
+    @Mock lateinit var xdripMvvmRepository: XdripMvvmRepository
 
     private lateinit var xdripPlugin: XdripPlugin
     private lateinit var rateLimit: RateLimit
@@ -36,7 +38,24 @@ class XdripPluginTest : TestBaseWithProfile() {
     @BeforeEach fun prepare() {
         rateLimit = RateLimit(dateUtil)
         xdripPlugin = XdripPlugin(
-            aapsLogger, rh, preferences, profileFunction, profileUtil, aapsSchedulers, context, fabricPrivacy, loop, iobCobCalculator, processedTbrEbData, rxBus, uiInteraction, dateUtil, config, decimalFormatter, glucoseStatusProvider
+            aapsLogger,
+            rh,
+            preferences,
+            profileFunction,
+            profileUtil,
+            aapsSchedulers,
+            context,
+            fabricPrivacy,
+            loop,
+            iobCobCalculator,
+            processedTbrEbData,
+            rxBus,
+            uiInteraction,
+            dateUtil,
+            config,
+            decimalFormatter,
+            glucoseStatusProvider,
+            xdripMvvmRepository
         )
     }
 

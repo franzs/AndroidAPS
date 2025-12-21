@@ -1,126 +1,108 @@
 package app.aaps.plugins.sync.xdrip
 
 import android.os.Bundle
-import android.os.Handler
-import android.os.HandlerThread
 import android.view.LayoutInflater
-import android.view.Menu
-import android.view.MenuInflater
-import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
-import androidx.core.view.MenuCompat
-import androidx.core.view.MenuProvider
-import androidx.lifecycle.Lifecycle
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.lifecycle.lifecycleScope
-import app.aaps.core.interfaces.configuration.Config
-import app.aaps.core.interfaces.logging.AAPSLogger
 import app.aaps.core.interfaces.plugin.PluginBase
 import app.aaps.core.interfaces.plugin.PluginFragment
 import app.aaps.core.interfaces.resources.ResourceHelper
-import app.aaps.core.interfaces.rx.AapsSchedulers
 import app.aaps.core.interfaces.rx.bus.RxBus
 import app.aaps.core.interfaces.sync.DataSyncSelectorXdrip
 import app.aaps.core.interfaces.ui.UiInteraction
-import app.aaps.core.interfaces.utils.fabric.FabricPrivacy
+import app.aaps.core.interfaces.utils.DateUtil
+import app.aaps.core.keys.interfaces.Preferences
+import app.aaps.core.ui.compose.AapsTheme
+import app.aaps.core.ui.compose.LocalPreferences
+import app.aaps.core.ui.compose.LocalRxBus
 import app.aaps.plugins.sync.R
-import app.aaps.plugins.sync.databinding.XdripFragmentBinding
-import app.aaps.plugins.sync.xdrip.events.EventXdripUpdateGUI
+import app.aaps.plugins.sync.xdrip.mvvm.XdripMvvmRepository
+import app.aaps.plugins.sync.xdrip.mvvm.XdripViewModel
 import dagger.android.support.DaggerFragment
-import io.reactivex.rxjava3.disposables.CompositeDisposable
-import io.reactivex.rxjava3.kotlin.plusAssign
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-class XdripFragment : DaggerFragment(), MenuProvider, PluginFragment {
+class XdripFragment : DaggerFragment(), PluginFragment {
 
     @Inject lateinit var rh: ResourceHelper
-    @Inject lateinit var rxBus: RxBus
-    @Inject lateinit var fabricPrivacy: FabricPrivacy
-    @Inject lateinit var aapsSchedulers: AapsSchedulers
+    @Inject lateinit var dateUtil: DateUtil
     @Inject lateinit var dataSyncSelector: DataSyncSelectorXdrip
-    @Inject lateinit var aapsLogger: AAPSLogger
     @Inject lateinit var xdripPlugin: XdripPlugin
-    @Inject lateinit var config: Config
     @Inject lateinit var uiInteraction: UiInteraction
-
-    companion object {
-
-        const val ID_MENU_CLEAR_LOG = 511
-        const val ID_MENU_FULL_SYNC = 512
-    }
+    @Inject lateinit var xdripMvvmRepository: XdripMvvmRepository
+    @Inject lateinit var preferences: Preferences
+    @Inject lateinit var rxBus: RxBus
 
     override var plugin: PluginBase? = null
 
-    private val disposable = CompositeDisposable()
-    private var handler = Handler(HandlerThread(this::class.simpleName + "Handler").also { it.start() }.looper)
+    private var viewModel: XdripViewModel? = null
 
-    private var _binding: XdripFragmentBinding? = null
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
+        viewModel = XdripViewModel(
+            rh = rh,
+            xdripMvvmRepository = xdripMvvmRepository,
+            dataSyncSelector = dataSyncSelector
+        )
 
-    // This property is only valid between onCreateView and
-    // onDestroyView.
-    private val binding get() = _binding!!
-
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View =
-        XdripFragmentBinding.inflate(inflater, container, false).also {
-            _binding = it
-            requireActivity().addMenuProvider(this, viewLifecycleOwner, Lifecycle.State.RESUMED)
-        }.root
-
-    override fun onCreateMenu(menu: Menu, inflater: MenuInflater) {
-        menu.add(Menu.FIRST, ID_MENU_CLEAR_LOG, 0, rh.gs(R.string.clear_log)).setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER)
-        menu.add(Menu.FIRST, ID_MENU_FULL_SYNC, 0, rh.gs(R.string.full_sync)).setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER)
-        MenuCompat.setGroupDividerEnabled(menu, true)
-    }
-
-    override fun onMenuItemSelected(item: MenuItem): Boolean =
-        when (item.itemId) {
-            ID_MENU_CLEAR_LOG -> {
-                xdripPlugin.clearLog()
-                true
+        return ComposeView(requireContext()).apply {
+            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
+            setContent {
+                CompositionLocalProvider(
+                    LocalPreferences provides preferences,
+                    LocalRxBus provides rxBus
+                ) {
+                    AapsTheme {
+                        viewModel?.let { vm ->
+                            XdripScreen(
+                                viewModel = vm,
+                                dateUtil = dateUtil,
+                                rh = rh,
+                                title = rh.gs(R.string.xdrip),
+                                setToolbarConfig = { },
+                                onNavigateBack = {
+                                    activity?.onBackPressedDispatcher?.onBackPressed()
+                                },
+                                onClearLog = {
+                                    xdripMvvmRepository.clearLog()
+                                },
+                                onFullSync = {
+                                    handleFullSync()
+                                },
+                                onSettings = {
+                                    uiInteraction.runPreferencesForPlugin(requireActivity(), xdripPlugin.javaClass.simpleName)
+                                }
+                            )
+                        }
+                    }
+                }
             }
-
-            ID_MENU_FULL_SYNC -> {
-                uiInteraction.showOkCancelDialog(
-                    context = requireActivity(), title = R.string.xdrip, message = R.string.full_xdrip_sync_comment,
-                    ok = { lifecycleScope.launch { dataSyncSelector.resetToNextFullSync() } }
-                )
-                true
-            }
-
-            else              -> false
         }
-
-    override fun onResume() {
-        super.onResume()
-        disposable += rxBus
-            .toObservable(EventXdripUpdateGUI::class.java)
-            .observeOn(aapsSchedulers.main)
-            .subscribe({ updateGui() }, fabricPrivacy::logException)
-        updateGui()
     }
 
-    override fun onPause() {
-        super.onPause()
-        disposable.clear()
-        handler.removeCallbacksAndMessages(null)
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        handler.removeCallbacksAndMessages(null)
-        handler.looper.quitSafely()
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        viewModel?.loadInitialData()
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
-        _binding = null
+        viewModel = null
     }
 
-    private fun updateGui() {
-        if (_binding == null) return
-        binding.log.text = xdripPlugin.textLog()
-        val size = dataSyncSelector.queueSize()
-        binding.queue.text = if (size >= 0) size.toString() else rh.gs(app.aaps.core.ui.R.string.value_unavailable_short)
+    private fun handleFullSync() {
+        uiInteraction.showOkCancelDialog(
+            context = requireActivity(),
+            title = R.string.xdrip,
+            message = R.string.full_xdrip_sync_comment,
+            ok = {
+                viewLifecycleOwner.lifecycleScope.launch {
+                    dataSyncSelector.resetToNextFullSync()
+                }
+            }
+        )
     }
 }
