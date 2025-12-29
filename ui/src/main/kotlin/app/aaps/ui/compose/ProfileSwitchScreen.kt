@@ -21,12 +21,13 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -40,12 +41,12 @@ import app.aaps.core.data.ue.Sources
 import app.aaps.core.data.ue.ValueWithUnit
 import app.aaps.core.interfaces.logging.UserEntryLogger
 import app.aaps.core.interfaces.resources.ResourceHelper
-import app.aaps.core.interfaces.ui.UiInteraction
 import app.aaps.core.interfaces.utils.DateUtil
 import app.aaps.core.interfaces.utils.DecimalFormatter
 import app.aaps.core.objects.extensions.getCustomizedName
 import app.aaps.core.objects.profile.ProfileSealed
 import app.aaps.core.ui.compose.AapsTheme
+import app.aaps.core.ui.compose.OkCancelDialog
 import app.aaps.core.ui.compose.ToolbarConfig
 import app.aaps.core.ui.compose.icons.Ns
 import app.aaps.core.ui.compose.icons.Pump
@@ -59,9 +60,7 @@ import app.aaps.ui.viewmodels.ProfileSwitchViewModel
  * @param viewModel ViewModel managing state and business logic
  * @param activePlugin Active plugin for profile source
  * @param decimalFormatter Formatter for decimal values
- * @param uiInteraction UI interaction helper for showing dialogs
  * @param uel User entry logger
- * @param rxBus RxBus for local profile changes
  * @param setToolbarConfig Callback to set the toolbar configuration
  * @param onNavigateBack Callback to navigate back
  */
@@ -71,13 +70,18 @@ fun ProfileSwitchScreen(
     viewModel: ProfileSwitchViewModel,
     activePlugin: app.aaps.core.interfaces.plugin.ActivePlugin,
     decimalFormatter: DecimalFormatter,
-    uiInteraction: UiInteraction,
     uel: UserEntryLogger,
     setToolbarConfig: (ToolbarConfig) -> Unit,
     onNavigateBack: () -> Unit = { }
 ) {
-    val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    // Dialog states
+    var showDeleteDialog by remember { mutableStateOf(false) }
+    var deleteDialogMessage by remember { mutableStateOf("") }
+    var showCloneDialog by remember { mutableStateOf(false) }
+    var cloneDialogMessage by remember { mutableStateOf("") }
+    var pendingCloneAction by remember { mutableStateOf<(() -> Unit)?>(null) }
 
     val currentlyActiveProfile = remember(uiState.profileSwitches) {
         viewModel.getActiveProfile()
@@ -90,16 +94,41 @@ fun ProfileSwitchScreen(
                 onNavigateBack = onNavigateBack,
                 onDeleteClick = {
                     if (uiState.selectedItems.isNotEmpty()) {
-                        val confirmationMessage = viewModel.getDeleteConfirmationMessage()
-                        uiInteraction.showOkCancelDialog(
-                            context = context,
-                            title = viewModel.rh.gs(app.aaps.core.ui.R.string.removerecord),
-                            message = confirmationMessage,
-                            ok = { viewModel.deleteSelected() }
-                        )
+                        deleteDialogMessage = viewModel.getDeleteConfirmationMessage()
+                        showDeleteDialog = true
                     }
                 }
             )
+        )
+    }
+
+    // Delete confirmation dialog
+    if (showDeleteDialog) {
+        OkCancelDialog(
+            title = viewModel.rh.gs(app.aaps.core.ui.R.string.removerecord),
+            message = deleteDialogMessage,
+            onConfirm = {
+                viewModel.deleteSelected()
+                showDeleteDialog = false
+            },
+            onDismiss = { showDeleteDialog = false }
+        )
+    }
+
+    // Clone confirmation dialog
+    if (showCloneDialog) {
+        OkCancelDialog(
+            title = viewModel.rh.gs(app.aaps.core.ui.R.string.careportal_profileswitch),
+            message = cloneDialogMessage,
+            onConfirm = {
+                pendingCloneAction?.invoke()
+                pendingCloneAction = null
+                showCloneDialog = false
+            },
+            onDismiss = {
+                pendingCloneAction = null
+                showCloneDialog = false
+            }
         )
     }
 
@@ -145,29 +174,26 @@ fun ProfileSwitchScreen(
                                 val timestamp = ps.value.timestamp
                                 val timestampStr = viewModel.dateUtil.dateAndTimeString(timestamp)
 
-                                uiInteraction.showOkCancelDialog(
-                                    context = context,
-                                    title = viewModel.rh.gs(app.aaps.core.ui.R.string.careportal_profileswitch),
-                                    message = "${viewModel.rh.gs(app.aaps.core.ui.R.string.copytolocalprofile)}\n$profileName\n$timestampStr",
-                                    ok = {
-                                        uel.log(
-                                            action = Action.PROFILE_SWITCH_CLONED,
-                                            source = Sources.Treatments,
-                                            note = "$profileName ${timestampStr.replace(".", "_")}",
-                                            listValues = listOf(
-                                                ValueWithUnit.Timestamp(timestamp),
-                                                ValueWithUnit.SimpleString(ps.value.profileName)
-                                            )
+                                cloneDialogMessage = "${viewModel.rh.gs(app.aaps.core.ui.R.string.copytolocalprofile)}\n$profileName\n$timestampStr"
+                                pendingCloneAction = {
+                                    uel.log(
+                                        action = Action.PROFILE_SWITCH_CLONED,
+                                        source = Sources.Treatments,
+                                        note = "$profileName ${timestampStr.replace(".", "_")}",
+                                        listValues = listOf(
+                                            ValueWithUnit.Timestamp(timestamp),
+                                            ValueWithUnit.SimpleString(ps.value.profileName)
                                         )
-                                        val nonCustomized = ps.convertToNonCustomizedProfile(viewModel.dateUtil)
-                                        activePlugin.activeProfileSource.addProfile(
-                                            activePlugin.activeProfileSource.copyFrom(
-                                                nonCustomized,
-                                                "$profileName ${timestampStr.replace(".", "_")}"
-                                            )
+                                    )
+                                    val nonCustomized = ps.convertToNonCustomizedProfile(viewModel.dateUtil)
+                                    activePlugin.activeProfileSource.addProfile(
+                                        activePlugin.activeProfileSource.copyFrom(
+                                            nonCustomized,
+                                            "$profileName ${timestampStr.replace(".", "_")}"
                                         )
-                                    }
-                                )
+                                    )
+                                }
+                                showCloneDialog = true
                             },
                             rh = viewModel.rh,
                             dateUtil = viewModel.dateUtil,

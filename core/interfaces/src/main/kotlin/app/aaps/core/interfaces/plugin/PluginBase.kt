@@ -77,7 +77,7 @@ abstract class PluginBase(
         return pluginDescription.composeContentProvider != null
     }
 
-    fun getComposeContent(): PluginComposeContent? {
+    fun getComposeContent(): Any? {
         return pluginDescription.composeContentProvider?.invoke()
     }
 

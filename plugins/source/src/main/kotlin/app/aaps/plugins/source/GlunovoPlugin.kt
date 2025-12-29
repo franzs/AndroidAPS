@@ -22,7 +22,6 @@ import app.aaps.core.interfaces.plugin.PluginDescription
 import app.aaps.core.interfaces.profile.ProfileUtil
 import app.aaps.core.interfaces.resources.ResourceHelper
 import app.aaps.core.interfaces.source.BgSource
-import app.aaps.core.interfaces.ui.UiInteraction
 import app.aaps.core.interfaces.utils.DateUtil
 import app.aaps.core.interfaces.utils.fabric.FabricPrivacy
 import app.aaps.core.keys.interfaces.Preferences
@@ -41,8 +40,7 @@ class GlunovoPlugin @Inject constructor(
     private val persistenceLayer: PersistenceLayer,
     private val dateUtil: DateUtil,
     private val fabricPrivacy: FabricPrivacy,
-    profileUtil: ProfileUtil,
-    uiInteraction: UiInteraction
+    profileUtil: ProfileUtil
 ) : AbstractBgSourcePlugin(
     PluginDescription()
         .mainType(PluginType.BGSOURCE)
@@ -54,7 +52,6 @@ class GlunovoPlugin @Inject constructor(
                 dateUtil = dateUtil,
                 profileUtil = profileUtil,
                 aapsLogger = aapsLogger,
-                uiInteraction = uiInteraction,
                 title = resourceHelper.gs(R.string.glunovo)
             )
         }

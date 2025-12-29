@@ -71,5 +71,4 @@ interface ProfileSource {
      * @param store ProfileStore to import
      */
     fun loadFromStore(store: ProfileStore)
-
 }

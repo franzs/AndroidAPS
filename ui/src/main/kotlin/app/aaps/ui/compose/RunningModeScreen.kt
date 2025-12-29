@@ -26,12 +26,13 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -41,10 +42,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.aaps.core.data.model.RM
 import app.aaps.core.data.time.T
 import app.aaps.core.interfaces.resources.ResourceHelper
-import app.aaps.core.interfaces.ui.UiInteraction
 import app.aaps.core.interfaces.utils.DateUtil
 import app.aaps.core.interfaces.utils.Translator
 import app.aaps.core.ui.compose.AapsTheme
+import app.aaps.core.ui.compose.OkCancelDialog
 import app.aaps.core.ui.compose.ToolbarConfig
 import app.aaps.core.ui.compose.icons.Ns
 import app.aaps.ui.R
@@ -56,7 +57,6 @@ import app.aaps.ui.viewmodels.RunningModeViewModel
  *
  * @param viewModel ViewModel managing state and business logic
  * @param translator Translator for running mode names
- * @param uiInteraction UI interaction helper for showing dialogs
  * @param setToolbarConfig Callback to set the toolbar configuration
  * @param onNavigateBack Callback to navigate back
  */
@@ -65,12 +65,14 @@ import app.aaps.ui.viewmodels.RunningModeViewModel
 fun RunningModeScreen(
     viewModel: RunningModeViewModel,
     translator: Translator,
-    uiInteraction: UiInteraction,
     setToolbarConfig: (ToolbarConfig) -> Unit,
     onNavigateBack: () -> Unit = { }
 ) {
-    val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    // Dialog state
+    var showDeleteDialog by remember { mutableStateOf(false) }
+    var deleteDialogMessage by remember { mutableStateOf("") }
 
     val currentlyActiveMode = remember(uiState.runningModes) {
         viewModel.getActiveMode()
@@ -96,13 +98,8 @@ fun RunningModeScreen(
                         IconButton(
                             onClick = {
                                 if (uiState.selectedItems.isNotEmpty()) {
-                                    val confirmationMessage = viewModel.getDeleteConfirmationMessage()
-                                    uiInteraction.showOkCancelDialog(
-                                        context = context,
-                                        title = viewModel.rh.gs(app.aaps.core.ui.R.string.removerecord),
-                                        message = confirmationMessage,
-                                        ok = { viewModel.deleteSelected() }
-                                    )
+                                    deleteDialogMessage = viewModel.getDeleteConfirmationMessage()
+                                    showDeleteDialog = true
                                 }
                             }
                         ) {
@@ -140,6 +137,19 @@ fun RunningModeScreen(
                     }
                 )
             }
+        )
+    }
+
+    // Delete confirmation dialog
+    if (showDeleteDialog) {
+        OkCancelDialog(
+            title = viewModel.rh.gs(app.aaps.core.ui.R.string.removerecord),
+            message = deleteDialogMessage,
+            onConfirm = {
+                viewModel.deleteSelected()
+                showDeleteDialog = false
+            },
+            onDismiss = { showDeleteDialog = false }
         )
     }
 

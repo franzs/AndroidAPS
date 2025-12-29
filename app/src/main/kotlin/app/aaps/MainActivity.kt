@@ -57,9 +57,6 @@ import app.aaps.plugins.configuration.activities.SingleFragmentActivity
 import app.aaps.plugins.configuration.maintenance.MaintenancePlugin
 import app.aaps.plugins.configuration.setupwizard.SetupWizardActivity
 import app.aaps.plugins.constraints.signatureVerifier.SignatureVerifierPlugin
-import app.aaps.ui.activities.ProfileHelperActivity
-import app.aaps.ui.activities.StatsActivity
-import app.aaps.ui.activities.TreatmentsActivity
 import app.aaps.ui.alertDialogs.AboutDialog
 import app.aaps.ui.tabs.TabPageAdapter
 import com.google.android.material.tabs.TabLayoutMediator
@@ -174,11 +171,6 @@ class MainActivity : DaggerAppCompatActivityWithResult() {
                         true
                     }
 
-                    R.id.nav_treatments         -> {
-                        startActivity(Intent(this@MainActivity, TreatmentsActivity::class.java).setAction("info.nightscout.androidaps.MainActivity"))
-                        true
-                    }
-
                     R.id.nav_setupwizard        -> {
                         protectionCheck.queryProtection(this@MainActivity, ProtectionCheck.Protection.PREFERENCES, {
                             startActivity(Intent(this@MainActivity, SetupWizardActivity::class.java).setAction("info.nightscout.androidaps.MainActivity"))
@@ -200,15 +192,6 @@ class MainActivity : DaggerAppCompatActivityWithResult() {
                     R.id.nav_plugin_preferences -> {
                         val plugin = (binding.mainPager.adapter as TabPageAdapter).getPluginAt(binding.mainPager.currentItem)
                         uiInteraction.runPreferencesForPlugin(this@MainActivity, plugin.javaClass.simpleName)
-                        true
-                    }
-                    R.id.nav_defaultprofile     -> {
-                        startActivity(Intent(this@MainActivity, ProfileHelperActivity::class.java).setAction("info.nightscout.androidaps.MainActivity"))
-                        true
-                    }
-
-                    R.id.nav_stats              -> {
-                        startActivity(Intent(this@MainActivity, StatsActivity::class.java).setAction("info.nightscout.androidaps.MainActivity"))
                         true
                     }
 
@@ -303,9 +286,10 @@ class MainActivity : DaggerAppCompatActivityWithResult() {
         if (config.appInitialized) binding.splash.visibility = View.GONE
         if (!isProtectionCheckActive) {
             isProtectionCheckActive = true
-            protectionCheck.queryProtection(this, ProtectionCheck.Protection.APPLICATION, UIRunnable { isProtectionCheckActive = false },
-                                            UIRunnable { uiInteraction.showOkDialog(context = this, title = "", message = rh.gs(R.string.authorizationfailed), onFinish = { isProtectionCheckActive = false; finish() }) },
-                                            UIRunnable { uiInteraction.showOkDialog(context = this, title = "", message = rh.gs(R.string.authorizationfailed), onFinish = { isProtectionCheckActive = false; finish() }) }
+            protectionCheck.queryProtection(
+                this, ProtectionCheck.Protection.APPLICATION, UIRunnable { isProtectionCheckActive = false },
+                UIRunnable { uiInteraction.showOkDialog(context = this, title = "", message = rh.gs(R.string.authorizationfailed), onFinish = { isProtectionCheckActive = false; finish() }) },
+                UIRunnable { uiInteraction.showOkDialog(context = this, title = "", message = rh.gs(R.string.authorizationfailed), onFinish = { isProtectionCheckActive = false; finish() }) }
             )
         }
     }
@@ -377,6 +361,11 @@ class MainActivity : DaggerAppCompatActivityWithResult() {
                 tab.text = (binding.mainPager.adapter as TabPageAdapter).getPluginAt(position).name
             }.attach()
         }
+
+        // FAB to switch to Compose UI
+        binding.fabSwitchUi.setOnClickListener {
+            startActivity(Intent(this, ComposeMainActivity::class.java))
+        }
     }
 
     override fun dispatchTouchEvent(event: MotionEvent): Boolean {
@@ -401,7 +390,6 @@ class MainActivity : DaggerAppCompatActivityWithResult() {
             binding.mainDrawerLayout.closeDrawers()
         }
         val result = super.onMenuOpened(featureId, menu)
-        menu.findItem(R.id.nav_treatments)?.isEnabled = profileFunction.getProfile() != null
         if (binding.mainPager.currentItem >= 0) {
             val plugin = (binding.mainPager.adapter as TabPageAdapter?)?.getPluginAt(binding.mainPager.currentItem) ?: return result
             this.menu?.findItem(R.id.nav_plugin_preferences)?.title = rh.gs(R.string.nav_preferences_plugin, plugin.name)

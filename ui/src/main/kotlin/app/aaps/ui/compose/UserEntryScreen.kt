@@ -23,7 +23,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -44,11 +46,11 @@ import app.aaps.core.data.ue.Sources
 import app.aaps.core.interfaces.logging.UserEntryLogger
 import app.aaps.core.interfaces.maintenance.ImportExportPrefs
 import app.aaps.core.interfaces.resources.ResourceHelper
-import app.aaps.core.interfaces.ui.UiInteraction
 import app.aaps.core.interfaces.userEntry.UserEntryPresentationHelper
 import app.aaps.core.interfaces.utils.DateUtil
 import app.aaps.core.interfaces.utils.Translator
 import app.aaps.core.ui.compose.AapsTheme
+import app.aaps.core.ui.compose.OkCancelDialog
 import app.aaps.core.ui.compose.ToolbarConfig
 import app.aaps.ui.R
 import app.aaps.ui.compose.components.ErrorSnackbar
@@ -60,7 +62,6 @@ import app.aaps.ui.viewmodels.UserEntryViewModel
  * @param viewModel ViewModel managing state and business logic
  * @param userEntryPresentationHelper Helper for formatting user entry display
  * @param translator Translator for action names
- * @param uiInteraction UI interaction helper for showing dialogs
  * @param importExportPrefs Import/export preferences helper
  * @param uel User entry logger
  * @param setToolbarConfig Lambda to set toolbar configuration
@@ -72,7 +73,6 @@ fun UserEntryScreen(
     viewModel: UserEntryViewModel,
     userEntryPresentationHelper: UserEntryPresentationHelper,
     translator: Translator,
-    uiInteraction: UiInteraction,
     importExportPrefs: ImportExportPrefs,
     uel: UserEntryLogger,
     setToolbarConfig: (ToolbarConfig) -> Unit,
@@ -80,6 +80,9 @@ fun UserEntryScreen(
 ) {
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    // Dialog state
+    var showExportDialog by remember { mutableStateOf(false) }
 
     // Update toolbar configuration
     LaunchedEffect(uiState.showLoop) {
@@ -97,19 +100,25 @@ fun UserEntryScreen(
                     MenuItemData(
                         label = viewModel.rh.gs(app.aaps.core.ui.R.string.ue_export_to_csv),
                         onClick = {
-                            uiInteraction.showOkCancelDialog(
-                                context = context,
-                                title = viewModel.rh.gs(app.aaps.core.ui.R.string.confirm),
-                                message = viewModel.rh.gs(app.aaps.core.ui.R.string.ue_export_to_csv) + "?",
-                                ok = {
-                                    uel.log(Action.EXPORT_CSV, Sources.Treatments)
-                                    importExportPrefs.exportUserEntriesCsv(context)
-                                }
-                            )
+                            showExportDialog = true
                         }
                     )
                 )
             )
+        )
+    }
+
+    // Export confirmation dialog
+    if (showExportDialog) {
+        OkCancelDialog(
+            title = viewModel.rh.gs(app.aaps.core.ui.R.string.confirm),
+            message = viewModel.rh.gs(app.aaps.core.ui.R.string.ue_export_to_csv) + "?",
+            onConfirm = {
+                uel.log(Action.EXPORT_CSV, Sources.Treatments)
+                importExportPrefs.exportUserEntriesCsv(context)
+                showExportDialog = false
+            },
+            onDismiss = { showExportDialog = false }
         )
     }
 

@@ -4,10 +4,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import app.aaps.core.interfaces.db.PersistenceLayer
 import app.aaps.core.interfaces.logging.AAPSLogger
-import app.aaps.core.interfaces.plugin.PluginComposeContent
 import app.aaps.core.interfaces.profile.ProfileUtil
 import app.aaps.core.interfaces.resources.ResourceHelper
-import app.aaps.core.interfaces.ui.UiInteraction
 import app.aaps.core.interfaces.utils.DateUtil
 import app.aaps.core.ui.compose.ComposablePluginContent
 import app.aaps.core.ui.compose.ToolbarConfig
@@ -27,12 +25,8 @@ class BgSourceComposeContent(
     private val dateUtil: DateUtil,
     private val profileUtil: ProfileUtil,
     private val aapsLogger: AAPSLogger,
-    private val uiInteraction: UiInteraction,
     private val title: String
-) : PluginComposeContent, ComposablePluginContent {
-
-    // Keep for interface compatibility
-    override val content: Any = Unit
+) : ComposablePluginContent {
 
     @Composable
     override fun Render(
@@ -53,7 +47,6 @@ class BgSourceComposeContent(
 
         BgSourceScreen(
             viewModel = viewModel,
-            uiInteraction = uiInteraction,
             title = title,
             setToolbarConfig = setToolbarConfig,
             onNavigateBack = onNavigateBack,

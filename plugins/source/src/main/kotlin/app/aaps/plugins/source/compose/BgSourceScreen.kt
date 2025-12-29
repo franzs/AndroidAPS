@@ -25,12 +25,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -42,10 +43,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.aaps.core.data.model.GV
 import app.aaps.core.data.time.T
 import app.aaps.core.interfaces.resources.ResourceHelper
-import app.aaps.core.interfaces.ui.UiInteraction
 import app.aaps.core.interfaces.utils.DateUtil
 import app.aaps.core.objects.extensions.directionToIcon
 import app.aaps.core.ui.compose.AapsTheme
+import app.aaps.core.ui.compose.OkCancelDialog
 import app.aaps.core.ui.compose.ToolbarConfig
 import app.aaps.core.ui.compose.icons.Ns
 import app.aaps.plugins.source.viewmodels.BgSourceViewModel
@@ -58,7 +59,6 @@ import kotlinx.coroutines.flow.distinctUntilChanged
  * Composable screen displaying blood glucose readings in a list grouped by day.
  *
  * @param viewModel ViewModel managing state and business logic
- * @param uiInteraction UI interaction helper for showing dialogs
  * @param title Title to display in the toolbar
  * @param setToolbarConfig Lambda to set toolbar configuration
  * @param onNavigateBack Lambda to handle back navigation
@@ -67,14 +67,16 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 @Composable
 fun BgSourceScreen(
     viewModel: BgSourceViewModel,
-    uiInteraction: UiInteraction,
     title: String,
     setToolbarConfig: (ToolbarConfig) -> Unit,
     onNavigateBack: () -> Unit = { },
     onSettings: (() -> Unit)? = null
 ) {
-    val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    // Dialog state
+    var showDeleteDialog by remember { mutableStateOf(false) }
+    var deleteDialogMessage by remember { mutableStateOf("") }
 
     // Update toolbar configuration whenever state changes
     LaunchedEffect(uiState.isRemovingMode, uiState.selectedItems.size) {
@@ -86,18 +88,27 @@ fun BgSourceScreen(
                 onNavigateBack = onNavigateBack,
                 onDelete = {
                     if (uiState.selectedItems.isNotEmpty()) {
-                        uiInteraction.showOkCancelDialog(
-                            context = context,
-                            title = viewModel.rh.gs(app.aaps.core.ui.R.string.removerecord),
-                            message = viewModel.getDeleteConfirmationMessage(),
-                            ok = { viewModel.deleteSelected() }
-                        )
+                        deleteDialogMessage = viewModel.getDeleteConfirmationMessage()
+                        showDeleteDialog = true
                     }
                 },
                 rh = viewModel.rh,
                 title = title,
                 onSettings = onSettings
             )
+        )
+    }
+
+    // Delete confirmation dialog
+    if (showDeleteDialog) {
+        OkCancelDialog(
+            title = viewModel.rh.gs(app.aaps.core.ui.R.string.removerecord),
+            message = deleteDialogMessage,
+            onConfirm = {
+                viewModel.deleteSelected()
+                showDeleteDialog = false
+            },
+            onDismiss = { showDeleteDialog = false }
         )
     }
 

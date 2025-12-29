@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.compose.compiler)
     id("kotlin-android")
     id("android-module-dependencies")
     id("test-module-dependencies")
@@ -9,6 +10,9 @@ plugins {
 
 android {
     namespace = "app.aaps.plugins.main"
+    buildFeatures {
+        compose = true
+    }
 }
 
 dependencies {
@@ -31,6 +35,13 @@ dependencies {
 
     api(libs.androidx.appcompat)
     api(libs.com.google.android.material)
+
+    // Compose
+    api(platform(libs.androidx.compose.bom))
+    api(libs.androidx.compose.material3)
+    api(libs.androidx.compose.material.icons.extended)
+    api(libs.androidx.compose.foundation)
+    api(libs.androidx.lifecycle.runtime.compose)
 
     // Actions
     api(libs.androidx.gridlayout)

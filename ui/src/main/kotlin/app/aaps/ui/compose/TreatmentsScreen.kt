@@ -28,19 +28,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import app.aaps.core.interfaces.db.PersistenceLayer
-import app.aaps.core.interfaces.logging.AAPSLogger
-import app.aaps.core.interfaces.logging.UserEntryLogger
-import app.aaps.core.interfaces.maintenance.ImportExportPrefs
-import app.aaps.core.interfaces.plugin.ActivePlugin
-import app.aaps.core.interfaces.profile.ProfileFunction
-import app.aaps.core.interfaces.profile.ProfileUtil
-import app.aaps.core.interfaces.resources.ResourceHelper
-import app.aaps.core.interfaces.ui.UiInteraction
-import app.aaps.core.interfaces.userEntry.UserEntryPresentationHelper
-import app.aaps.core.interfaces.utils.DateUtil
-import app.aaps.core.interfaces.utils.DecimalFormatter
-import app.aaps.core.interfaces.utils.Translator
 import app.aaps.core.ui.compose.AapsTheme
 import app.aaps.core.ui.compose.ToolbarConfig
 import app.aaps.core.ui.compose.icons.Carbs
@@ -52,55 +39,23 @@ import app.aaps.core.ui.compose.icons.TempBasal
 import app.aaps.core.ui.compose.icons.TempTarget
 import app.aaps.core.ui.compose.icons.UserEntry
 import app.aaps.ui.R
-import app.aaps.ui.viewmodels.BolusCarbsViewModel
-import app.aaps.ui.viewmodels.CareportalViewModel
-import app.aaps.ui.viewmodels.ExtendedBolusViewModel
-import app.aaps.ui.viewmodels.ProfileSwitchViewModel
-import app.aaps.ui.viewmodels.RunningModeViewModel
-import app.aaps.ui.viewmodels.TempBasalViewModel
-import app.aaps.ui.viewmodels.TempTargetViewModel
-import app.aaps.ui.viewmodels.UserEntryViewModel
+import app.aaps.ui.viewmodels.TreatmentsViewModel
 import kotlinx.coroutines.launch
 
 /**
  * Composable screen displaying treatments with tab navigation.
  * Uses Jetpack Compose for all content including each treatment type.
  *
- * @param showExtendedBolusTab Whether to show the Extended Bolus tab
- * @param persistenceLayer Database layer for treatment data
- * @param profileUtil Profile utility for unit conversion
- * @param profileFunction Profile function for calculations
- * @param activePlugin Active plugin for pump capabilities
- * @param rh Resource helper for string resources
- * @param translator Translator for treatment types
- * @param dateUtil Date utility for formatting dates and times
- * @param decimalFormatter Formatter for decimal values
- * @param uiInteraction UI interaction helper for showing dialogs
- * @param userEntryPresentationHelper Helper for formatting user entry display
- * @param importExportPrefs Import/export preferences helper
- * @param uel User entry logger
- * @param aapsLogger Logger for error and debug messages
+ * @param viewModel ViewModel containing all dependencies and child ViewModels
  * @param onNavigateBack Callback when back navigation is requested
  */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun TreatmentsScreen(
-    showExtendedBolusTab: Boolean,
-    persistenceLayer: PersistenceLayer,
-    profileUtil: ProfileUtil,
-    profileFunction: ProfileFunction,
-    activePlugin: ActivePlugin,
-    rh: ResourceHelper,
-    translator: Translator,
-    dateUtil: DateUtil,
-    decimalFormatter: DecimalFormatter,
-    uiInteraction: UiInteraction,
-    userEntryPresentationHelper: UserEntryPresentationHelper,
-    importExportPrefs: ImportExportPrefs,
-    uel: UserEntryLogger,
-    aapsLogger: AAPSLogger,
+    viewModel: TreatmentsViewModel,
     onNavigateBack: () -> Unit
 ) {
+    val showExtendedBolusTab = viewModel.showExtendedBolusTab()
     val iconColors = AapsTheme.elementColors
     var toolbarConfig by remember {
         mutableStateOf(
@@ -133,20 +88,9 @@ fun TreatmentsScreen(
                     titleRes = R.string.carbs_and_bolus,
                     colorGetter = { iconColors.carbs },
                     content = {
-                        val bolusCarbsViewModel = remember {
-                            BolusCarbsViewModel(
-                                persistenceLayer = persistenceLayer,
-                                profileFunction = profileFunction,
-                                rh = rh,
-                                dateUtil = dateUtil,
-                                decimalFormatter = decimalFormatter,
-                                aapsLogger = aapsLogger
-                            )
-                        }
                         BolusCarbsScreen(
-                            viewModel = bolusCarbsViewModel,
-                            activePlugin = activePlugin,
-                            uiInteraction = uiInteraction,
+                            viewModel = viewModel.bolusCarbsViewModel,
+                            activePlugin = viewModel.activePlugin,
                             setToolbarConfig = { config ->
                                 if (allowedToolbarPage == pageIndex0) toolbarConfig = config
                             },
@@ -163,19 +107,10 @@ fun TreatmentsScreen(
                         titleRes = app.aaps.core.ui.R.string.extended_bolus,
                         colorGetter = { iconColors.extendedBolus },
                         content = {
-                            val extendedBolusViewModel = remember {
-                                ExtendedBolusViewModel(
-                                    persistenceLayer = persistenceLayer,
-                                    rh = rh,
-                                    dateUtil = dateUtil,
-                                    aapsLogger = aapsLogger
-                                )
-                            }
                             ExtendedBolusScreen(
-                                viewModel = extendedBolusViewModel,
-                                profileFunction = profileFunction,
-                                activeInsulin = activePlugin.activeInsulin,
-                                uiInteraction = uiInteraction,
+                                viewModel = viewModel.extendedBolusViewModel,
+                                profileFunction = viewModel.profileFunction,
+                                activeInsulin = viewModel.activePlugin.activeInsulin,
                                 setToolbarConfig = { config ->
                                     if (allowedToolbarPage == pageIndex1) toolbarConfig = config
                                 },
@@ -192,22 +127,10 @@ fun TreatmentsScreen(
                     titleRes = app.aaps.core.ui.R.string.tempbasal_label,
                     colorGetter = { iconColors.tempBasal },
                     content = {
-                        val tempBasalViewModel = remember {
-                            TempBasalViewModel(
-                                persistenceLayer = persistenceLayer,
-                                profileFunction = profileFunction,
-                                activePlugin = activePlugin,
-                                rh = rh,
-                                dateUtil = dateUtil,
-                                decimalFormatter = decimalFormatter,
-                                aapsLogger = aapsLogger
-                            )
-                        }
                         TempBasalScreen(
-                            viewModel = tempBasalViewModel,
-                            profileFunction = profileFunction,
-                            activePlugin = activePlugin,
-                            uiInteraction = uiInteraction,
+                            viewModel = viewModel.tempBasalViewModel,
+                            profileFunction = viewModel.profileFunction,
+                            activePlugin = viewModel.activePlugin,
                             setToolbarConfig = { config ->
                                 if (allowedToolbarPage == pageIndex2) toolbarConfig = config
                             },
@@ -223,21 +146,11 @@ fun TreatmentsScreen(
                     titleRes = app.aaps.core.ui.R.string.temporary_target,
                     colorGetter = { iconColors.tempTarget },
                     content = {
-                        val tempTargetViewModel = remember {
-                            TempTargetViewModel(
-                                persistenceLayer = persistenceLayer,
-                                profileUtil = profileUtil,
-                                rh = rh,
-                                dateUtil = dateUtil,
-                                aapsLogger = aapsLogger
-                            )
-                        }
                         TempTargetScreen(
-                            viewModel = tempTargetViewModel,
-                            profileUtil = profileUtil,
-                            translator = translator,
-                            decimalFormatter = decimalFormatter,
-                            uiInteraction = uiInteraction,
+                            viewModel = viewModel.tempTargetViewModel,
+                            profileUtil = viewModel.profileUtil,
+                            translator = viewModel.translator,
+                            decimalFormatter = viewModel.decimalFormatter,
                             setToolbarConfig = { config ->
                                 if (allowedToolbarPage == pageIndex3) toolbarConfig = config
                             },
@@ -253,20 +166,11 @@ fun TreatmentsScreen(
                     titleRes = app.aaps.core.ui.R.string.careportal_profileswitch,
                     colorGetter = { iconColors.profileSwitch },
                     content = {
-                        val profileSwitchViewModel = remember {
-                            ProfileSwitchViewModel(
-                                persistenceLayer = persistenceLayer,
-                                rh = rh,
-                                dateUtil = dateUtil,
-                                aapsLogger = aapsLogger
-                            )
-                        }
                         ProfileSwitchScreen(
-                            viewModel = profileSwitchViewModel,
-                            activePlugin = activePlugin,
-                            decimalFormatter = decimalFormatter,
-                            uiInteraction = uiInteraction,
-                            uel = uel,
+                            viewModel = viewModel.profileSwitchViewModel,
+                            activePlugin = viewModel.activePlugin,
+                            decimalFormatter = viewModel.decimalFormatter,
+                            uel = viewModel.uel,
                             setToolbarConfig = { config ->
                                 if (allowedToolbarPage == pageIndex4) toolbarConfig = config
                             },
@@ -282,21 +186,11 @@ fun TreatmentsScreen(
                     titleRes = app.aaps.core.ui.R.string.careportal,
                     colorGetter = { iconColors.careportal },
                     content = {
-                        val careportalViewModel = remember {
-                            CareportalViewModel(
-                                persistenceLayer = persistenceLayer,
-                                rh = rh,
-                                translator = translator,
-                                dateUtil = dateUtil,
-                                aapsLogger = aapsLogger
-                            )
-                        }
                         CareportalScreen(
-                            viewModel = careportalViewModel,
-                            persistenceLayer = persistenceLayer,
-                            profileUtil = profileUtil,
-                            translator = translator,
-                            uiInteraction = uiInteraction,
+                            viewModel = viewModel.careportalViewModel,
+                            persistenceLayer = viewModel.persistenceLayer,
+                            profileUtil = viewModel.profileUtil,
+                            translator = viewModel.translator,
                             setToolbarConfig = { config ->
                                 if (allowedToolbarPage == pageIndex5) toolbarConfig = config
                             },
@@ -312,18 +206,9 @@ fun TreatmentsScreen(
                     titleRes = app.aaps.core.ui.R.string.running_mode,
                     colorGetter = { iconColors.runningMode },
                     content = {
-                        val runningModeViewModel = remember {
-                            RunningModeViewModel(
-                                persistenceLayer = persistenceLayer,
-                                rh = rh,
-                                dateUtil = dateUtil,
-                                aapsLogger = aapsLogger
-                            )
-                        }
                         RunningModeScreen(
-                            viewModel = runningModeViewModel,
-                            translator = translator,
-                            uiInteraction = uiInteraction,
+                            viewModel = viewModel.runningModeViewModel,
+                            translator = viewModel.translator,
                             setToolbarConfig = { config ->
                                 if (allowedToolbarPage == pageIndex6) toolbarConfig = config
                             },
@@ -339,21 +224,12 @@ fun TreatmentsScreen(
                     titleRes = R.string.user_entry,
                     colorGetter = { iconColors.userEntry },
                     content = {
-                        val userEntryViewModel = remember {
-                            UserEntryViewModel(
-                                persistenceLayer = persistenceLayer,
-                                rh = rh,
-                                dateUtil = dateUtil,
-                                aapsLogger = aapsLogger
-                            )
-                        }
                         UserEntryScreen(
-                            viewModel = userEntryViewModel,
-                            userEntryPresentationHelper = userEntryPresentationHelper,
-                            translator = translator,
-                            uiInteraction = uiInteraction,
-                            importExportPrefs = importExportPrefs,
-                            uel = uel,
+                            viewModel = viewModel.userEntryViewModel,
+                            userEntryPresentationHelper = viewModel.userEntryPresentationHelper,
+                            translator = viewModel.translator,
+                            importExportPrefs = viewModel.importExportPrefs,
+                            uel = viewModel.uel,
                             setToolbarConfig = { config ->
                                 if (allowedToolbarPage == pageIndex7) toolbarConfig = config
                             },

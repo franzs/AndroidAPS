@@ -2,12 +2,9 @@ package app.aaps.ui.di
 
 import app.aaps.ui.activities.BolusProgressHelperActivity
 import app.aaps.ui.activities.ErrorActivity
-import app.aaps.ui.activities.ProfileHelperActivity
 import app.aaps.ui.activities.ProfileViewerActivity
 import app.aaps.ui.activities.QuickWizardListActivity
-import app.aaps.ui.activities.StatsActivity
 import app.aaps.ui.activities.TDDStatsActivity
-import app.aaps.ui.activities.TreatmentsActivity
 import app.aaps.ui.dialogs.BolusProgressDialog
 import app.aaps.ui.dialogs.CalibrationDialog
 import app.aaps.ui.dialogs.CarbsDialog
@@ -61,7 +58,4 @@ abstract class UiModule {
     @ContributesAndroidInjector abstract fun contributesTDDStatsActivity(): TDDStatsActivity
     @ContributesAndroidInjector abstract fun contributeBolusProgressHelperActivity(): BolusProgressHelperActivity
     @ContributesAndroidInjector abstract fun contributeErrorActivity(): ErrorActivity
-    @ContributesAndroidInjector abstract fun contributesStatsActivity(): StatsActivity
-    @ContributesAndroidInjector abstract fun contributesTreatmentsActivity(): TreatmentsActivity
-    @ContributesAndroidInjector abstract fun contributesProfileHelperActivity(): ProfileHelperActivity
 }

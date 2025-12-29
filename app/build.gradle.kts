@@ -3,6 +3,7 @@ import java.util.Date
 
 plugins {
     alias(libs.plugins.ksp)
+    alias(libs.plugins.compose.compiler)
     id("com.android.application")
     id("kotlin-android")
     id("com.google.gms.google-services")
@@ -141,6 +142,7 @@ android {
     buildFeatures {
         dataBinding = true
         buildConfig = true
+        compose = true
     }
 }
 
@@ -205,19 +207,19 @@ dependencies {
 
     debugImplementation(libs.com.squareup.leakcanary.android)
 
-
-    kspAndroidTest(libs.com.google.dagger.android.processor)
-
     /* Dagger2 - We are going to use dagger.android which includes
      * support for Activity and fragment injection so we need to include
      * the following dependencies */
     ksp(libs.com.google.dagger.android.processor)
+    kspAndroidTest(libs.com.google.dagger.android.processor)
     ksp(libs.com.google.dagger.compiler)
 
     // MainApp
     api(libs.com.uber.rxdogtag2.rxdogtag)
     // Remote config
     api(libs.com.google.firebase.config)
+    // Navigation Compose
+    api(libs.androidx.compose.navigation)
 }
 
 println("-------------------")

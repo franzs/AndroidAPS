@@ -13,7 +13,6 @@ import app.aaps.core.interfaces.profile.ProfileUtil
 import app.aaps.core.interfaces.resources.ResourceHelper
 import app.aaps.core.interfaces.source.BgSource
 import app.aaps.core.interfaces.source.NSClientSource
-import app.aaps.core.interfaces.ui.UiInteraction
 import app.aaps.core.interfaces.utils.DateUtil
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -25,8 +24,7 @@ class NSClientSourcePlugin @Inject constructor(
     config: Config,
     persistenceLayer: PersistenceLayer,
     dateUtil: DateUtil,
-    profileUtil: ProfileUtil,
-    uiInteraction: UiInteraction
+    profileUtil: ProfileUtil
 ) : PluginBase(
     PluginDescription()
         .mainType(PluginType.BGSOURCE)
@@ -38,7 +36,6 @@ class NSClientSourcePlugin @Inject constructor(
                 dateUtil = dateUtil,
                 profileUtil = profileUtil,
                 aapsLogger = aapsLogger,
-                uiInteraction = uiInteraction,
                 title = rh.gs(R.string.ns_client_bg)
             )
         }

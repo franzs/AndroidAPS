@@ -70,6 +70,7 @@ class ProfilePlugin @Inject constructor(
         .pluginName(R.string.localprofile)
         .shortName(R.string.localprofile_shortname)
         .description(R.string.description_profile_local)
+        .visibleByDefault(true)
         .setDefault(),
     ownPreferences = listOf(
         ProfileComposedStringKey::class.java, ProfileComposedDoubleKey::class.java, ProfileComposedBooleanKey::class.java, ProfileIntKey::class.java

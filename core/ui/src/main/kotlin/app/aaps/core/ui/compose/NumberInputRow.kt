@@ -1,5 +1,6 @@
 package app.aaps.core.ui.compose
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -8,13 +9,17 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import java.text.DecimalFormat
 
 /**
  * Composable that displays a numeric input with label, current value, and Material 3 slider.
@@ -27,8 +32,9 @@ import androidx.compose.ui.unit.dp
  * ```
  *
  * The component displays:
- * - Top row: Label (left, labelLarge) and current value (right, titleMedium bold in primary color)
- * - Bottom: Material 3 Slider with defined range and step increments
+ * - Top row: Label (left, labelLarge) and current value (right, titleMedium bold in primary color, clickable)
+ * - Bottom: Material 3 Slider with +/- buttons
+ * - Clicking on value opens a dialog for direct input
  *
  * **Value Display:**
  * - Value is displayed as an integer (decimal portion is truncated)
@@ -53,6 +59,9 @@ fun NumberInputRow(
     step: Double,
     modifier: Modifier = Modifier
 ) {
+    var showDialog by remember { mutableStateOf(false) }
+    val valueFormat = remember { DecimalFormat("0") }
+
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -72,16 +81,29 @@ fun NumberInputRow(
                 text = value.toInt().toString(),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.clickable { showDialog = true }
             )
         }
         Spacer(modifier = Modifier.height(4.dp))
-        Slider(
-            value = value.toFloat(),
-            onValueChange = { onValueChange(it.toDouble()) },
-            valueRange = minValue.toFloat()..maxValue.toFloat(),
-            steps = ((maxValue - minValue) / step - 1).toInt(),
+        SliderWithButtons(
+            value = value,
+            onValueChange = onValueChange,
+            valueRange = minValue..maxValue,
+            step = step,
             modifier = Modifier.fillMaxWidth()
+        )
+    }
+
+    if (showDialog) {
+        ValueInputDialog(
+            currentValue = value,
+            valueRange = minValue..maxValue,
+            step = step,
+            label = label,
+            valueFormat = valueFormat,
+            onValueConfirm = onValueChange,
+            onDismiss = { showDialog = false }
         )
     }
 }

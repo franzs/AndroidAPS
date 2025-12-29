@@ -12,7 +12,6 @@ import app.aaps.core.interfaces.logging.AAPSLogger
 import app.aaps.core.interfaces.profile.ProfileUtil
 import app.aaps.core.interfaces.resources.ResourceHelper
 import app.aaps.core.interfaces.rx.bus.RxBus
-import app.aaps.core.interfaces.ui.UiInteraction
 import app.aaps.core.interfaces.utils.DateUtil
 import app.aaps.core.keys.interfaces.Preferences
 import app.aaps.core.ui.compose.AapsTheme
@@ -31,7 +30,6 @@ class BGSourceFragment : DaggerFragment() {
     @Inject lateinit var dateUtil: DateUtil
     @Inject lateinit var persistenceLayer: PersistenceLayer
     @Inject lateinit var profileUtil: ProfileUtil
-    @Inject lateinit var uiInteraction: UiInteraction
     @Inject lateinit var preferences: Preferences
 
     private var viewModel: BgSourceViewModel? = null
@@ -56,7 +54,6 @@ class BGSourceFragment : DaggerFragment() {
                         viewModel?.let { vm ->
                             BgSourceScreen(
                                 viewModel = vm,
-                                uiInteraction = uiInteraction,
                                 title = rh.gs(R.string.bgsource_settings),
                                 setToolbarConfig = { },
                                 onNavigateBack = {

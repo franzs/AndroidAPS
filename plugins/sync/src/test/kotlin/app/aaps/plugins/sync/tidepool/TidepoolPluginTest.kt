@@ -5,6 +5,7 @@ import app.aaps.plugins.sync.nsclient.ReceiverDelegate
 import app.aaps.plugins.sync.tidepool.auth.AuthFlowOut
 import app.aaps.plugins.sync.tidepool.comm.TidepoolUploader
 import app.aaps.plugins.sync.tidepool.comm.UploadChunk
+import app.aaps.plugins.sync.tidepool.mvvm.TidepoolMvvmRepository
 import app.aaps.plugins.sync.tidepool.utils.RateLimit
 import app.aaps.shared.tests.TestBaseWithProfile
 import com.google.common.truth.Truth.assertThat
@@ -19,6 +20,7 @@ class TidepoolPluginTest : TestBaseWithProfile() {
     @Mock lateinit var receiverDelegate: ReceiverDelegate
     @Mock lateinit var uiInteraction: UiInteraction
     @Mock lateinit var authFlowOut: AuthFlowOut
+    @Mock lateinit var tidepoolMvvmRepository: TidepoolMvvmRepository
 
     private lateinit var tidepoolPlugin: TidepoolPlugin
     private lateinit var rateLimit: RateLimit
@@ -26,7 +28,7 @@ class TidepoolPluginTest : TestBaseWithProfile() {
     @BeforeEach fun prepare() {
         rateLimit = RateLimit(dateUtil)
         tidepoolPlugin = TidepoolPlugin(
-            aapsLogger, rh, preferences, aapsSchedulers, rxBus, context, fabricPrivacy, tidepoolUploader, uploadChunk, rateLimit, receiverDelegate, uiInteraction, authFlowOut
+            aapsLogger, rh, preferences, aapsSchedulers, rxBus, fabricPrivacy, tidepoolUploader, uploadChunk, rateLimit, receiverDelegate, authFlowOut, tidepoolMvvmRepository
         )
     }
 

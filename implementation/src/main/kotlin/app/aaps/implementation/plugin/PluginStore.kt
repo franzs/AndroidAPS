@@ -32,7 +32,6 @@ class PluginStore @Inject constructor(
 
     private var activeBgSourceStore: BgSource? = null
     private var activePumpStore: Pump? = null
-    private var activeProfile: ProfileSource? = null
     private var activeAPSStore: APS? = null
     private var activeInsulinStore: Insulin? = null
     private var activeSensitivityStore: Sensitivity? = null
@@ -122,16 +121,6 @@ class PluginStore @Inject constructor(
         }
         setFragmentVisibilities((activeSmoothingStore as PluginBase).name, pluginsInCategory, PluginType.SMOOTHING)
 
-        // PluginType.PROFILE
-        pluginsInCategory = getSpecificPluginsList(PluginType.PROFILE)
-        activeProfile = getTheOneEnabledInArray(pluginsInCategory, PluginType.PROFILE) as ProfileSource?
-        if (activeProfile == null) {
-            activeProfile = getDefaultPlugin(PluginType.PROFILE) as ProfileSource
-            (activeProfile as PluginBase).setPluginEnabled(PluginType.PROFILE, true)
-            aapsLogger.debug(LTag.CONFIGBUILDER, "Defaulting ProfileInterface")
-        }
-        setFragmentVisibilities((activeProfile as PluginBase).name, pluginsInCategory, PluginType.PROFILE)
-
         // PluginType.BGSOURCE
         pluginsInCategory = getSpecificPluginsList(PluginType.BGSOURCE)
         activeBgSourceStore = getTheOneEnabledInArray(pluginsInCategory, PluginType.BGSOURCE) as BgSource?
@@ -182,7 +171,7 @@ class PluginStore @Inject constructor(
         get() = activeBgSourceStore ?: checkNotNull(activeBgSourceStore) { "No bg source selected" }
 
     override val activeProfileSource: ProfileSource
-        get() = activeProfile ?: checkNotNull(activeProfile) { "No profile selected" }
+        get() = getSpecificPluginsListByInterface(ProfileSource::class.java).first() as ProfileSource
 
     override val activeInsulin: Insulin
         get() = activeInsulinStore ?: getDefaultPlugin(PluginType.INSULIN) as Insulin

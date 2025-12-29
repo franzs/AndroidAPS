@@ -30,6 +30,9 @@
     <string name="sort_label">Sort</string>
     <string name="search">Search</string>
     <string name="simple_mode">Simple mode</string>
+    <string name="use_compose_main_screen">Use Compose main screen (experimental)</string>
+    <string name="switch_to_compose_ui">Switch to Compose UI</string>
+    <string name="switch_to_classic_ui">Switch to classic UI</string>
     <string name="select">Select</string>
     <string name="set">Set</string>
 

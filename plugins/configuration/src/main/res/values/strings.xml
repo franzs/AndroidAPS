@@ -58,7 +58,6 @@
     <string name="configbuilder_pump">Pump</string>
     <string name="configbuilder_pump_description">Which pump would you like to use with AAPS?</string>
     <string name="configbuilder_profile">Profile</string>
-    <string name="configbuilder_profile_description">Which profile should AAPS use?</string>
     <string name="configbuilder_aps">APS</string>
     <string name="configbuilder_aps_description">Which APS algorithm should make therapy adjustments?</string>
     <string name="configbuilder_general">General</string>

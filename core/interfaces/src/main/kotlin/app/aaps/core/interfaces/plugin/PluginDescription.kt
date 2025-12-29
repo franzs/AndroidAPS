@@ -27,8 +27,11 @@ open class PluginDescription {
      * When set, SingleFragmentActivity will use this instead of fragmentClass.
      * This is a lazy provider that creates the content only when needed, avoiding
      * early memory allocation for screens the user may never open.
+     *
+     * The returned object should implement ComposablePluginContent from core:ui.
+     * Type is Any to avoid Compose dependency in core:interfaces.
      */
-    var composeContentProvider: (() -> PluginComposeContent)? = null
+    var composeContentProvider: (() -> Any)? = null
     var alwaysVisible = false
     var neverVisible = false
     var alwaysEnabled = false
@@ -62,5 +65,5 @@ open class PluginDescription {
     fun setDefault(value: Boolean = true): PluginDescription = this.also { it.defaultPlugin = value }
     fun preferencesVisibleInSimpleMode(value: Boolean): PluginDescription = this.also { it.preferencesVisibleInSimpleMode = value }
     fun simpleModePosition(value: Position = Position.MENU): PluginDescription = this.also { it.simpleModePosition = value }
-    fun composeContent(provider: () -> PluginComposeContent): PluginDescription = this.also { it.composeContentProvider = provider }
+    fun composeContent(provider: () -> Any): PluginDescription = this.also { it.composeContentProvider = provider }
 }

@@ -20,11 +20,13 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
@@ -40,11 +42,11 @@ import app.aaps.core.interfaces.aps.IobTotal
 import app.aaps.core.interfaces.plugin.ActivePlugin
 import app.aaps.core.interfaces.profile.ProfileFunction
 import app.aaps.core.interfaces.resources.ResourceHelper
-import app.aaps.core.interfaces.ui.UiInteraction
 import app.aaps.core.interfaces.utils.DateUtil
 import app.aaps.core.interfaces.utils.DecimalFormatter
 import app.aaps.core.objects.extensions.iobCalc
 import app.aaps.core.ui.compose.AapsTheme
+import app.aaps.core.ui.compose.OkCancelDialog
 import app.aaps.core.ui.compose.ToolbarConfig
 import app.aaps.core.ui.compose.icons.Ns
 import app.aaps.core.ui.compose.icons.Pump
@@ -58,7 +60,6 @@ import app.aaps.ui.viewmodels.TempBasalViewModel
  * @param viewModel ViewModel managing state and business logic
  * @param profileFunction Profile function for IOB calculations in item
  * @param activePlugin Active plugin for IOB calculations in item
- * @param uiInteraction UI interaction helper for showing dialogs
  * @param setToolbarConfig Callback to set the toolbar configuration
  * @param onNavigateBack Callback to navigate back
  */
@@ -68,12 +69,14 @@ fun TempBasalScreen(
     viewModel: TempBasalViewModel,
     profileFunction: ProfileFunction,
     activePlugin: ActivePlugin,
-    uiInteraction: UiInteraction,
     setToolbarConfig: (ToolbarConfig) -> Unit,
     onNavigateBack: () -> Unit = { }
 ) {
-    val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    // Dialog state
+    var showDeleteDialog by remember { mutableStateOf(false) }
+    var deleteDialogMessage by remember { mutableStateOf("") }
 
     // Update toolbar configuration whenever state changes
     LaunchedEffect(uiState.isRemovingMode, uiState.selectedItems.size, uiState.showInvalidated) {
@@ -82,16 +85,24 @@ fun TempBasalScreen(
                 onNavigateBack = onNavigateBack,
                 onDeleteClick = {
                     if (uiState.selectedItems.isNotEmpty()) {
-                        val confirmationMessage = viewModel.getDeleteConfirmationMessage()
-                        uiInteraction.showOkCancelDialog(
-                            context = context,
-                            title = viewModel.rh.gs(app.aaps.core.ui.R.string.removerecord),
-                            message = confirmationMessage,
-                            ok = { viewModel.deleteSelected() }
-                        )
+                        deleteDialogMessage = viewModel.getDeleteConfirmationMessage()
+                        showDeleteDialog = true
                     }
                 }
             )
+        )
+    }
+
+    // Delete confirmation dialog
+    if (showDeleteDialog) {
+        OkCancelDialog(
+            title = viewModel.rh.gs(app.aaps.core.ui.R.string.removerecord),
+            message = deleteDialogMessage,
+            onConfirm = {
+                viewModel.deleteSelected()
+                showDeleteDialog = false
+            },
+            onDismiss = { showDeleteDialog = false }
         )
     }
 

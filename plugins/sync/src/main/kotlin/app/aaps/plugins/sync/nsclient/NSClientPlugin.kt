@@ -93,7 +93,6 @@ class NSClientPlugin @Inject constructor(
                 rh = rh,
                 dateUtil = dateUtil,
                 aapsLogger = aapsLogger,
-                uiInteraction = uiInteraction,
                 persistenceLayer = persistenceLayer,
                 uel = uel,
                 nsClientMvvmRepository = nsClientMvvmRepository,

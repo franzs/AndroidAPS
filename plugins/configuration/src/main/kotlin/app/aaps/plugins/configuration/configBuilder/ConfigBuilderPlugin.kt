@@ -28,7 +28,6 @@ import app.aaps.core.interfaces.plugin.ActivePlugin
 import app.aaps.core.interfaces.plugin.PluginBase
 import app.aaps.core.interfaces.plugin.PluginBaseWithPreferences
 import app.aaps.core.interfaces.plugin.PluginDescription
-import app.aaps.core.interfaces.profile.ProfileSource
 import app.aaps.core.interfaces.protection.ProtectionCheck
 import app.aaps.core.interfaces.pump.Pump
 import app.aaps.core.interfaces.pump.PumpSync
@@ -158,7 +157,6 @@ class ConfigBuilderPlugin @Inject constructor(
                 LTag.CONFIGBUILDER, p.name + ":" +
                     (if (p.isEnabled(PluginType.GENERAL)) " GENERAL" else "") +
                     (if (p.isEnabled(PluginType.SENSITIVITY)) " SENSITIVITY" else "") +
-                    (if (p.isEnabled(PluginType.PROFILE)) " PROFILE" else "") +
                     (if (p.isEnabled(PluginType.APS)) " APS" else "") +
                     (if (p.isEnabled(PluginType.PUMP)) " PUMP" else "") +
                     (if (p.isEnabled(PluginType.CONSTRAINTS)) " CONSTRAINTS" else "") +
@@ -199,9 +197,9 @@ class ConfigBuilderPlugin @Inject constructor(
                 )
                 aapsLogger.debug(LTag.PUMP, "First time HW pump allowed!")
             }, cancel = {
-                                          rxBus.send(EventConfigBuilderUpdateGui())
-                                          aapsLogger.debug(LTag.PUMP, "User does not allow switching to HW pump!")
-                                      })
+                rxBus.send(EventConfigBuilderUpdateGui())
+                aapsLogger.debug(LTag.PUMP, "User does not allow switching to HW pump!")
+            })
         }
     }
 
@@ -240,7 +238,6 @@ class ConfigBuilderPlugin @Inject constructor(
             type == PluginType.SENSITIVITY -> pluginsInCategory = activePlugin.getSpecificPluginsListByInterface(Sensitivity::class.java)
             type == PluginType.SMOOTHING   -> pluginsInCategory = activePlugin.getSpecificPluginsListByInterface(Smoothing::class.java)
             type == PluginType.APS         -> pluginsInCategory = activePlugin.getSpecificPluginsListByInterface(APS::class.java)
-            type == PluginType.PROFILE     -> pluginsInCategory = activePlugin.getSpecificPluginsListByInterface(ProfileSource::class.java)
             type == PluginType.BGSOURCE    -> pluginsInCategory = activePlugin.getSpecificPluginsListByInterface(BgSource::class.java)
             type == PluginType.PUMP        -> pluginsInCategory = activePlugin.getSpecificPluginsListByInterface(Pump::class.java)
             // Process only NSClients

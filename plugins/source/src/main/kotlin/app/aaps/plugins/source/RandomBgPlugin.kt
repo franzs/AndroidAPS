@@ -28,7 +28,6 @@ import app.aaps.core.interfaces.profile.ProfileUtil
 import app.aaps.core.interfaces.pump.VirtualPump
 import app.aaps.core.interfaces.resources.ResourceHelper
 import app.aaps.core.interfaces.source.BgSource
-import app.aaps.core.interfaces.ui.UiInteraction
 import app.aaps.core.interfaces.utils.DateUtil
 import app.aaps.core.keys.BooleanKey
 import app.aaps.core.keys.IntKey
@@ -56,8 +55,7 @@ class RandomBgPlugin @Inject constructor(
     private val preferences: Preferences,
     private val config: Config,
     dateUtil: DateUtil,
-    profileUtil: ProfileUtil,
-    uiInteraction: UiInteraction
+    profileUtil: ProfileUtil
 ) : PluginBase(
     PluginDescription()
         .mainType(PluginType.BGSOURCE)
@@ -69,7 +67,6 @@ class RandomBgPlugin @Inject constructor(
                 dateUtil = dateUtil,
                 profileUtil = profileUtil,
                 aapsLogger = aapsLogger,
-                uiInteraction = uiInteraction,
                 title = rh.gs(R.string.random_bg)
             )
         }

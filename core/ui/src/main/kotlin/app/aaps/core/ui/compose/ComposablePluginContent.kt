@@ -6,8 +6,7 @@ import androidx.compose.runtime.Composable
  * Interface for plugins that provide Jetpack Compose content.
  *
  * This interface is defined in core:ui (which has Compose dependencies) and can be
- * properly invoked as a Composable. Plugins should implement this interface alongside
- * [app.aaps.core.interfaces.plugin.PluginComposeContent].
+ * properly invoked as a Composable.
  */
 interface ComposablePluginContent {
 

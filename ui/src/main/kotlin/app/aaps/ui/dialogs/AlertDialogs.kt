@@ -4,34 +4,9 @@ import android.app.Dialog
 import android.content.Context
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.fromHtml
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleRegistry
@@ -47,8 +22,12 @@ import app.aaps.core.interfaces.rx.bus.RxBus
 import app.aaps.core.keys.interfaces.Preferences
 import app.aaps.core.ui.R
 import app.aaps.core.ui.compose.AapsTheme
+import app.aaps.core.ui.compose.ErrorDialog
 import app.aaps.core.ui.compose.LocalPreferences
 import app.aaps.core.ui.compose.LocalRxBus
+import app.aaps.core.ui.compose.OkCancelDialog
+import app.aaps.core.ui.compose.OkDialog
+import app.aaps.core.ui.compose.YesNoCancelDialog
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -198,17 +177,10 @@ class AlertDialogs(
                     LocalRxBus provides rxBus
                 ) {
                     AapsTheme {
-                        OKAlertDialog(
+                        OkDialog(
                             title = title.ifEmpty { context.getString(R.string.message) },
                             message = message,
                             onDismiss = {
-                                dialog.dismiss()
-                                CoroutineScope(Dispatchers.Main).launch {
-                                    delay(100)
-                                    onFinish?.invoke()
-                                }
-                            },
-                            onConfirm = {
                                 dialog.dismiss()
                                 CoroutineScope(Dispatchers.Main).launch {
                                     delay(100)
@@ -226,26 +198,6 @@ class AlertDialogs(
         dialog.show()
     }
 
-    @Composable
-    private fun OKAlertDialog(
-        title: String,
-        message: String,
-        onDismiss: () -> Unit,
-        onConfirm: () -> Unit
-    ) {
-        AlertDialog(
-            onDismissRequest = onDismiss,
-            title = { Text(text = title, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center) },
-            text = { Text(text = AnnotatedString.fromHtml(message.replace("\n", "<br>"))) },
-            confirmButton = {
-                TextButton(onClick = onConfirm) {
-                    Text(stringResource(R.string.ok))
-                }
-            },
-            properties = DialogProperties(dismissOnBackPress = false, dismissOnClickOutside = false)
-        )
-    }
-
     private fun showYesNoCancelComposeDialog(context: Context, title: String, message: String, yes: Runnable?, no: Runnable?) {
         val dialog = Dialog(context)
         val owner = ComposeDialogOwner()
@@ -260,7 +212,7 @@ class AlertDialogs(
                     LocalRxBus provides rxBus
                 ) {
                     AapsTheme {
-                        YesNoCancelAlertDialog(
+                        YesNoCancelDialog(
                             title = title,
                             message = message,
                             onYes = {
@@ -291,50 +243,6 @@ class AlertDialogs(
         dialog.show()
     }
 
-    @Composable
-    private fun YesNoCancelAlertDialog(
-        title: String,
-        message: String,
-        onYes: () -> Unit,
-        onNo: () -> Unit,
-        onCancel: () -> Unit
-    ) {
-        AlertDialog(
-            onDismissRequest = { onCancel() },
-            title = { Text(text = title, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center) },
-            text = {
-                Column {
-                    Text(text = AnnotatedString.fromHtml(message.replace("\n", "<br>")))
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.End
-                    ) {
-                        TextButton(
-                            onClick = { onCancel() }
-                        ) {
-                            Text(stringResource(R.string.cancel))
-                        }
-                        Spacer(modifier = Modifier.width(8.dp))
-                        TextButton(
-                            onClick = { onNo() }
-                        ) {
-                            Text(stringResource(R.string.no))
-                        }
-                        Spacer(modifier = Modifier.width(8.dp))
-                        TextButton(
-                            onClick = { onYes() }
-                        ) {
-                            Text(stringResource(R.string.yes))
-                        }
-                    }
-                }
-            },
-            confirmButton = {},
-            properties = DialogProperties(dismissOnBackPress = false, dismissOnClickOutside = false)
-        )
-    }
-
     private fun showErrorComposeDialog(context: Context, title: String, message: String, @StringRes positiveButton: Int?, ok: (() -> Unit)?, cancel: (() -> Unit)?) {
         val dialog = Dialog(context)
         val owner = ComposeDialogOwner()
@@ -349,7 +257,7 @@ class AlertDialogs(
                     LocalRxBus provides rxBus
                 ) {
                     AapsTheme {
-                        ErrorAlertDialog(
+                        ErrorDialog(
                             title = title,
                             message = message,
                             positiveButton = positiveButton?.let { context.getString(positiveButton) },
@@ -378,47 +286,6 @@ class AlertDialogs(
         dialog.show()
     }
 
-    @Composable
-    private fun ErrorAlertDialog(
-        title: String,
-        message: String,
-        positiveButton: String?,
-        onDismiss: () -> Unit,
-        onPositive: () -> Unit
-    ) {
-        AlertDialog(
-            onDismissRequest = onDismiss,
-            icon = {
-                Icon(
-                    imageVector = Icons.Default.Warning,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.error
-                )
-            },
-            title = { Text(text = title, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center) },
-            text = {
-                Text(
-                    text = AnnotatedString.fromHtml(message.replace("\n", "<br>")),
-                    modifier = Modifier.fillMaxWidth(),
-                    textAlign = TextAlign.Center
-                )
-            },
-            confirmButton = {
-                positiveButton?.let {
-                    TextButton(onClick = onPositive) {
-                        Text(positiveButton)
-                    }
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = onDismiss) {
-                    Text(stringResource(R.string.dismiss))
-                }
-            },
-            properties = DialogProperties(dismissOnBackPress = true, dismissOnClickOutside = true)
-        )
-    }
-
     private fun showOkCancelComposeDialog(context: Context, title: String, message: String, secondMessage: String? = null, ok: (() -> Unit)?, cancel: (() -> Unit)?, @DrawableRes icon: Int?) {
         val dialog = Dialog(context)
         val owner = ComposeDialogOwner()
@@ -433,19 +300,19 @@ class AlertDialogs(
                     LocalRxBus provides rxBus
                 ) {
                     AapsTheme {
-                        OkCancelAlertDialog(
+                        OkCancelDialog(
                             title = title,
                             message = message,
                             secondMessage = secondMessage,
                             icon = icon,
-                            onOk = {
+                            onConfirm = {
                                 dialog.dismiss()
                                 CoroutineScope(Dispatchers.Main).launch {
                                     delay(100)
                                     ok?.invoke()
                                 }
                             },
-                            onCancel = {
+                            onDismiss = {
                                 dialog.dismiss()
                                 CoroutineScope(Dispatchers.Main).launch {
                                     delay(100)
@@ -462,61 +329,4 @@ class AlertDialogs(
         dialog.setOnDismissListener { owner.destroy() }
         dialog.show()
     }
-}
-
-@Composable
-private fun OkCancelAlertDialog(
-    title: String,
-    message: String,
-    secondMessage: String? = null,
-    @DrawableRes icon: Int?,
-    onOk: () -> Unit,
-    onCancel: () -> Unit
-) {
-    AlertDialog(
-        onDismissRequest = onCancel,
-        icon = {
-            icon?.let {
-                Icon(
-                    painter = painterResource(id = icon),
-                    contentDescription = null,
-                    modifier = Modifier.size(48.dp)
-                )
-            }
-        },
-        title = { Text(text = title, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center) },
-        text = {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    text = AnnotatedString.fromHtml(message.replace("\n", "<br>")),
-                    modifier = Modifier.fillMaxWidth(),
-                    textAlign = TextAlign.Center
-                )
-                secondMessage?.let {
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text(
-                        text = secondMessage,
-                        modifier = Modifier.fillMaxWidth(),
-                        textAlign = TextAlign.Center,
-                        color = MaterialTheme.colorScheme.primary,
-                        style = MaterialTheme.typography.bodySmall
-                    )
-                }
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = onOk) {
-                Text(stringResource(android.R.string.ok))
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onCancel) {
-                Text(stringResource(android.R.string.cancel))
-            }
-        },
-        properties = DialogProperties(dismissOnBackPress = false, dismissOnClickOutside = false)
-    )
 }
