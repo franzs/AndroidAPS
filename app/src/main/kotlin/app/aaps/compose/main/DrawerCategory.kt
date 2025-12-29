@@ -37,10 +37,13 @@ data class DrawerCategory(
         get() = if (!isMultiSelect) enabledPlugins.firstOrNull()?.name else null
 
     /**
-     * Get header text: "Category: PluginName" for single-select, "Category: N enabled" for multi-select
+     * Get header text: "Category: PluginName" for single-select or 1 enabled, "Category: N enabled" for multi-select with more than 1
      */
     fun getHeaderText(categoryName: String): String {
-        return if (isMultiSelect) {
+        // If only 1 plugin is enabled, show its name (behave like exclusive selection)
+        return if (enabledCount == 1) {
+            enabledPlugins.firstOrNull()?.name?.let { "$categoryName: $it" } ?: categoryName
+        } else if (isMultiSelect) {
             if (enabledCount > 0) "$categoryName: $enabledCount enabled" else categoryName
         } else {
             activePluginName?.let { "$categoryName: $it" } ?: categoryName

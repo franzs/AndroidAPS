@@ -23,16 +23,4 @@
         android:orderInCategory="1"
         app:showAsAction="never"
         android:title="@string/nav_setupwizard" />
-    <group android:id="@+id/about_exit">
-        <item
-            android:id="@+id/nav_about"
-            android:orderInCategory="1"
-            app:showAsAction="never"
-            android:title="@string/nav_about" />
-        <item
-            android:id="@+id/nav_exit"
-            android:orderInCategory="1"
-            app:showAsAction="never"
-            android:title="@string/nav_exit" />
-    </group>
 </menu>

@@ -25,7 +25,6 @@ import androidx.core.view.MenuCompat
 import androidx.core.view.MenuProvider
 import app.aaps.activities.HistoryBrowseActivity
 import app.aaps.activities.PreferencesActivity
-import app.aaps.core.data.ue.Sources
 import app.aaps.core.interfaces.aps.Loop
 import app.aaps.core.interfaces.configuration.Config
 import app.aaps.core.interfaces.configuration.ConfigBuilder
@@ -57,7 +56,6 @@ import app.aaps.plugins.configuration.activities.SingleFragmentActivity
 import app.aaps.plugins.configuration.maintenance.MaintenancePlugin
 import app.aaps.plugins.configuration.setupwizard.SetupWizardActivity
 import app.aaps.plugins.constraints.signatureVerifier.SignatureVerifierPlugin
-import app.aaps.ui.alertDialogs.AboutDialog
 import app.aaps.ui.tabs.TabPageAdapter
 import com.google.android.material.tabs.TabLayoutMediator
 import com.google.firebase.crashlytics.FirebaseCrashlytics
@@ -88,7 +86,6 @@ class MainActivity : DaggerAppCompatActivityWithResult() {
     @Inject lateinit var exportPasswordDataStore: ExportPasswordDataStore
     @Inject lateinit var uiInteraction: UiInteraction
     @Inject lateinit var configBuilder: ConfigBuilder
-    @Inject lateinit var aboutDialog: AboutDialog
 
     private lateinit var actionBarDrawerToggle: ActionBarDrawerToggle
     private var pluginPreferencesMenuItem: MenuItem? = null
@@ -175,17 +172,6 @@ class MainActivity : DaggerAppCompatActivityWithResult() {
                         protectionCheck.queryProtection(this@MainActivity, ProtectionCheck.Protection.PREFERENCES, {
                             startActivity(Intent(this@MainActivity, SetupWizardActivity::class.java).setAction("info.nightscout.androidaps.MainActivity"))
                         })
-                        true
-                    }
-
-                    R.id.nav_about              -> {
-                        aboutDialog.showAboutDialog(this@MainActivity, R.string.app_name)
-                        true
-                    }
-
-                    R.id.nav_exit               -> {
-                        finish()
-                        configBuilder.exitApp("Menu", Sources.Aaps, false)
                         true
                     }
 

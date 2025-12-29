@@ -21,14 +21,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import app.aaps.core.data.plugin.PluginType
 import app.aaps.core.interfaces.plugin.PluginBase
+import app.aaps.ui.compose.alertDialogs.AboutAlertDialog
+import app.aaps.ui.compose.alertDialogs.AboutDialogData
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(
     uiState: MainUiState,
+    versionName: String,
+    appIcon: Int,
+    aboutDialogData: AboutDialogData?,
     onMenuClick: () -> Unit,
-    onMenuExpandedChange: (Boolean) -> Unit,
+    onPreferencesClick: () -> Unit,
     onMenuItemClick: (MainMenuItem) -> Unit,
     onCategoryClick: (DrawerCategory) -> Unit,
     onCategoryExpand: (DrawerCategory) -> Unit,
@@ -39,6 +44,7 @@ fun MainScreen(
     onDrawerClosed: () -> Unit,
     onNavDestinationSelected: (MainNavDestination) -> Unit,
     onSwitchToClassicUi: () -> Unit,
+    onAboutDialogDismiss: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
@@ -74,6 +80,8 @@ fun MainScreen(
         drawerContent = {
             MainDrawer(
                 categories = uiState.drawerCategories,
+                versionName = versionName,
+                appIcon = appIcon,
                 onCategoryClick = { category ->
                     scope.launch {
                         drawerState.close()
@@ -104,11 +112,7 @@ fun MainScreen(
                             onMenuClick()
                         }
                     },
-                    isMenuExpanded = uiState.isMenuExpanded,
-                    onMenuExpandedChange = onMenuExpandedChange,
-                    onMenuItemClick = onMenuItemClick,
-                    currentPluginName = uiState.currentPluginName,
-                    hasPluginPreferences = uiState.currentPluginHasPreferences
+                    onPreferencesClick = onPreferencesClick
                 )
             },
             bottomBar = {
@@ -154,6 +158,14 @@ fun MainScreen(
                 onCategorySheetDismiss()
                 onPluginPreferencesClick(plugin)
             }
+        )
+    }
+
+    // About dialog
+    if (uiState.showAboutDialog && aboutDialogData != null) {
+        AboutAlertDialog(
+            data = aboutDialogData,
+            onDismiss = onAboutDialogDismiss
         )
     }
 }

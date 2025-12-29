@@ -1,5 +1,6 @@
 package app.aaps.compose.main
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -12,7 +13,9 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -29,6 +32,8 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun MainDrawer(
     categories: List<DrawerCategory>,
+    versionName: String,
+    appIcon: Int,
     onCategoryClick: (DrawerCategory) -> Unit,
     onCategoryExpand: (DrawerCategory) -> Unit,
     onMenuItemClick: (MainMenuItem) -> Unit,
@@ -40,12 +45,22 @@ fun MainDrawer(
     ) {
         Spacer(modifier = Modifier.height(16.dp))
 
-        Text(
-            text = "AAPS",
-            style = MaterialTheme.typography.headlineSmall,
-            color = MaterialTheme.colorScheme.primary,
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp)
-        )
+        ) {
+            Image(
+                painter = painterResource(id = appIcon),
+                contentDescription = "AAPS Logo",
+                modifier = Modifier.size(40.dp)
+            )
+            Spacer(modifier = Modifier.width(12.dp))
+            Text(
+                text = "AAPS $versionName",
+                style = MaterialTheme.typography.headlineSmall,
+                color = MaterialTheme.colorScheme.primary
+            )
+        }
 
         HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
 
@@ -111,6 +126,22 @@ fun MainDrawer(
             }
         }
 
+        // Bottom section with About and Exit
+        HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+        Spacer(modifier = Modifier.height(8.dp))
+
+        DrawerMenuItemWithIcon(
+            icon = Icons.Default.Info,
+            label = stringResource(app.aaps.R.string.nav_about),
+            onClick = { onMenuItemClick(MainMenuItem.About) }
+        )
+
+        DrawerMenuItemWithIcon(
+            icon = Icons.AutoMirrored.Filled.ExitToApp,
+            label = stringResource(app.aaps.R.string.nav_exit),
+            onClick = { onMenuItemClick(MainMenuItem.Exit) }
+        )
+
         Spacer(modifier = Modifier.height(16.dp))
     }
 }
@@ -154,6 +185,35 @@ private fun DrawerMenuItem(
 }
 
 @Composable
+private fun DrawerMenuItemWithIcon(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    label: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(horizontal = 24.dp, vertical = 12.dp)
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(24.dp)
+        )
+        Spacer(modifier = Modifier.width(16.dp))
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+    }
+}
+
+@Composable
 private fun DrawerCategoryItem(
     category: DrawerCategory,
     categoryName: String,
@@ -161,7 +221,10 @@ private fun DrawerCategoryItem(
     onExpandClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val subtitle = if (category.isMultiSelect) {
+    // If only 1 plugin is enabled, show its name (behave like exclusive selection)
+    val subtitle = if (category.enabledCount == 1) {
+        category.enabledPlugins.firstOrNull()?.name ?: "-"
+    } else if (category.isMultiSelect) {
         if (category.enabledCount > 0) "${category.enabledCount}" else "-"
     } else {
         category.activePluginName ?: "-"
