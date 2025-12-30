@@ -939,6 +939,8 @@ open class OpenAPSAutoISFPlugin @Inject constructor(
         return new_SMB
     }
 
+    override fun getPreferenceScreenContent(): Any = OpenAPSAutoISFPreferencesCompose(preferences, config)
+
     override fun addPreferenceScreen(preferenceManager: PreferenceManager, parent: PreferenceScreen, context: Context, requiredKey: String?) {
         if (requiredKey != null &&
             requiredKey != "absorption_smb_advanced" &&

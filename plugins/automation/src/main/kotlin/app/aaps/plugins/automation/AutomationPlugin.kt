@@ -100,6 +100,7 @@ class AutomationPlugin @Inject constructor(
     aapsLogger: AAPSLogger,
     rh: ResourceHelper,
     preferences: Preferences,
+    private val sp: app.aaps.core.interfaces.sharedPreferences.SP,
     private val context: Context,
     private val fabricPrivacy: FabricPrivacy,
     private val loop: Loop,
@@ -557,6 +558,8 @@ class AutomationPlugin @Inject constructor(
         }
         removeIfExists(event)
     }
+
+    override fun getPreferenceScreenContent(): Any = AutomationPreferencesCompose(sp)
 
     override fun addPreferenceScreen(preferenceManager: PreferenceManager, parent: PreferenceScreen, context: Context, requiredKey: String?) {
         if (requiredKey != null) return

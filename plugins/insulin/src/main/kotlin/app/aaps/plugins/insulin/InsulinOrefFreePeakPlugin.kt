@@ -32,7 +32,7 @@ class InsulinOrefFreePeakPlugin @Inject constructor(
     profileFunction: ProfileFunction,
     rxBus: RxBus,
     aapsLogger: AAPSLogger,
-    config: Config,
+    private val config: Config,
     hardLimits: HardLimits,
     uiInteraction: UiInteraction
 ) : InsulinOrefBasePlugin(rh, profileFunction, rxBus, aapsLogger, config, hardLimits, uiInteraction) {
@@ -64,6 +64,8 @@ class InsulinOrefFreePeakPlugin @Inject constructor(
             .preferencesId(PluginDescription.PREFERENCE_SCREEN)
             .description(R.string.description_insulin_free_peak)
     }
+
+    override fun getPreferenceScreenContent(): Any = InsulinOrefFreePeakPreferencesCompose(preferences, config)
 
     override fun addPreferenceScreen(preferenceManager: PreferenceManager, parent: PreferenceScreen, context: Context, requiredKey: String?) {
         if (requiredKey != null) return

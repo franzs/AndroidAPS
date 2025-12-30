@@ -28,6 +28,7 @@ import app.aaps.core.interfaces.rx.events.EventWearUpdateTiles
 import app.aaps.core.interfaces.rx.weardata.CwfData
 import app.aaps.core.interfaces.rx.weardata.CwfMetadataKey
 import app.aaps.core.interfaces.rx.weardata.EventData
+import app.aaps.core.interfaces.sharedPreferences.SP
 import app.aaps.core.interfaces.utils.fabric.FabricPrivacy
 import app.aaps.core.keys.BooleanKey
 import app.aaps.core.keys.StringNonKey
@@ -49,6 +50,7 @@ class WearPlugin @Inject constructor(
     rh: ResourceHelper,
     private val aapsSchedulers: AapsSchedulers,
     private val preferences: Preferences,
+    private val sp: SP,
     private val fabricPrivacy: FabricPrivacy,
     private val rxBus: RxBus,
     private val context: Context,
@@ -234,4 +236,6 @@ class WearPlugin @Inject constructor(
             })
         }
     }
+
+    override fun getPreferenceScreenContent(): Any = WearPreferencesCompose(preferences, config, config.AAPSCLIENT)
 }

@@ -61,14 +61,14 @@ class RunningConfigurationImpl @Inject constructor(
                 val apsInterface = activePlugin.activeAPS
 
                 json.put("insulin", insulinInterface.id.value)
-                json.put("insulinConfiguration", insulinInterface.configuration())
+                json.put("insulinConfiguration", JSONObject(insulinInterface.configuration().toString()))
                 json.put("aps", apsInterface.algorithm.name)
-                json.put("apsConfiguration", apsInterface.configuration())
+                json.put("apsConfiguration", JSONObject(apsInterface.configuration().toString()))
                 json.put("sensitivity", sensitivityInterface.id.value)
-                json.put("sensitivityConfiguration", sensitivityInterface.configuration())
+                json.put("sensitivityConfiguration", JSONObject(sensitivityInterface.configuration().toString()))
                 json.put("smoothing", smoothingInterface.javaClass.simpleName)
-                json.put("overviewConfiguration", overviewInterface.configuration())
-                json.put("safetyConfiguration", safetyInterface.configuration())
+                json.put("overviewConfiguration", JSONObject(overviewInterface.configuration().toString()))
+                json.put("safetyConfiguration", JSONObject(safetyInterface.configuration().toString()))
                 json.put("pump", pumpInterface.model().description)
                 json.put("version", config.VERSION_NAME)
             } catch (e: JSONException) {

@@ -10,4 +10,9 @@ sealed class AppRoute(val route: String) {
     data object Treatments : AppRoute("treatments")
     data object Stats : AppRoute("stats")
     data object ProfileHelper : AppRoute("profile_helper")
+    data object Preferences : AppRoute("preferences")
+    data object PluginPreferences : AppRoute("plugin_preferences/{pluginKey}") {
+
+        fun createRoute(pluginKey: String) = "plugin_preferences/$pluginKey"
+    }
 }

@@ -21,6 +21,7 @@ import app.aaps.core.interfaces.profile.Profile
 import app.aaps.core.interfaces.pump.defs.determineCorrectBolusSize
 import app.aaps.core.interfaces.pump.defs.determineCorrectExtendedBolusSize
 import app.aaps.core.interfaces.resources.ResourceHelper
+import app.aaps.core.interfaces.sharedPreferences.SP
 import app.aaps.core.interfaces.ui.UiInteraction
 import app.aaps.core.interfaces.utils.DateUtil
 import app.aaps.core.interfaces.utils.DecimalFormatter
@@ -47,6 +48,7 @@ class SafetyPlugin @Inject constructor(
     aapsLogger: AAPSLogger,
     rh: ResourceHelper,
     private val preferences: Preferences,
+    private val sp: SP,
     private val constraintChecker: ConstraintsChecker,
     private val activePlugin: ActivePlugin,
     private val hardLimits: HardLimits,
@@ -204,4 +206,6 @@ class SafetyPlugin @Inject constructor(
             addPreference(AdaptiveIntPreference(ctx = context, intKey = IntKey.SafetyMaxCarbs, title = app.aaps.core.ui.R.string.max_carbs_title))
         }
     }
+
+    override fun getPreferenceScreenContent(): Any = SafetyPreferencesCompose(preferences, config)
 }

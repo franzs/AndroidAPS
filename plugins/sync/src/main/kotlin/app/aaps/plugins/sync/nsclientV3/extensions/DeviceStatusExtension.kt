@@ -5,12 +5,22 @@ import app.aaps.core.nssdk.localmodel.devicestatus.NSDeviceStatus
 import kotlinx.serialization.json.Json
 
 fun DS.toNSDeviceStatus(): NSDeviceStatus {
-    val pump: NSDeviceStatus.Pump? = pump?.let { Json { ignoreUnknownKeys = true; encodeDefaults = true }.decodeFromString(it) }
+    val jsonParser = Json { ignoreUnknownKeys = true; encodeDefaults = true }
+    val pump: NSDeviceStatus.Pump? = pump?.let { jsonParser.decodeFromString(it) }
     val openAps = NSDeviceStatus.OpenAps(
         suggested = suggested?.let { Json.decodeFromString(it) },
         enacted = enacted?.let { Json.decodeFromString(it) },
         iob = iob?.let { Json.decodeFromString(it) },
     )
+    // Try to parse configuration, but handle malformed data gracefully
+    // (older records may have nested objects double-serialized as strings)
+    val parsedConfiguration: NSDeviceStatus.Configuration? = configuration?.let {
+        try {
+            jsonParser.decodeFromString(it)
+        } catch (e: Exception) {
+            null // Skip malformed configuration data
+        }
+    }
     return NSDeviceStatus(
         date = timestamp,
         device = device,
@@ -18,7 +28,7 @@ fun DS.toNSDeviceStatus(): NSDeviceStatus {
         openaps = openAps,
         uploaderBattery = if (uploaderBattery != 0) uploaderBattery else null,
         isCharging = isCharging,
-        configuration = configuration?.let { Json.decodeFromString(it) },
+        configuration = parsedConfiguration,
         uploader = null
     )
 }

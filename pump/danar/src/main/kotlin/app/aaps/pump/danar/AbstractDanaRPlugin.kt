@@ -3,6 +3,7 @@ package app.aaps.pump.danar
 import app.aaps.core.data.plugin.PluginType
 import app.aaps.core.data.pump.defs.ManufacturerType
 import app.aaps.core.data.pump.defs.PumpDescription
+import app.aaps.core.interfaces.configuration.Config
 import app.aaps.core.interfaces.constraints.Constraint
 import app.aaps.core.interfaces.constraints.ConstraintsChecker
 import app.aaps.core.interfaces.constraints.PluginConstraints
@@ -54,7 +55,8 @@ abstract class AbstractDanaRPlugin protected constructor(
     protected var danaPump: DanaPump,
     aapsLogger: AAPSLogger,
     rh: ResourceHelper,
-    preferences: Preferences,
+    protected val preferences: Preferences,
+    protected val config: Config,
     commandQueue: CommandQueue,
     protected var constraintChecker: ConstraintsChecker,
     protected var aapsSchedulers: AapsSchedulers,

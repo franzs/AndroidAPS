@@ -14,6 +14,7 @@ import androidx.preference.PreferenceManager
 import androidx.preference.PreferenceScreen
 import app.aaps.core.data.pump.defs.PumpType
 import app.aaps.core.data.time.T.Companion.mins
+import app.aaps.core.interfaces.configuration.Config
 import app.aaps.core.interfaces.constraints.ConstraintsChecker
 import app.aaps.core.interfaces.logging.AAPSLogger
 import app.aaps.core.interfaces.logging.LTag
@@ -80,6 +81,7 @@ class DanaRv2Plugin @Inject constructor(
     private val fabricPrivacy: FabricPrivacy,
     pumpSync: PumpSync,
     preferences: Preferences,
+    config: Config,
     uiInteraction: UiInteraction,
     danaHistoryDatabase: DanaHistoryDatabase,
     decimalFormatter: DecimalFormatter,
@@ -89,6 +91,7 @@ class DanaRv2Plugin @Inject constructor(
     aapsLogger,
     rh,
     preferences,
+    config,
     commandQueue,
     constraintChecker,
     aapsSchedulers,
@@ -368,6 +371,8 @@ class DanaRv2Plugin @Inject constructor(
 
     override fun setUserOptions(): PumpEnactResult =
         executionService?.setUserOptions() ?: error("Execution service is null")
+
+    override fun getPreferenceScreenContent(): Any = app.aaps.pump.danar.DanaRPreferencesCompose(preferences, config)
 
     override fun addPreferenceScreen(preferenceManager: PreferenceManager, parent: PreferenceScreen, context: Context, requiredKey: String?) {
         if (requiredKey != null) return

@@ -244,6 +244,8 @@ class MaintenancePlugin @Inject constructor(
         }
     }
 
+    override fun getPreferenceScreenContent(): Any = MaintenancePreferencesCompose(preferences, config)
+
     override fun addPreferenceScreen(preferenceManager: PreferenceManager, parent: PreferenceScreen, context: Context, requiredKey: String?) {
         if (requiredKey != null && !(requiredKey == "data_choice_setting" || requiredKey == "unattended_export_setting")) return
         val category = PreferenceCategory(context)

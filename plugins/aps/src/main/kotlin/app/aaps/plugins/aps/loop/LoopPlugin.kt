@@ -106,6 +106,7 @@ class LoopPlugin @Inject constructor(
     private val aapsSchedulers: AapsSchedulers,
     private val rxBus: RxBus,
     private val preferences: Preferences,
+    private val sp: app.aaps.core.interfaces.sharedPreferences.SP,
     private val config: Config,
     private val constraintChecker: ConstraintsChecker,
     rh: ResourceHelper,
@@ -1058,6 +1059,8 @@ class LoopPlugin @Inject constructor(
             )
         )
     }
+
+    override fun getPreferenceScreenContent(): Any = LoopPreferencesCompose(sp)
 
     override fun addPreferenceScreen(preferenceManager: PreferenceManager, parent: PreferenceScreen, context: Context, requiredKey: String?) {
         if (requiredKey != null) return

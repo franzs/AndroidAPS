@@ -69,7 +69,7 @@ class OpenAPSAMAPlugin @Inject constructor(
     private val rxBus: RxBus,
     private val constraintsChecker: ConstraintsChecker,
     rh: ResourceHelper,
-    config: Config,
+    private val config: Config,
     private val profileFunction: ProfileFunction,
     private val activePlugin: ActivePlugin,
     private val iobCobCalculator: IobCobCalculator,
@@ -312,6 +312,8 @@ class OpenAPSAMAPlugin @Inject constructor(
     // Needed only for dynamic ISF so far
     override fun configuration(): JsonObject = JsonObject(emptyMap())
     override fun applyConfiguration(configuration: JsonObject) {}
+
+    override fun getPreferenceScreenContent(): Any = OpenAPSAMAPreferencesCompose(preferences, config)
 
     override fun addPreferenceScreen(preferenceManager: PreferenceManager, parent: PreferenceScreen, context: Context, requiredKey: String?) {
         if (requiredKey != null && requiredKey != "absorption_ama_advanced") return

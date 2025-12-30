@@ -45,19 +45,19 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 
-inline fun <T> LazyListScope.multiSelectListPreference(
+fun <T> LazyListScope.multiSelectListPreference(
     key: String,
     defaultValue: Set<T>,
     values: List<T>,
-    crossinline title: @Composable (Set<T>) -> Unit,
+    title: @Composable (Set<T>) -> Unit,
     modifier: Modifier = Modifier.fillMaxWidth(),
-    crossinline rememberState: @Composable () -> MutableState<Set<T>>,
-    crossinline enabled: (Set<T>) -> Boolean = { true },
-    noinline icon: @Composable ((Set<T>) -> Unit)? = null,
-    noinline summary: @Composable ((Set<T>) -> Unit)? = null,
-    noinline valueToText: (T) -> AnnotatedString = { AnnotatedString(it.toString()) },
-    noinline item:
-        @Composable
+    rememberState: @Composable () -> MutableState<Set<T>>,
+    enabled: (Set<T>) -> Boolean = { true },
+    icon: @Composable ((Set<T>) -> Unit)? = null,
+    summary: @Composable ((Set<T>) -> Unit)? = null,
+    valueToText: (T) -> AnnotatedString = { AnnotatedString(it.toString()) },
+    item:
+    @Composable
         (value: T, currentValues: Set<T>, onToggle: (Boolean) -> Unit) -> Unit =
         MultiSelectListPreferenceDefaults.item(valueToText),
 ) {
@@ -151,7 +151,9 @@ fun <T> MultiSelectListPreference(
         ) {
             val lazyListState = rememberLazyListState()
             LazyColumn(
-                modifier = Modifier.fillMaxWidth().verticalScrollIndicators(lazyListState),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScrollIndicators(lazyListState),
                 state = lazyListState,
             ) {
                 items(values) { itemValue ->
@@ -165,6 +167,7 @@ fun <T> MultiSelectListPreference(
 }
 
 object MultiSelectListPreferenceDefaults {
+
     fun <T> item(
         valueToText: (T) -> AnnotatedString
     ): @Composable (value: T, currentValues: Set<T>, onToggle: (Boolean) -> Unit) -> Unit =
@@ -182,7 +185,8 @@ object MultiSelectListPreferenceDefaults {
         val checked = value in currentValues
         Row(
             modifier =
-                Modifier.fillMaxWidth()
+                Modifier
+                    .fillMaxWidth()
                     .heightIn(min = 48.dp)
                     .toggleable(checked, true, Role.Checkbox, onValueChange = onToggle)
                     .padding(horizontal = 24.dp, vertical = 8.dp),

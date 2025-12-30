@@ -14,12 +14,13 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import app.aaps.activities.HistoryBrowseActivity
-import app.aaps.activities.PreferencesActivity
 import app.aaps.compose.actions.ActionsViewModel
 import app.aaps.compose.main.MainMenuItem
 import app.aaps.compose.main.MainScreen
 import app.aaps.compose.main.MainViewModel
 import app.aaps.compose.navigation.AppRoute
+import app.aaps.compose.preferences.AllPreferencesScreen
+import app.aaps.compose.preferences.PluginPreferencesScreen
 import app.aaps.core.data.ue.Sources
 import app.aaps.core.interfaces.configuration.ConfigBuilder
 import app.aaps.core.interfaces.plugin.ActivePlugin
@@ -107,10 +108,7 @@ class ComposeMainActivity : DaggerAppCompatActivityWithResult() {
                             onMenuClick = { mainViewModel.openDrawer() },
                             onPreferencesClick = {
                                 protectionCheck.queryProtection(this@ComposeMainActivity, ProtectionCheck.Protection.PREFERENCES, {
-                                    startActivity(
-                                        Intent(this@ComposeMainActivity, PreferencesActivity::class.java)
-                                            .setAction("app.aaps.ComposeMainActivity")
-                                    )
+                                    navController.navigate(AppRoute.Preferences.route)
                                 })
                             },
                             onMenuItemClick = { menuItem ->
@@ -128,7 +126,9 @@ class ComposeMainActivity : DaggerAppCompatActivityWithResult() {
                                 mainViewModel.togglePluginEnabled(plugin, type, enabled)
                             },
                             onPluginPreferencesClick = { plugin ->
-                                handlePluginPreferencesClick(plugin)
+                                protectionCheck.queryProtection(this@ComposeMainActivity, ProtectionCheck.Protection.PREFERENCES, {
+                                    navController.navigate(AppRoute.PluginPreferences.createRoute(plugin.javaClass.simpleName))
+                                })
                             },
                             onDrawerClosed = { mainViewModel.closeDrawer() },
                             onNavDestinationSelected = { destination ->
@@ -241,6 +241,26 @@ class ComposeMainActivity : DaggerAppCompatActivityWithResult() {
                             onBackClick = { navController.popBackStack() }
                         )
                     }
+
+                    composable(AppRoute.Preferences.route) {
+                        AllPreferencesScreen(
+                            plugins = activePlugin.getPluginsList(),
+                            onBackClick = { navController.popBackStack() }
+                        )
+                    }
+
+                    composable(AppRoute.PluginPreferences.route) { backStackEntry ->
+                        val pluginKey = backStackEntry.arguments?.getString("pluginKey")
+                        val plugin = activePlugin.getPluginsList().find {
+                            it.javaClass.simpleName == pluginKey
+                        }
+                        if (plugin != null) {
+                            PluginPreferencesScreen(
+                                plugin = plugin,
+                                onBackClick = { navController.popBackStack() }
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -286,15 +306,15 @@ class ComposeMainActivity : DaggerAppCompatActivityWithResult() {
         when (menuItem) {
             is MainMenuItem.Preferences -> {
                 protectionCheck.queryProtection(this, ProtectionCheck.Protection.PREFERENCES, {
-                    startActivity(
-                        Intent(this, PreferencesActivity::class.java)
-                            .setAction("app.aaps.ComposeMainActivity")
-                    )
+                    navController.navigate(AppRoute.Preferences.route)
                 })
             }
 
             is MainMenuItem.PluginPreferences -> {
-                // No-op: Compose UI doesn't have plugin tabs
+                // Navigate to plugin preferences if a plugin is specified
+                protectionCheck.queryProtection(this, ProtectionCheck.Protection.PREFERENCES, {
+                    navController.navigate(AppRoute.Preferences.route)
+                })
             }
 
             is MainMenuItem.Profile -> {
@@ -356,9 +376,4 @@ class ComposeMainActivity : DaggerAppCompatActivityWithResult() {
         }
     }
 
-    private fun handlePluginPreferencesClick(plugin: PluginBase) {
-        protectionCheck.queryProtection(this, ProtectionCheck.Protection.PREFERENCES, {
-            uiInteraction.runPreferencesForPlugin(this, plugin.javaClass.simpleName)
-        })
-    }
 }

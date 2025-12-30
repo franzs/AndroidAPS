@@ -174,6 +174,8 @@ class RandomBgPlugin @Inject constructor(
         }
     }
 
+    override fun getPreferenceScreenContent(): Any = RandomBgPreferencesCompose(preferences, config)
+
     override fun addPreferenceScreen(preferenceManager: PreferenceManager, parent: PreferenceScreen, context: Context, requiredKey: String?) {
         if (requiredKey != null) return
         val category = PreferenceCategory(context)

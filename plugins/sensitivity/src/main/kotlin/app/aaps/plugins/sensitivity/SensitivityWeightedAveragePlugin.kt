@@ -182,6 +182,12 @@ class SensitivityWeightedAveragePlugin @Inject constructor(
 
     }
 
+    override fun getPreferenceScreenContent(): Any? {
+        // Share with SensitivityAAPSPlugin
+        val aapsPlugin = activePlugin.getPluginsList().firstOrNull { it::class == SensitivityAAPSPlugin::class } ?: return null
+        return aapsPlugin.getPreferenceScreenContent()
+    }
+
     override fun addPreferenceScreen(preferenceManager: PreferenceManager, parent: PreferenceScreen, context: Context, requiredKey: String?) {
         // Share with SensitivityAAPSPlugin
         val aapsPlugin = activePlugin.getPluginsList().firstOrNull { it::class == SensitivityAAPSPlugin::class } ?: return

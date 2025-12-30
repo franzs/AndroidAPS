@@ -30,15 +30,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
 import app.aaps.core.interfaces.sharedPreferences.SP
 
-inline fun LazyListScope.checkboxPreference(
+fun LazyListScope.checkboxPreference(
     key: String,
     defaultValue: Boolean,
-    crossinline title: @Composable (Boolean) -> Unit,
+    title: @Composable (Boolean) -> Unit,
     modifier: Modifier = Modifier.fillMaxWidth(),
-    crossinline rememberState: @Composable () -> MutableState<Boolean>,
-    crossinline enabled: (Boolean) -> Boolean = { true },
-    noinline icon: @Composable ((Boolean) -> Unit)? = null,
-    noinline summary: @Composable ((Boolean) -> Unit)? = null,
+    rememberState: @Composable () -> MutableState<Boolean>,
+    enabled: (Boolean) -> Boolean = { true },
+    icon: @Composable ((Boolean) -> Unit)? = null,
+    summary: @Composable ((Boolean) -> Unit)? = null,
 ) {
     item(key = key, contentType = "CheckboxPreference") {
         val state = rememberState()
@@ -57,15 +57,15 @@ inline fun LazyListScope.checkboxPreference(
 /**
  * Convenience function to create a checkbox preference backed by SP.
  */
-inline fun LazyListScope.checkboxPreference(
+fun LazyListScope.checkboxPreference(
     sp: SP,
     key: String,
     defaultValue: Boolean,
-    crossinline title: @Composable (Boolean) -> Unit,
+    title: @Composable (Boolean) -> Unit,
     modifier: Modifier = Modifier.fillMaxWidth(),
-    crossinline enabled: (Boolean) -> Boolean = { true },
-    noinline icon: @Composable ((Boolean) -> Unit)? = null,
-    noinline summary: @Composable ((Boolean) -> Unit)? = null,
+    enabled: (Boolean) -> Boolean = { true },
+    icon: @Composable ((Boolean) -> Unit)? = null,
+    summary: @Composable ((Boolean) -> Unit)? = null,
 ) {
     checkboxPreference(
         key = key,

@@ -42,115 +42,100 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import app.aaps.core.interfaces.sharedPreferences.SP
 
-inline fun <T> LazyListScope.textFieldPreference(
+/**
+ * Convenience function to create a string text field preference backed by SP.
+ * Uses resource IDs to avoid cross-module Compose compiler issues.
+ */
+fun LazyListScope.stringTextFieldPreference(
+    sp: SP,
     key: String,
-    defaultValue: T,
-    crossinline title: @Composable (T) -> Unit,
-    noinline textToValue: (String) -> T?,
-    modifier: Modifier = Modifier.fillMaxWidth(),
-    crossinline rememberState: @Composable () -> MutableState<T>,
-    crossinline enabled: (T) -> Boolean = { true },
-    noinline icon: @Composable ((T) -> Unit)? = null,
-    noinline summary: @Composable ((T) -> Unit)? = null,
-    noinline valueToText: (T) -> String = { it.toString() },
-    noinline textField:
-        @Composable
-        (value: TextFieldValue, onValueChange: (TextFieldValue) -> Unit, onOk: () -> Unit) -> Unit =
-        TextFieldPreferenceDefaults.TextField,
+    defaultValue: String,
+    titleResId: Int,
+    summaryResId: Int? = null,
+    enabled: Boolean = true,
+    isPassword: Boolean = false,
 ) {
-    item(key = key, contentType = "TextFieldPreference") {
-        val state = rememberState()
+    item(key = key, contentType = "StringTextFieldPreference") {
+        val state = rememberSPStringState(sp, key, defaultValue)
         val value by state
         TextFieldPreference(
             state = state,
-            title = { title(value) },
-            textToValue = textToValue,
-            modifier = modifier,
-            enabled = enabled(value),
-            icon = icon?.let { { it(value) } },
-            summary = summary?.let { { it(value) } },
-            valueToText = valueToText,
-            textField = textField,
+            title = { Text(stringResource(titleResId)) },
+            textToValue = { it },
+            enabled = enabled,
+            summary = when {
+                isPassword && value.isNotEmpty() -> {
+                    { Text("••••••••") }
+                }
+
+                value.isNotEmpty()               -> {
+                    { Text(value) }
+                }
+
+                summaryResId != null             -> {
+                    { Text(stringResource(summaryResId)) }
+                }
+
+                else                             -> null
+            },
         )
     }
 }
 
 /**
- * Convenience function to create a string text field preference backed by SP.
- */
-inline fun LazyListScope.stringTextFieldPreference(
-    sp: SP,
-    key: String,
-    defaultValue: String,
-    crossinline title: @Composable (String) -> Unit,
-    modifier: Modifier = Modifier.fillMaxWidth(),
-    crossinline enabled: (String) -> Boolean = { true },
-    noinline icon: @Composable ((String) -> Unit)? = null,
-    noinline summary: @Composable ((String) -> Unit)? = null,
-) {
-    textFieldPreference(
-        key = key,
-        defaultValue = defaultValue,
-        title = title,
-        textToValue = { it },
-        modifier = modifier,
-        rememberState = { rememberSPStringState(sp, key, defaultValue) },
-        enabled = enabled,
-        icon = icon,
-        summary = summary,
-    )
-}
-
-/**
  * Convenience function to create an int text field preference backed by SP.
  */
-inline fun LazyListScope.intTextFieldPreference(
+fun LazyListScope.intTextFieldPreference(
     sp: SP,
     key: String,
     defaultValue: Int,
-    crossinline title: @Composable (Int) -> Unit,
+    title: @Composable (Int) -> Unit,
     modifier: Modifier = Modifier.fillMaxWidth(),
-    crossinline enabled: (Int) -> Boolean = { true },
-    noinline icon: @Composable ((Int) -> Unit)? = null,
-    noinline summary: @Composable ((Int) -> Unit)? = null,
+    enabled: Boolean = true,
+    icon: @Composable ((Int) -> Unit)? = null,
+    summary: @Composable ((Int) -> Unit)? = null,
 ) {
-    textFieldPreference(
-        key = key,
-        defaultValue = defaultValue,
-        title = title,
-        textToValue = { it.toIntOrNull() },
-        modifier = modifier,
-        rememberState = { rememberSPIntState(sp, key, defaultValue) },
-        enabled = enabled,
-        icon = icon,
-        summary = summary,
-    )
+    item(key = key, contentType = "IntTextFieldPreference") {
+        val state = rememberSPIntState(sp, key, defaultValue)
+        val value by state
+        TextFieldPreference(
+            state = state,
+            title = { title(value) },
+            textToValue = { it.toIntOrNull() },
+            modifier = modifier,
+            enabled = enabled,
+            icon = icon?.let { { it(value) } },
+            summary = summary?.let { { it(value) } },
+        )
+    }
 }
 
 /**
  * Convenience function to create a double text field preference backed by SP.
  */
-inline fun LazyListScope.doubleTextFieldPreference(
+fun LazyListScope.doubleTextFieldPreference(
     sp: SP,
     key: String,
     defaultValue: Double,
-    crossinline title: @Composable (Double) -> Unit,
+    title: @Composable (Double) -> Unit,
     modifier: Modifier = Modifier.fillMaxWidth(),
-    crossinline enabled: (Double) -> Boolean = { true },
-    noinline icon: @Composable ((Double) -> Unit)? = null,
-    noinline summary: @Composable ((Double) -> Unit)? = null,
+    enabled: Boolean = true,
+    icon: @Composable ((Double) -> Unit)? = null,
+    summary: @Composable ((Double) -> Unit)? = null,
 ) {
-    textFieldPreference(
-        key = key,
-        defaultValue = defaultValue,
-        title = title,
-        textToValue = { it.toDoubleOrNull() },
-        modifier = modifier,
-        rememberState = { rememberSPDoubleState(sp, key, defaultValue) },
-        enabled = enabled,
-        icon = icon,
-        summary = summary,
-    )
+    item(key = key, contentType = "DoubleTextFieldPreference") {
+        val state = rememberSPDoubleState(sp, key, defaultValue)
+        val value by state
+        TextFieldPreference(
+            state = state,
+            title = { title(value) },
+            textToValue = { it.toDoubleOrNull() },
+            modifier = modifier,
+            enabled = enabled,
+            icon = icon?.let { { it(value) } },
+            summary = summary?.let { { it(value) } },
+        )
+    }
 }
 
 @Composable
@@ -164,7 +149,7 @@ fun <T> TextFieldPreference(
     summary: @Composable (() -> Unit)? = null,
     valueToText: (T) -> String = { it.toString() },
     textField:
-        @Composable
+    @Composable
         (value: TextFieldValue, onValueChange: (TextFieldValue) -> Unit, onOk: () -> Unit) -> Unit =
         TextFieldPreferenceDefaults.TextField,
 ) {
@@ -195,7 +180,7 @@ fun <T> TextFieldPreference(
     summary: @Composable (() -> Unit)? = null,
     valueToText: (T) -> String = { it.toString() },
     textField:
-        @Composable
+    @Composable
         (value: TextFieldValue, onValueChange: (TextFieldValue) -> Unit, onOk: () -> Unit) -> Unit =
         TextFieldPreferenceDefaults.TextField,
 ) {
@@ -211,10 +196,10 @@ fun <T> TextFieldPreference(
     }
     if (openDialog) {
         var dialogText by
-            rememberSaveable(stateSaver = TextFieldValue.Saver) {
-                val text = valueToText(value)
-                mutableStateOf(TextFieldValue(text, TextRange(text.length)))
-            }
+        rememberSaveable(stateSaver = TextFieldValue.Saver) {
+            val text = valueToText(value)
+            mutableStateOf(TextFieldValue(text, TextRange(text.length)))
+        }
         val onOk = {
             val dialogValue = textToValue(dialogText.text)
             if (dialogValue != null) {
@@ -235,7 +220,8 @@ fun <T> TextFieldPreference(
             val focusRequester = remember { FocusRequester() }
             Box(
                 modifier =
-                    Modifier.fillMaxWidth()
+                    Modifier
+                        .fillMaxWidth()
                         .padding(horizontal = 24.dp)
                         .focusRequester(focusRequester)
             ) {
@@ -247,9 +233,10 @@ fun <T> TextFieldPreference(
 }
 
 object TextFieldPreferenceDefaults {
+
     val TextField:
         @Composable
-        (value: TextFieldValue, onValueChange: (TextFieldValue) -> Unit, onOk: () -> Unit) -> Unit =
+            (value: TextFieldValue, onValueChange: (TextFieldValue) -> Unit, onOk: () -> Unit) -> Unit =
         { value, onValueChange, onOk ->
             OutlinedTextField(
                 value = value,

@@ -10,6 +10,7 @@ import app.aaps.core.data.pump.defs.ManufacturerType
 import app.aaps.core.data.pump.defs.PumpDescription
 import app.aaps.core.data.pump.defs.PumpType
 import app.aaps.core.data.pump.defs.TimeChangeType
+import app.aaps.core.interfaces.configuration.Config
 import app.aaps.core.interfaces.constraints.ConstraintsChecker
 import app.aaps.core.interfaces.logging.AAPSLogger
 import app.aaps.core.interfaces.logging.LTag
@@ -69,7 +70,8 @@ import javax.inject.Singleton
 class EquilPumpPlugin @Inject constructor(
     aapsLogger: AAPSLogger,
     rh: ResourceHelper,
-    preferences: Preferences,
+    private val preferences: Preferences,
+    private val config: Config,
     commandQueue: CommandQueue,
     private val aapsSchedulers: AapsSchedulers,
     private val rxBus: RxBus,
@@ -456,6 +458,8 @@ class EquilPumpPlugin @Inject constructor(
         private val BASAL_STEP_DURATION: Duration = Duration.standardMinutes(30)
         fun toDuration(dateTime: DateTime): Duration = Duration(dateTime.toLocalTime().millisOfDay.toLong())
     }
+
+    override fun getPreferenceScreenContent(): Any = EquilPreferencesCompose(preferences, config)
 
     override fun addPreferenceScreen(
         preferenceManager: PreferenceManager,

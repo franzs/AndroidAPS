@@ -472,6 +472,8 @@ class AutotunePlugin @Inject constructor(
         autotuneFS.atLog(message)
     }
 
+    override fun getPreferenceScreenContent(): Any = AutotunePreferencesCompose(preferences, config)
+
     override fun addPreferenceScreen(preferenceManager: PreferenceManager, parent: PreferenceScreen, context: Context, requiredKey: String?) {
         if (requiredKey != null) return
         val category = PreferenceCategory(context)

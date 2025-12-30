@@ -20,6 +20,7 @@ import app.aaps.core.data.pump.defs.PumpType
 import app.aaps.core.data.pump.defs.TimeChangeType
 import app.aaps.core.data.time.T.Companion.msecs
 import app.aaps.core.data.ue.Sources
+import app.aaps.core.interfaces.configuration.Config
 import app.aaps.core.interfaces.logging.AAPSLogger
 import app.aaps.core.interfaces.logging.LTag
 import app.aaps.core.interfaces.notifications.Notification
@@ -125,7 +126,8 @@ import javax.inject.Singleton
 class OmnipodErosPumpPlugin @Inject constructor(
     aapsLogger: AAPSLogger,
     rh: ResourceHelper,
-    preferences: Preferences,
+    private val preferences: Preferences,
+    private val config: Config,
     commandQueue: CommandQueue,
     private val aapsSchedulers: AapsSchedulers,
     private val rxBus: RxBus,
@@ -896,6 +898,8 @@ class OmnipodErosPumpPlugin @Inject constructor(
     override fun clearAllTables() {
         erosHistoryDatabase.clearAllTables()
     }
+
+    override fun getPreferenceScreenContent(): Any = OmnipodErosPreferencesCompose(preferences, config)
 
     override fun addPreferenceScreen(preferenceManager: PreferenceManager, parent: PreferenceScreen, context: Context, requiredKey: String?) {
         if (requiredKey != null) return

@@ -18,6 +18,7 @@ import app.aaps.core.data.pump.defs.ManufacturerType
 import app.aaps.core.data.pump.defs.PumpDescription
 import app.aaps.core.data.pump.defs.PumpType
 import app.aaps.core.data.time.T
+import app.aaps.core.interfaces.configuration.Config
 import app.aaps.core.interfaces.constraints.Constraint
 import app.aaps.core.interfaces.constraints.PluginConstraints
 import app.aaps.core.interfaces.logging.AAPSLogger
@@ -135,7 +136,8 @@ import kotlin.math.roundToLong
 class InsightPlugin @Inject constructor(
     aapsLogger: AAPSLogger,
     rh: ResourceHelper,
-    preferences: Preferences,
+    private val preferences: Preferences,
+    private val config: Config,
     commandQueue: CommandQueue,
     private val rxBus: RxBus,
     private val profileFunction: ProfileFunction,
@@ -476,7 +478,7 @@ class InsightPlugin @Inject constructor(
     }
 
     override val lastDataTime: Long get() = if (connectionService == null || alertService == null) dateUtil.now() else connectionService?.lastDataTime ?: 0
-    override val lastBolusTime: Long? get() = lastBolusTimestamp
+    override val lastBolusTime: Long get() = lastBolusTimestamp
 
     override val baseBasalRate: Double
         get() {
@@ -1534,6 +1536,8 @@ class InsightPlugin @Inject constructor(
     override fun clearAllTables() {
         insightDatabase.clearAllTables()
     }
+
+    override fun getPreferenceScreenContent(): Any = InsightPreferencesCompose(preferences, config)
 
     override fun addPreferenceScreen(preferenceManager: PreferenceManager, parent: PreferenceScreen, context: Context, requiredKey: String?) {
         if (requiredKey != null) return

@@ -56,19 +56,19 @@ enum class ListPreferenceType {
     DROPDOWN_MENU,
 }
 
-inline fun <T> LazyListScope.listPreference(
+fun <T> LazyListScope.listPreference(
     key: String,
     defaultValue: T,
     values: List<T>,
-    crossinline title: @Composable (T) -> Unit,
+    title: @Composable (T) -> Unit,
     modifier: Modifier = Modifier.fillMaxWidth(),
-    crossinline rememberState: @Composable () -> MutableState<T>,
-    crossinline enabled: (T) -> Boolean = { true },
-    noinline icon: @Composable ((T) -> Unit)? = null,
-    noinline summary: @Composable ((T) -> Unit)? = null,
+    rememberState: @Composable () -> MutableState<T>,
+    enabled: (T) -> Boolean = { true },
+    icon: @Composable ((T) -> Unit)? = null,
+    summary: @Composable ((T) -> Unit)? = null,
     type: ListPreferenceType = ListPreferenceType.ALERT_DIALOG,
-    noinline valueToText: (T) -> AnnotatedString = { AnnotatedString(it.toString()) },
-    noinline item: @Composable (value: T, currentValue: T, onClick: () -> Unit) -> Unit =
+    valueToText: (T) -> AnnotatedString = { AnnotatedString(it.toString()) },
+    item: @Composable (value: T, currentValue: T, onClick: () -> Unit) -> Unit =
         ListPreferenceDefaults.item(type, valueToText),
 ) {
     item(key = key, contentType = "ListPreference") {
@@ -91,50 +91,49 @@ inline fun <T> LazyListScope.listPreference(
 
 /**
  * Convenience function to create a string list preference backed by SP.
+ * Uses resource IDs to avoid cross-module Compose compiler issues.
+ *
+ * @param entries Map of value to display text resource ID
  */
-inline fun LazyListScope.stringListPreference(
+fun LazyListScope.stringListPreference(
     sp: SP,
     key: String,
     defaultValue: String,
-    values: List<String>,
-    crossinline title: @Composable (String) -> Unit,
-    modifier: Modifier = Modifier.fillMaxWidth(),
-    crossinline enabled: (String) -> Boolean = { true },
-    noinline icon: @Composable ((String) -> Unit)? = null,
-    noinline summary: @Composable ((String) -> Unit)? = null,
+    entries: Map<String, Int>,
+    titleResId: Int,
     type: ListPreferenceType = ListPreferenceType.ALERT_DIALOG,
-    noinline valueToText: (String) -> AnnotatedString = { AnnotatedString(it) },
 ) {
-    listPreference(
-        key = key,
-        defaultValue = defaultValue,
-        values = values,
-        title = title,
-        modifier = modifier,
-        rememberState = { rememberSPStringState(sp, key, defaultValue) },
-        enabled = enabled,
-        icon = icon,
-        summary = summary,
-        type = type,
-        valueToText = valueToText,
-    )
+    item(key = key, contentType = "StringListPreference") {
+        val state = rememberSPStringState(sp, key, defaultValue)
+        val value by state
+        // Pre-resolve resource strings during composition to use in non-composable lambda
+        val resolvedEntries = entries.mapValues { (_, resId) -> stringResource(resId) }
+        ListPreference(
+            state = state,
+            values = entries.keys.toList(),
+            title = { Text(stringResource(titleResId)) },
+            summary = { Text(resolvedEntries[value] ?: value) },
+            type = type,
+            valueToText = { v -> AnnotatedString(resolvedEntries[v] ?: v) },
+        )
+    }
 }
 
 /**
  * Convenience function to create an int list preference backed by SP.
  */
-inline fun LazyListScope.intListPreference(
+fun LazyListScope.intListPreference(
     sp: SP,
     key: String,
     defaultValue: Int,
     values: List<Int>,
-    crossinline title: @Composable (Int) -> Unit,
+    title: @Composable (Int) -> Unit,
     modifier: Modifier = Modifier.fillMaxWidth(),
-    crossinline enabled: (Int) -> Boolean = { true },
-    noinline icon: @Composable ((Int) -> Unit)? = null,
-    noinline summary: @Composable ((Int) -> Unit)? = null,
+    enabled: (Int) -> Boolean = { true },
+    icon: @Composable ((Int) -> Unit)? = null,
+    summary: @Composable ((Int) -> Unit)? = null,
     type: ListPreferenceType = ListPreferenceType.ALERT_DIALOG,
-    noinline valueToText: (Int) -> AnnotatedString = { AnnotatedString(it.toString()) },
+    valueToText: (Int) -> AnnotatedString = { AnnotatedString(it.toString()) },
 ) {
     listPreference(
         key = key,
@@ -199,7 +198,7 @@ fun <T> ListPreference(
     var openSelector by rememberSaveable { mutableStateOf(false) }
     if (openSelector) {
         when (type) {
-            ListPreferenceType.ALERT_DIALOG -> {
+            ListPreferenceType.ALERT_DIALOG  -> {
                 PreferenceAlertDialog(
                     onDismissRequest = { openSelector = false },
                     title = title,
@@ -211,7 +210,9 @@ fun <T> ListPreference(
                 ) {
                     val lazyListState = rememberLazyListState()
                     LazyColumn(
-                        modifier = Modifier.fillMaxWidth().verticalScrollIndicators(lazyListState),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .verticalScrollIndicators(lazyListState),
                         state = lazyListState,
                     ) {
                         items(values) { itemValue ->
@@ -223,10 +224,13 @@ fun <T> ListPreference(
                     }
                 }
             }
+
             ListPreferenceType.DROPDOWN_MENU -> {
                 val theme = LocalPreferenceTheme.current
                 Box(
-                    modifier = Modifier.fillMaxWidth().padding(theme.padding.copy(vertical = 0.dp))
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(theme.padding.copy(vertical = 0.dp))
                 ) {
                     DropdownMenu(
                         expanded = openSelector,
@@ -255,16 +259,18 @@ fun <T> ListPreference(
 }
 
 object ListPreferenceDefaults {
+
     fun <T> item(
         type: ListPreferenceType,
         valueToText: (T) -> AnnotatedString,
     ): @Composable (value: T, currentValue: T, onClick: () -> Unit) -> Unit =
         when (type) {
-            ListPreferenceType.ALERT_DIALOG -> {
+            ListPreferenceType.ALERT_DIALOG  -> {
                 { value, currentValue, onClick ->
                     DialogItem(value, currentValue, valueToText, onClick)
                 }
             }
+
             ListPreferenceType.DROPDOWN_MENU -> {
                 { value, currentValue, onClick ->
                     DropdownMenuItemContent(value, currentValue, valueToText, onClick)
@@ -282,7 +288,8 @@ object ListPreferenceDefaults {
         val selected = value == currentValue
         Row(
             modifier =
-                Modifier.fillMaxWidth()
+                Modifier
+                    .fillMaxWidth()
                     .heightIn(min = 48.dp)
                     .selectable(selected, true, Role.RadioButton, onClick = onClick)
                     .padding(horizontal = 24.dp, vertical = 8.dp),

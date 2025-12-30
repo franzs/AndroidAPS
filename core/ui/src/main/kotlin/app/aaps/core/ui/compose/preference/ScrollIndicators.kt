@@ -32,7 +32,7 @@ import androidx.compose.ui.platform.debugInspectorInfo
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 
-internal fun Modifier.verticalScrollIndicators(
+fun Modifier.verticalScrollIndicators(
     scrollableState: ScrollableState,
     reverseScrolling: Boolean = false,
     drawTopIndicator: Boolean = true,
@@ -83,16 +83,18 @@ private fun Modifier.scrollIndicators(
         val drawTopLeftIndicator: Boolean
         val drawBottomRightIndicator: Boolean
         when (orientation) {
-            Orientation.Vertical -> {
+            Orientation.Vertical   -> {
                 drawTopLeftIndicator = drawTopStartIndicator
                 drawBottomRightIndicator = drawBottomEndIndicator
             }
+
             Orientation.Horizontal -> {
                 when (layoutDirection) {
                     LayoutDirection.Ltr -> {
                         drawTopLeftIndicator = drawTopStartIndicator
                         drawBottomRightIndicator = drawBottomEndIndicator
                     }
+
                     LayoutDirection.Rtl -> {
                         drawTopLeftIndicator = drawBottomEndIndicator
                         drawBottomRightIndicator = drawTopStartIndicator
@@ -106,7 +108,7 @@ private fun Modifier.scrollIndicators(
             drawContent()
             val indicatorSize =
                 when (orientation) {
-                    Orientation.Vertical -> Size(size.width, thickness)
+                    Orientation.Vertical   -> Size(size.width, thickness)
                     Orientation.Horizontal -> Size(thickness, size.height)
                 }
             if (drawTopLeftIndicator) {
@@ -129,7 +131,7 @@ private fun Modifier.scrollIndicators(
                     }
                 val topLeft =
                     when (orientation) {
-                        Orientation.Vertical -> Offset(0f, size.height - thickness)
+                        Orientation.Vertical   -> Offset(0f, size.height - thickness)
                         Orientation.Horizontal -> Offset(size.width - thickness, 0f)
                     }
                 if (canScrollDownRight) {

@@ -8,6 +8,7 @@ import androidx.preference.PreferenceScreen
 import app.aaps.core.data.model.GV
 import app.aaps.core.data.model.GlucoseUnit
 import app.aaps.core.data.plugin.PluginType
+import app.aaps.core.interfaces.configuration.Config
 import app.aaps.core.interfaces.logging.AAPSLogger
 import app.aaps.core.interfaces.logging.LTag
 import app.aaps.core.interfaces.plugin.PluginBaseWithPreferences
@@ -59,7 +60,8 @@ class GarminPlugin @Inject constructor(
     preferences: Preferences,
     private val context: Context,
     private val loopHub: LoopHub,
-    private val rxBus: RxBus
+    private val rxBus: RxBus,
+    private val config: Config
 ) : PluginBaseWithPreferences(
     pluginDescription = PluginDescription()
         .mainType(PluginType.SYNC)
@@ -475,6 +477,8 @@ class GarminPlugin @Inject constructor(
         }
         return joa.toString()
     }
+
+    override fun getPreferenceScreenContent(): Any = GarminPreferencesCompose(preferences, config)
 
     override fun addPreferenceScreen(preferenceManager: PreferenceManager, parent: PreferenceScreen, context: Context, requiredKey: String?) {
         if (requiredKey != null) return

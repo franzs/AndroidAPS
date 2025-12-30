@@ -36,21 +36,21 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import app.aaps.core.interfaces.sharedPreferences.SP
 
-inline fun LazyListScope.sliderPreference(
+fun LazyListScope.sliderPreference(
     key: String,
     defaultValue: Float,
-    crossinline title: @Composable (Float) -> Unit,
+    title: @Composable (Float) -> Unit,
     modifier: Modifier = Modifier.fillMaxWidth(),
-    crossinline rememberState: @Composable () -> MutableState<Float>,
+    rememberState: @Composable () -> MutableState<Float>,
     valueRange: ClosedFloatingPointRange<Float> = 0f..1f,
     valueSteps: Int = 0,
-    crossinline rememberSliderState: @Composable (Float) -> MutableFloatState = {
+    rememberSliderState: @Composable (Float) -> MutableFloatState = {
         remember { mutableFloatStateOf(it) }
     },
-    crossinline enabled: (Float) -> Boolean = { true },
-    noinline icon: @Composable ((Float) -> Unit)? = null,
-    noinline summary: @Composable ((Float) -> Unit)? = null,
-    noinline valueText: @Composable ((Float) -> Unit)? = null,
+    enabled: (Float) -> Boolean = { true },
+    icon: @Composable ((Float) -> Unit)? = null,
+    summary: @Composable ((Float) -> Unit)? = null,
+    valueText: @Composable ((Float) -> Unit)? = null,
 ) {
     item(key = key, contentType = "SliderPreference") {
         val state = rememberState()
@@ -75,18 +75,18 @@ inline fun LazyListScope.sliderPreference(
 /**
  * Convenience function to create a slider preference backed by SP.
  */
-inline fun LazyListScope.sliderPreference(
+fun LazyListScope.sliderPreference(
     sp: SP,
     key: String,
     defaultValue: Float,
-    crossinline title: @Composable (Float) -> Unit,
+    title: @Composable (Float) -> Unit,
     modifier: Modifier = Modifier.fillMaxWidth(),
     valueRange: ClosedFloatingPointRange<Float> = 0f..1f,
     valueSteps: Int = 0,
-    crossinline enabled: (Float) -> Boolean = { true },
-    noinline icon: @Composable ((Float) -> Unit)? = null,
-    noinline summary: @Composable ((Float) -> Unit)? = null,
-    noinline valueText: @Composable ((Float) -> Unit)? = null,
+    enabled: (Float) -> Boolean = { true },
+    icon: @Composable ((Float) -> Unit)? = null,
+    summary: @Composable ((Float) -> Unit)? = null,
+    valueText: @Composable ((Float) -> Unit)? = null,
 ) {
     sliderPreference(
         key = key,

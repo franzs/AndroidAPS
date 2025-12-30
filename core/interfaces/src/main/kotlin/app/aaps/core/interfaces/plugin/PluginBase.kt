@@ -168,4 +168,14 @@ abstract class PluginBase(
      * Plugin can provide either this method or [preferencesId] XML
      */
     open fun addPreferenceScreen(preferenceManager: PreferenceManager, parent: PreferenceScreen, context: Context, requiredKey: String?) {}
+
+    /**
+     * Add compose preference screen content
+     *
+     * Plugin can override this to provide compose-based preference UI
+     * Returns a composable lambda that will be called within a LazyColumn
+     *
+     * @return composable content provider or null if not implemented
+     */
+    open fun getPreferenceScreenContent(): Any? = null
 }

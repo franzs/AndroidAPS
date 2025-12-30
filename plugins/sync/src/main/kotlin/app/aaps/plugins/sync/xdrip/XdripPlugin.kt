@@ -377,6 +377,8 @@ class XdripPlugin @Inject constructor(
         }
     }
 
+    override fun getPreferenceScreenContent(): Any = XdripPreferencesCompose(preferences, config)
+
     override fun addPreferenceScreen(preferenceManager: PreferenceManager, parent: PreferenceScreen, context: Context, requiredKey: String?) {
         if (requiredKey != null && requiredKey != "xdrip_advanced") return
         val category = PreferenceCategory(context)

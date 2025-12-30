@@ -13,6 +13,7 @@ import androidx.preference.PreferenceCategory
 import androidx.preference.PreferenceManager
 import androidx.preference.PreferenceScreen
 import app.aaps.core.data.pump.defs.PumpType
+import app.aaps.core.interfaces.configuration.Config
 import app.aaps.core.interfaces.constraints.ConstraintsChecker
 import app.aaps.core.interfaces.logging.AAPSLogger
 import app.aaps.core.interfaces.logging.LTag
@@ -65,6 +66,7 @@ class DanaRPlugin @Inject constructor(
     aapsLogger: AAPSLogger,
     rh: ResourceHelper,
     preferences: Preferences,
+    config: Config,
     commandQueue: CommandQueue,
     aapsSchedulers: AapsSchedulers,
     rxBus: RxBus,
@@ -84,6 +86,7 @@ class DanaRPlugin @Inject constructor(
     aapsLogger,
     rh,
     preferences,
+    config,
     commandQueue,
     constraintsChecker,
     aapsSchedulers,
@@ -353,6 +356,8 @@ class DanaRPlugin @Inject constructor(
 
     override fun setUserOptions(): PumpEnactResult =
         executionService?.setUserOptions() ?: throw Exception("No execution service")
+
+    override fun getPreferenceScreenContent(): Any = DanaRPreferencesCompose(preferences, config)
 
     override fun addPreferenceScreen(preferenceManager: PreferenceManager, parent: PreferenceScreen, context: Context, requiredKey: String?) {
         if (requiredKey != null) return

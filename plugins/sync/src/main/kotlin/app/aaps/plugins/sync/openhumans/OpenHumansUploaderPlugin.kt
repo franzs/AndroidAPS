@@ -24,6 +24,7 @@ import androidx.work.WorkManager
 import app.aaps.core.data.model.HasIDs
 import app.aaps.core.data.model.data.Block
 import app.aaps.core.data.plugin.PluginType
+import app.aaps.core.interfaces.configuration.Config
 import app.aaps.core.interfaces.db.PersistenceLayer
 import app.aaps.core.interfaces.logging.AAPSLogger
 import app.aaps.core.interfaces.plugin.PluginBaseWithPreferences
@@ -66,7 +67,8 @@ import javax.inject.Singleton
 class OpenHumansUploaderPlugin @Inject internal constructor(
     rh: ResourceHelper,
     aapsLogger: AAPSLogger,
-    preferences: Preferences,
+    private val preferences: Preferences,
+    private val config: Config,
     private val context: Context,
     private val persistenceLayer: PersistenceLayer,
     private val openHumansAPI: OpenHumansAPI,
@@ -688,6 +690,8 @@ class OpenHumansUploaderPlugin @Inject internal constructor(
         const val SIGNED_OUT_NOTIFICATION_ID = 3125
         const val UPLOAD_NOTIFICATION_ID = 3126
     }
+
+    override fun getPreferenceScreenContent(): Any = OpenHumansPreferencesCompose(preferences, config)
 
     override fun addPreferenceScreen(preferenceManager: PreferenceManager, parent: PreferenceScreen, context: Context, requiredKey: String?) {
         if (requiredKey != null) return

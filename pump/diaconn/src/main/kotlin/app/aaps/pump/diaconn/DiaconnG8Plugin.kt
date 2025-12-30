@@ -13,6 +13,7 @@ import app.aaps.core.data.pump.defs.ManufacturerType
 import app.aaps.core.data.pump.defs.PumpDescription
 import app.aaps.core.data.pump.defs.PumpType
 import app.aaps.core.data.time.T
+import app.aaps.core.interfaces.configuration.Config
 import app.aaps.core.interfaces.constraints.Constraint
 import app.aaps.core.interfaces.constraints.ConstraintsChecker
 import app.aaps.core.interfaces.constraints.PluginConstraints
@@ -73,7 +74,8 @@ import kotlin.math.max
 class DiaconnG8Plugin @Inject constructor(
     aapsLogger: AAPSLogger,
     rh: ResourceHelper,
-    preferences: Preferences,
+    private val preferences: Preferences,
+    private val config: Config,
     commandQueue: CommandQueue,
     private val rxBus: RxBus,
     private val context: Context,
@@ -267,8 +269,8 @@ class DiaconnG8Plugin @Inject constructor(
         return true
     }
 
-    override val lastBolusTime: Long? get() = diaconnG8Pump.lastBolusTime
-    override val lastBolusAmount: Double? get() = diaconnG8Pump.lastBolusAmount
+    override val lastBolusTime: Long get() = diaconnG8Pump.lastBolusTime
+    override val lastBolusAmount: Double get() = diaconnG8Pump.lastBolusAmount
     override val lastDataTime: Long get() = diaconnG8Pump.lastConnection
     override val baseBasalRate: Double get() = diaconnG8Pump.baseAmount
     override val reservoirLevel: Double get() = diaconnG8Pump.systemRemainInsulin
@@ -508,6 +510,8 @@ class DiaconnG8Plugin @Inject constructor(
     }
 
     override fun clearAllTables() = diaconnHistoryDatabase.clearAllTables()
+
+    override fun getPreferenceScreenContent(): Any = DiaconnG8PreferencesCompose(preferences, config)
 
     override fun addPreferenceScreen(preferenceManager: PreferenceManager, parent: PreferenceScreen, context: Context, requiredKey: String?) {
         if (requiredKey != null) return
