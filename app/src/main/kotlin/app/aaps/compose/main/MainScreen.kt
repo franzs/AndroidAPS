@@ -19,6 +19,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import app.aaps.compose.actions.ActionsScreen
+import app.aaps.compose.actions.ActionsViewModel
 import app.aaps.core.data.plugin.PluginType
 import app.aaps.core.interfaces.plugin.PluginBase
 import app.aaps.ui.compose.alertDialogs.AboutAlertDialog
@@ -32,6 +34,7 @@ fun MainScreen(
     versionName: String,
     appIcon: Int,
     aboutDialogData: AboutDialogData?,
+    actionsViewModel: ActionsViewModel,
     onMenuClick: () -> Unit,
     onPreferencesClick: () -> Unit,
     onMenuItemClick: (MainMenuItem) -> Unit,
@@ -45,6 +48,23 @@ fun MainScreen(
     onNavDestinationSelected: (MainNavDestination) -> Unit,
     onSwitchToClassicUi: () -> Unit,
     onAboutDialogDismiss: () -> Unit,
+    // Actions callbacks
+    onProfileSwitchClick: () -> Unit,
+    onTempTargetClick: () -> Unit,
+    onTempBasalClick: () -> Unit,
+    onExtendedBolusClick: () -> Unit,
+    onFillClick: () -> Unit,
+    onHistoryBrowserClick: () -> Unit,
+    onTddStatsClick: () -> Unit,
+    onBgCheckClick: () -> Unit,
+    onSensorInsertClick: () -> Unit,
+    onBatteryChangeClick: () -> Unit,
+    onNoteClick: () -> Unit,
+    onExerciseClick: () -> Unit,
+    onQuestionClick: () -> Unit,
+    onAnnouncementClick: () -> Unit,
+    onSiteRotationClick: () -> Unit,
+    onActionsError: (String, String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
@@ -125,18 +145,45 @@ fun MainScreen(
                 SwitchUiFab(onClick = onSwitchToClassicUi)
             }
         ) { paddingValues ->
-            // Main content area placeholder
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-            ) {
-                Text(
-                    text = "Overview",
-                    style = MaterialTheme.typography.headlineMedium,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
-                )
+            // Main content area
+            when (uiState.currentNavDestination) {
+                MainNavDestination.Overview -> {
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(paddingValues)
+                    ) {
+                        Text(
+                            text = "Overview",
+                            style = MaterialTheme.typography.headlineMedium,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                        )
+                    }
+                }
+
+                MainNavDestination.Manage   -> {
+                    ActionsScreen(
+                        viewModel = actionsViewModel,
+                        onProfileSwitchClick = onProfileSwitchClick,
+                        onTempTargetClick = onTempTargetClick,
+                        onTempBasalClick = onTempBasalClick,
+                        onExtendedBolusClick = onExtendedBolusClick,
+                        onFillClick = onFillClick,
+                        onHistoryBrowserClick = onHistoryBrowserClick,
+                        onTddStatsClick = onTddStatsClick,
+                        onBgCheckClick = onBgCheckClick,
+                        onSensorInsertClick = onSensorInsertClick,
+                        onBatteryChangeClick = onBatteryChangeClick,
+                        onNoteClick = onNoteClick,
+                        onExerciseClick = onExerciseClick,
+                        onQuestionClick = onQuestionClick,
+                        onAnnouncementClick = onAnnouncementClick,
+                        onSiteRotationClick = onSiteRotationClick,
+                        onError = onActionsError,
+                        modifier = Modifier.padding(paddingValues)
+                    )
+                }
             }
         }
     }

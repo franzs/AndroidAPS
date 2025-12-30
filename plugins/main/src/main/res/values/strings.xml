@@ -171,8 +171,11 @@
 
     <!-- Actions -->
     <string name="actions">Actions</string>
+    <string name="manage">Manage</string>
     <string name="description_actions">Some buttons to quickly access common features</string>
     <string name="actions_shortname">ACT</string>
+    <string name="status">Status</string>
+    <string name="pump_actions">Pump actions</string>
     <string name="tempbasal_button">TempBasal</string>
     <string name="extended_bolus_button">Extended Bolus</string>
     <string name="extended_bolus_cancel_button">Cancel Extended Bolus</string>

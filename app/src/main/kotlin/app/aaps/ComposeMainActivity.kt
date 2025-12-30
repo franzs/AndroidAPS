@@ -15,6 +15,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import app.aaps.activities.HistoryBrowseActivity
 import app.aaps.activities.PreferencesActivity
+import app.aaps.compose.actions.ActionsViewModel
 import app.aaps.compose.main.MainMenuItem
 import app.aaps.compose.main.MainScreen
 import app.aaps.compose.main.MainViewModel
@@ -29,6 +30,7 @@ import app.aaps.core.interfaces.rx.events.EventPreferenceChange
 import app.aaps.core.interfaces.ui.UiInteraction
 import app.aaps.core.interfaces.utils.fabric.FabricPrivacy
 import app.aaps.core.keys.BooleanKey
+import app.aaps.core.ui.UIRunnable
 import app.aaps.core.ui.compose.AapsTheme
 import app.aaps.core.ui.compose.LocalPreferences
 import app.aaps.core.ui.compose.LocalRxBus
@@ -59,6 +61,7 @@ class ComposeMainActivity : DaggerAppCompatActivityWithResult() {
 
     // ViewModels
     @Inject lateinit var mainViewModel: MainViewModel
+    @Inject lateinit var actionsViewModel: ActionsViewModel
     @Inject lateinit var treatmentsViewModel: TreatmentsViewModel
     @Inject lateinit var statsViewModel: StatsViewModel
     @Inject lateinit var profileHelperViewModel: ProfileHelperViewModel
@@ -100,6 +103,7 @@ class ComposeMainActivity : DaggerAppCompatActivityWithResult() {
                             aboutDialogData = if (state.showAboutDialog) {
                                 mainViewModel.buildAboutDialogData(getString(R.string.app_name))
                             } else null,
+                            actionsViewModel = actionsViewModel,
                             onMenuClick = { mainViewModel.openDrawer() },
                             onPreferencesClick = {
                                 protectionCheck.queryProtection(this@ComposeMainActivity, ProtectionCheck.Protection.PREFERENCES, {
@@ -129,9 +133,84 @@ class ComposeMainActivity : DaggerAppCompatActivityWithResult() {
                             onDrawerClosed = { mainViewModel.closeDrawer() },
                             onNavDestinationSelected = { destination ->
                                 mainViewModel.setNavDestination(destination)
+                                if (destination == app.aaps.compose.main.MainNavDestination.Manage) {
+                                    actionsViewModel.refreshState()
+                                }
                             },
                             onSwitchToClassicUi = { switchToClassicUi() },
-                            onAboutDialogDismiss = { mainViewModel.setShowAboutDialog(false) }
+                            onAboutDialogDismiss = { mainViewModel.setShowAboutDialog(false) },
+                            // Actions callbacks
+                            onProfileSwitchClick = {
+                                protectionCheck.queryProtection(
+                                    this@ComposeMainActivity,
+                                    ProtectionCheck.Protection.BOLUS,
+                                    UIRunnable { uiInteraction.runProfileSwitchDialog(supportFragmentManager) }
+                                )
+                            },
+                            onTempTargetClick = {
+                                protectionCheck.queryProtection(
+                                    this@ComposeMainActivity,
+                                    ProtectionCheck.Protection.BOLUS,
+                                    UIRunnable { uiInteraction.runTempTargetDialog(supportFragmentManager) }
+                                )
+                            },
+                            onTempBasalClick = {
+                                protectionCheck.queryProtection(
+                                    this@ComposeMainActivity,
+                                    ProtectionCheck.Protection.BOLUS,
+                                    UIRunnable { uiInteraction.runTempBasalDialog(supportFragmentManager) }
+                                )
+                            },
+                            onExtendedBolusClick = {
+                                protectionCheck.queryProtection(this@ComposeMainActivity, ProtectionCheck.Protection.BOLUS, UIRunnable {
+                                    uiInteraction.showOkCancelDialog(
+                                        context = this@ComposeMainActivity,
+                                        title = app.aaps.core.ui.R.string.extended_bolus,
+                                        message = app.aaps.plugins.main.R.string.ebstopsloop,
+                                        ok = { uiInteraction.runExtendedBolusDialog(supportFragmentManager) }
+                                    )
+                                })
+                            },
+                            onFillClick = {
+                                protectionCheck.queryProtection(
+                                    this@ComposeMainActivity,
+                                    ProtectionCheck.Protection.BOLUS,
+                                    UIRunnable { uiInteraction.runFillDialog(supportFragmentManager) }
+                                )
+                            },
+                            onHistoryBrowserClick = {
+                                startActivity(Intent(this@ComposeMainActivity, uiInteraction.historyBrowseActivity))
+                            },
+                            onTddStatsClick = {
+                                startActivity(Intent(this@ComposeMainActivity, uiInteraction.tddStatsActivity))
+                            },
+                            onBgCheckClick = {
+                                uiInteraction.runCareDialog(supportFragmentManager, UiInteraction.EventType.BGCHECK, app.aaps.core.ui.R.string.careportal_bgcheck)
+                            },
+                            onSensorInsertClick = {
+                                uiInteraction.runCareDialog(supportFragmentManager, UiInteraction.EventType.SENSOR_INSERT, app.aaps.core.ui.R.string.cgm_sensor_insert)
+                            },
+                            onBatteryChangeClick = {
+                                uiInteraction.runCareDialog(supportFragmentManager, UiInteraction.EventType.BATTERY_CHANGE, app.aaps.core.ui.R.string.pump_battery_change)
+                            },
+                            onNoteClick = {
+                                uiInteraction.runCareDialog(supportFragmentManager, UiInteraction.EventType.NOTE, app.aaps.core.ui.R.string.careportal_note)
+                            },
+                            onExerciseClick = {
+                                uiInteraction.runCareDialog(supportFragmentManager, UiInteraction.EventType.EXERCISE, app.aaps.core.ui.R.string.careportal_exercise)
+                            },
+                            onQuestionClick = {
+                                uiInteraction.runCareDialog(supportFragmentManager, UiInteraction.EventType.QUESTION, app.aaps.core.ui.R.string.careportal_question)
+                            },
+                            onAnnouncementClick = {
+                                uiInteraction.runCareDialog(supportFragmentManager, UiInteraction.EventType.ANNOUNCEMENT, app.aaps.core.ui.R.string.careportal_announcement)
+                            },
+                            onSiteRotationClick = {
+                                uiInteraction.runSiteRotationDialog(supportFragmentManager)
+                            },
+                            onActionsError = { comment, title ->
+                                uiInteraction.runAlarm(comment, title, app.aaps.core.ui.R.raw.boluserror)
+                            }
                         )
                     }
 
@@ -170,6 +249,7 @@ class ComposeMainActivity : DaggerAppCompatActivityWithResult() {
     override fun onResume() {
         super.onResume()
         mainViewModel.refreshProfileState()
+        actionsViewModel.refreshState()
     }
 
     override fun onDestroy() {

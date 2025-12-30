@@ -18,10 +18,10 @@ sealed class MainNavDestination(val id: String, val iconRes: Int, val labelRes: 
         labelRes = app.aaps.plugins.main.R.string.overview
     )
 
-    data object Actions : MainNavDestination(
-        id = "actions",
+    data object Manage : MainNavDestination(
+        id = "manage",
         iconRes = app.aaps.core.objects.R.drawable.ic_action,
-        labelRes = app.aaps.plugins.main.R.string.actions
+        labelRes = app.aaps.plugins.main.R.string.manage
     )
 }
 
@@ -31,7 +31,7 @@ fun MainNavigationBar(
     onDestinationSelected: (MainNavDestination) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val destinations = listOf(MainNavDestination.Overview, MainNavDestination.Actions)
+    val destinations = listOf(MainNavDestination.Overview, MainNavDestination.Manage)
 
     NavigationBar(
         containerColor = MaterialTheme.colorScheme.surfaceContainer,
