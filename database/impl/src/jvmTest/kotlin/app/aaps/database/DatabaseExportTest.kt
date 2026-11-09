@@ -20,11 +20,15 @@ import kotlin.test.assertFails
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
 
-/** [AppRepository.exportDatabaseCopy]: a copy of the database file with `VACUUM INTO`. */
+/**
+ * [AppRepository.exportDatabaseCopy]: a copy of the database file with `VACUUM INTO`, made on its own
+ * connection while Room has the same file open - as on the phone.
+ */
 class DatabaseExportTest {
 
     private val directory = createTempDirectory("aaps-export-test")
-    private val database = JvmAppDatabaseBuilder().provideAppDatabase("$directory/aaps.db")
+    private val source = "$directory/aaps.db"
+    private val database = JvmAppDatabaseBuilder().provideAppDatabase(source)
     private val repository = AppRepository { database }
     private val now = Clock.System.now().toEpochMilliseconds()
     private val target = "$directory/export.db"
@@ -40,7 +44,7 @@ class DatabaseExportTest {
     fun `the copy holds all rows and needs no wal file`() = runTest {
         repeat(3) { database.apsResultDao.insert(apsResult(now - it * 300_000L)) }
 
-        repository.exportDatabaseCopy(target)
+        repository.exportDatabaseCopy(source, target)
 
         assertThat(countRows(target, "apsResults")).isEqualTo(3L)
         assertThat(File("$target-wal").exists()).isFalse()
@@ -50,7 +54,7 @@ class DatabaseExportTest {
     fun `an existing file is not overwritten`() = runTest {
         File(target).writeText("keep me")
 
-        assertFails { repository.exportDatabaseCopy(target) }
+        assertFails { repository.exportDatabaseCopy(source, target) }
         assertThat(File(target).readText()).isEqualTo("keep me")
     }
 
@@ -70,7 +74,7 @@ class DatabaseExportTest {
         }
         writing.await()
 
-        withTimeout(10.seconds) { repository.exportDatabaseCopy(target) }
+        withTimeout(10.seconds) { repository.exportDatabaseCopy(source, target) }
         finishWriting.complete(Unit)
         writer.join()
 

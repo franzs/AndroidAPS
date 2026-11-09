@@ -53,6 +53,8 @@ kotlin {
                 api(project.dependencies.platform(libs.kotlinx.serialization.bom))
                 api(libs.kotlinx.serialization.json)
                 api(libs.androidx.room.runtime)
+                // The database export opens its own connection with the bundled driver.
+                implementation(libs.androidx.sqlite.bundled)
             }
         }
 

@@ -919,7 +919,7 @@ class ImportExportPrefsImpl(
             rxBus.send(EventShowSnackbar(rh.gs(R.string.database_export_started), EventShowSnackbar.Type.Info))
             var target: DocumentFile? = null
             try {
-                persistenceLayer.exportDatabaseCopy(copy.absolutePath)
+                persistenceLayer.exportDatabaseCopy(database.path, copy.absolutePath)
                 target = prefFileList.newExportDatabaseFile()
                     ?: return fail(rh.gs(R.string.error_accessing_filesystem_select_aaps_directory_properly))
                 zip(copy, target)

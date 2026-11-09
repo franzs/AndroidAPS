@@ -67,8 +67,8 @@ class DatabaseExportWorkerTest : TestBaseWithProfile() {
 
     @Test
     fun `the copy is zipped into the exports folder and the cache file is deleted`() = runTest {
-        whenever(persistenceLayer.exportDatabaseCopy(any())).thenAnswer {
-            File(it.getArgument<String>(0)).writeBytes(databaseCopy)
+        whenever(persistenceLayer.exportDatabaseCopy(any(), any())).thenAnswer {
+            File(it.getArgument<String>(1)).writeBytes(databaseCopy)
         }
 
         val result = worker().doWorkAndLog()
@@ -83,8 +83,8 @@ class DatabaseExportWorkerTest : TestBaseWithProfile() {
 
     @Test
     fun `a failed copy removes the zip file and the cache file`() = runTest {
-        whenever(persistenceLayer.exportDatabaseCopy(any())).thenAnswer {
-            File(it.getArgument<String>(0)).writeBytes(databaseCopy)
+        whenever(persistenceLayer.exportDatabaseCopy(any(), any())).thenAnswer {
+            File(it.getArgument<String>(1)).writeBytes(databaseCopy)
             throw IOException("disk full")
         }
 
@@ -96,8 +96,8 @@ class DatabaseExportWorkerTest : TestBaseWithProfile() {
 
     @Test
     fun `a zip file that cannot be written is deleted`() = runTest {
-        whenever(persistenceLayer.exportDatabaseCopy(any())).thenAnswer {
-            File(it.getArgument<String>(0)).writeBytes(databaseCopy)
+        whenever(persistenceLayer.exportDatabaseCopy(any(), any())).thenAnswer {
+            File(it.getArgument<String>(1)).writeBytes(databaseCopy)
         }
         whenever(context.contentResolver.openOutputStream(anyOrNull())).thenReturn(null)
 
@@ -115,6 +115,6 @@ class DatabaseExportWorkerTest : TestBaseWithProfile() {
         val result = worker().doWorkAndLog()
 
         assertIs<ListenableWorker.Result.Failure>(result)
-        verify(persistenceLayer, never()).exportDatabaseCopy(any())
+        verify(persistenceLayer, never()).exportDatabaseCopy(any(), any())
     }
 }

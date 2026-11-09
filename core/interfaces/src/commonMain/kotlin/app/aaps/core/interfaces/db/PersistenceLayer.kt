@@ -93,11 +93,12 @@ interface PersistenceLayer {
     suspend fun vacuumDatabase(): VacuumResult
 
     /**
-     * Write a copy of the whole database to [targetPath] (a plain file path that does not exist yet).
-     * The copy is one consistent file and needs no `-wal` or `-shm` file. It does not block the loop:
-     * it only reads the database, and it does not build the copy in memory like [vacuumDatabase].
+     * Write a copy of the database file at [databasePath] to [targetPath] (a plain file path that does
+     * not exist yet). The copy is one consistent file and needs no `-wal` or `-shm` file. It does not
+     * block the loop: it reads the database on its own connection, and it does not build the copy in
+     * memory like [vacuumDatabase].
      */
-    suspend fun exportDatabaseCopy(targetPath: String)
+    suspend fun exportDatabaseCopy(databasePath: String, targetPath: String)
 
     /**
      * Collect DB size, free space and per-table row counts (total, older-than-retention, tracked

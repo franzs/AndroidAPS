@@ -1,8 +1,9 @@
 package app.aaps.database
 
 import androidx.room.Transactor.SQLiteTransactionType
-import androidx.room.useReaderConnection
 import androidx.room.useWriterConnection
+import androidx.sqlite.driver.bundled.BundledSQLiteDriver
+import androidx.sqlite.driver.bundled.SQLITE_OPEN_READWRITE
 import app.aaps.database.daos.ApsResultVariableSens
 import app.aaps.database.entities.APSResult
 import app.aaps.database.entities.Bolus
@@ -291,22 +292,33 @@ class AppRepository internal constructor(
     }
 
     /**
-     * Writes a copy of the whole database to [targetPath] with `VACUUM INTO`.
+     * Writes a copy of the database file at [databasePath] to [targetPath] with `VACUUM INTO`.
      *
      * The copy is one consistent file: it holds everything up to the moment the export started,
      * including what is still in the WAL file, and it needs no `-wal` or `-shm` file next to it.
      *
      * Unlike [vacuumDatabase], `VACUUM INTO` writes straight into the target file and does not build
-     * the copy in memory, so it does not run out of memory on a big database. It only reads the
-     * database, so it runs on a reader connection and the loop can keep writing meanwhile.
+     * the copy in memory, so it does not run out of memory on a big database.
      *
-     * [targetPath] must be a plain file path that does not exist yet (SQLite refuses to overwrite).
+     * ## Its own connection
+     *
+     * Room opens its reader connections read-only, and then `VACUUM INTO` may not write the target file
+     * either ("attempt to write a readonly database", seen on a phone). Room's writer connection would
+     * work, but it would hold back every write of the loop and the pump driver for the whole export, and
+     * Room gives up waiting for a connection after about 30 seconds. So the export opens its own short
+     * lived connection. In WAL mode it reads one fixed state of the database while Room keeps writing,
+     * and it writes only into the target file.
+     *
+     * Blocking: call it on an IO dispatcher. [targetPath] must be a plain file path that does not exist
+     * yet (SQLite refuses to overwrite).
      */
-    suspend fun exportDatabaseCopy(targetPath: String) {
-        database.useReaderConnection { connection ->
-            connection.usePrepared("VACUUM INTO ?") {
-                it.bindText(1, targetPath)
-                it.step()
+    fun exportDatabaseCopy(databasePath: String, targetPath: String) {
+        BundledSQLiteDriver().open(databasePath, SQLITE_OPEN_READWRITE).use { connection ->
+            // Wait a moment instead of failing when a writer holds a lock just at the start.
+            connection.prepare("PRAGMA busy_timeout = 10000").use { it.step() }
+            connection.prepare("VACUUM INTO ?").use { statement ->
+                statement.bindText(1, targetPath)
+                statement.step()
             }
         }
     }

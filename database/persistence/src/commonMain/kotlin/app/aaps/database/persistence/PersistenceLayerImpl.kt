@@ -181,8 +181,8 @@ class PersistenceLayerImpl(
         }
     }
 
-    override suspend fun exportDatabaseCopy(targetPath: String) = withContext(aapsIoDispatcher) {
-        repository.exportDatabaseCopy(targetPath)
+    override suspend fun exportDatabaseCopy(databasePath: String, targetPath: String) = withContext(aapsIoDispatcher) {
+        repository.exportDatabaseCopy(databasePath, targetPath)
     }
 
     override suspend fun databaseMaintenanceInfo(retentionDays: Long): DatabaseMaintenanceInfo = withContext(aapsIoDispatcher) {
