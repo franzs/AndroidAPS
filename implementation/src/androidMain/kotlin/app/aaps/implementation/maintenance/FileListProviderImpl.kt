@@ -191,6 +191,12 @@ class FileListProviderImpl(
         return dir?.createFile("application/csv", timeLocal + "_UserEntry.csv")
     }
 
+    override fun newExportDatabaseFile(): DocumentFile? {
+        val timeLocal = LocalDateTime.now().toString(DateTimeFormat.forPattern("yyyy-MM-dd'_'HHmmss"))
+        val dir = ensureExportDirExists()
+        return dir?.createFile("application/zip", timeLocal + "_androidaps.db.zip")
+    }
+
     override fun newCwfFile(filename: String, withDate: Boolean): DocumentFile? {
         val timeLocal = LocalDateTime.now().toString(DateTimeFormat.forPattern("yyyy-MM-dd'_'HHmmss"))
         val dir = ensureExportDirExists()

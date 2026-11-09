@@ -71,6 +71,7 @@ import dev.zacsweers.metro.AssistedInject
 import dev.zacsweers.metro.ContributesBinding
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.SingleIn
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -78,10 +79,15 @@ import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
+import java.io.BufferedOutputStream
+import java.io.File
 import java.io.FileNotFoundException
 import java.io.IOException
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import java.util.zip.Deflater
+import java.util.zip.ZipEntry
+import java.util.zip.ZipOutputStream
 
 /**
  * Created by mike on 03.07.2016.
@@ -857,6 +863,107 @@ class ImportExportPrefsImpl(
                 rxBus.send(EventShowSnackbar(rh.gs(R.string.error_accessing_filesystem_select_aaps_directory_properly), EventShowSnackbar.Type.Error))
                 throw PrefFileNotFoundError(file.name ?: "UNKNOWN")
             }
+        }
+    }
+
+    override val canExportDatabase: Boolean get() = true
+
+    override fun exportDatabase() {
+        WorkManager.getInstance(context).enqueueUniqueWork(
+            DatabaseExportWorker.WORK_NAME,
+            // An export that is still running is kept. A second tap does not start another one.
+            ExistingWorkPolicy.KEEP,
+            OneTimeWorkRequest.Builder(DatabaseExportWorker::class.java).build()
+        )
+    }
+
+    /**
+     * Copies the whole database into the exports folder as a zip file.
+     *
+     * `VACUUM INTO` writes the copy to the app cache first, because SQLite needs a plain file path and
+     * the exports folder can only be reached through the storage access framework. The copy is then
+     * zipped into the exports folder. The cache file is always deleted, also when something fails.
+     */
+    @AssistedInject
+    class DatabaseExportWorker(
+        @Assisted private val context: Context,
+        @Assisted params: WorkerParameters,
+        aapsLogger: AAPSLogger,
+        fabricPrivacy: FabricPrivacy,
+        private val rh: ResourceHelper,
+        private val prefFileList: FileListProvider,
+        private val persistenceLayer: PersistenceLayer,
+        private val rxBus: RxBus
+    ) : LoggingWorker(context, params, Dispatchers.IO, aapsLogger, fabricPrivacy) {
+
+        /** Metro builds this worker; the parameter names must match [MetroWorkerCreator]. */
+        @AssistedFactory
+        fun interface Factory : MetroWorkerCreator {
+
+            override fun create(context: Context, params: WorkerParameters): DatabaseExportWorker
+        }
+
+        override suspend fun doWorkAndLog(): Result {
+            val database = context.getDatabasePath(DATABASE_FILE_NAME)
+            val wal = File(database.path + "-wal")
+            val copy = File(context.cacheDir, "database-export.db")
+            // A left-over from an export that was killed. SQLite does not write into an existing file.
+            copy.delete()
+            // The copy holds the database and the WAL file, so it can be as big as both together.
+            if (context.cacheDir.usableSpace < database.length() + wal.length() + FREE_SPACE_MARGIN) {
+                return fail(rh.gs(R.string.database_export_no_space))
+            }
+            if (prefFileList.ensureExportDirExists() == null) {
+                return fail(rh.gs(R.string.error_accessing_filesystem_select_aaps_directory_properly))
+            }
+            rxBus.send(EventShowSnackbar(rh.gs(R.string.database_export_started), EventShowSnackbar.Type.Info))
+            var target: DocumentFile? = null
+            try {
+                persistenceLayer.exportDatabaseCopy(copy.absolutePath)
+                target = prefFileList.newExportDatabaseFile()
+                    ?: return fail(rh.gs(R.string.error_accessing_filesystem_select_aaps_directory_properly))
+                zip(copy, target)
+                aapsLogger.info(LTag.CORE, "Database exported to ${target.name}")
+                rxBus.send(EventShowSnackbar(rh.gs(R.string.database_exported, target.name ?: ""), EventShowSnackbar.Type.Success))
+                return Result.success()
+            } catch (e: CancellationException) {
+                // The worker was stopped: do not leave a half written zip file behind.
+                target?.delete()
+                throw e
+            } catch (e: Exception) {
+                aapsLogger.error(LTag.CORE, "Database export failed", e)
+                target?.delete()
+                return fail(rh.gs(R.string.database_export_failed))
+            } finally {
+                copy.delete()
+            }
+        }
+
+        private fun zip(file: File, target: DocumentFile) {
+            val output = context.contentResolver.openOutputStream(target.uri) ?: throw IOException("Cannot open ${target.name}")
+            ZipOutputStream(BufferedOutputStream(output, BUFFER_SIZE)).use { zip ->
+                // Fast compression: the JSON in the APS results still gets much smaller, and a slow
+                // level could push a big export over the 10 minute limit of WorkManager.
+                zip.setLevel(Deflater.BEST_SPEED)
+                zip.putNextEntry(ZipEntry(DATABASE_FILE_NAME))
+                file.inputStream().use { it.copyTo(zip, BUFFER_SIZE) }
+                zip.closeEntry()
+            }
+        }
+
+        private fun fail(message: String): Result {
+            rxBus.send(EventShowSnackbar(message, EventShowSnackbar.Type.Error))
+            return Result.failure(workDataOf("Error" to message))
+        }
+
+        companion object {
+
+            const val WORK_NAME = "database-export"
+
+            /** The name the app opens its database with (`DatabaseConfig.PRODUCTION`), kept here to avoid a module dependency. */
+            private const val DATABASE_FILE_NAME = "androidaps.db"
+            private const val FREE_SPACE_MARGIN = 100L * 1024 * 1024
+            private const val BUFFER_SIZE = 1024 * 1024
         }
     }
 

@@ -274,6 +274,12 @@ class MaintenanceViewModel(
         }
     }
 
+    /** True when this platform can export the database file. The menu entry is hidden otherwise. */
+    val canExportDatabase: Boolean get() = importExportPrefs.canExportDatabase
+
+    /** Starts the database export in the background. The worker shows the result as a snackbar. */
+    fun exportDatabase() = importExportPrefs.exportDatabase()
+
     fun exportCsv() {
         uel.log(Action.EXPORT_CSV, Sources.Maintenance)
         maintenanceAction("exporting csv") {

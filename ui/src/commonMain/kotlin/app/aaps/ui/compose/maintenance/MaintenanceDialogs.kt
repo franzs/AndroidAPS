@@ -24,7 +24,7 @@ import app.aaps.ui.compose.maintenance.MaintenanceViewModel.ExportState
  * - Maintenance bottom sheet with export/import/cleanup actions
  * - Log settings bottom sheet
  * - Cloud directory sheet
- * - 5 confirmation dialogs (reset APS, reset DB, cleanup DB, send logs, export CSV)
+ * - 6 confirmation dialogs (reset APS, reset DB, cleanup DB, send logs, export CSV, export database)
  * - Export state machine dialogs (missing password, confirm, ask password)
  * - Cleanup result dialog
  *
@@ -48,6 +48,7 @@ fun MaintenanceDialogs(
     var showConfirmResetDb by remember { mutableStateOf(false) }
     var showConfirmCleanupDb by remember { mutableStateOf(false) }
     var showConfirmExportCsv by remember { mutableStateOf(false) }
+    var showConfirmExportDatabase by remember { mutableStateOf(false) }
     var showConfirmSendLogs by remember { mutableStateOf(false) }
     var cleanupResultText by remember { mutableStateOf<String?>(null) }
 
@@ -98,6 +99,8 @@ fun MaintenanceDialogs(
             onResetApsResultsClick = { showConfirmResetAps = true },
             onCleanupDbClick = { showConfirmCleanupDb = true },
             onResetDbClick = { showConfirmResetDb = true },
+            canExportDatabase = maintenanceViewModel.canExportDatabase,
+            onExportDatabaseClick = { showConfirmExportDatabase = true },
             exportConfig = exportConfig,
             isDirectoryAccessGranted = isDirectoryAccessGranted,
             directoryPath = directoryPath,
@@ -188,6 +191,18 @@ fun MaintenanceDialogs(
                 maintenanceViewModel.exportCsv()
             },
             onDismiss = { showConfirmExportCsv = false }
+        )
+    }
+
+    if (showConfirmExportDatabase) {
+        OkCancelDialog(
+            title = stringResource(CoreUiStrings.confirmation),
+            message = stringResource(CoreUiStrings.value_question, stringResource(CoreUiStrings.export_database)),
+            onConfirm = {
+                showConfirmExportDatabase = false
+                maintenanceViewModel.exportDatabase()
+            },
+            onDismiss = { showConfirmExportDatabase = false }
         )
     }
 

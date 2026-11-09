@@ -181,6 +181,10 @@ class PersistenceLayerImpl(
         }
     }
 
+    override suspend fun exportDatabaseCopy(targetPath: String) = withContext(aapsIoDispatcher) {
+        repository.exportDatabaseCopy(targetPath)
+    }
+
     override suspend fun databaseMaintenanceInfo(retentionDays: Long): DatabaseMaintenanceInfo = withContext(aapsIoDispatcher) {
         val raw = repository.databaseMaintenanceInfo(retentionDays)
         DatabaseMaintenanceInfo(raw.dbSizeBytes, raw.availableBytes, raw.totalRows, raw.deletableRows, raw.changeRows, raw.report)

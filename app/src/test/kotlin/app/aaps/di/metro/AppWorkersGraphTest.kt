@@ -35,6 +35,7 @@ class AppWorkersGraphTest {
             KeepAliveWorker::class,
             SceneExpiryWorker::class,
             ImportExportPrefsImpl.CsvExportWorker::class,
+            ImportExportPrefsImpl.DatabaseExportWorker::class,
             ImportExportPrefsImpl.ApsResultExportWorker::class,
             // :plugins:sync - the nine nsclientV3 loaders, plus xdrip and SMS.
             DataSyncWorker::class,

@@ -14,6 +14,7 @@ interface FileListProvider : PrefsFileInfo {
 
     fun newPreferenceFile(): DocumentFile?
     fun newExportCsvFile(): DocumentFile?
+    fun newExportDatabaseFile(): DocumentFile?
     fun newCwfFile(filename: String, withDate: Boolean = true): DocumentFile?
 
     fun ensureResultDirExists(): File

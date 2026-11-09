@@ -52,6 +52,18 @@ interface ImportExportPrefs {
     suspend fun executeCsvExport(): ExportResult
 
     /**
+     * True when this platform can export the whole database file. Only Android can for now.
+     * The maintenance menu hides the entry when this is false, so the feature is not shown as dead.
+     */
+    val canExportDatabase: Boolean get() = false
+
+    /**
+     * Copy the whole database into the exports folder as a zip file, in the background.
+     * The result is shown as a snackbar. Call it only when [canExportDatabase] is true.
+     */
+    fun exportDatabase(): Unit = error("Database export is not supported on this platform")
+
+    /**
      * Write one APS run to a debug file (engineering mode only).
      *
      * [input] and [output] are whole JSON documents, already serialised. Nothing here reads them -

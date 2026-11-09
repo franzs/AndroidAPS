@@ -1,6 +1,7 @@
 package app.aaps.database
 
 import androidx.room.Transactor.SQLiteTransactionType
+import androidx.room.useReaderConnection
 import androidx.room.useWriterConnection
 import app.aaps.database.daos.ApsResultVariableSens
 import app.aaps.database.entities.APSResult
@@ -286,6 +287,27 @@ class AppRepository internal constructor(
         database.useWriterConnection { connection ->
             connection.usePrepared("PRAGMA wal_checkpoint(TRUNCATE)") { it.step() }
             connection.usePrepared("VACUUM") { it.step() }
+        }
+    }
+
+    /**
+     * Writes a copy of the whole database to [targetPath] with `VACUUM INTO`.
+     *
+     * The copy is one consistent file: it holds everything up to the moment the export started,
+     * including what is still in the WAL file, and it needs no `-wal` or `-shm` file next to it.
+     *
+     * Unlike [vacuumDatabase], `VACUUM INTO` writes straight into the target file and does not build
+     * the copy in memory, so it does not run out of memory on a big database. It only reads the
+     * database, so it runs on a reader connection and the loop can keep writing meanwhile.
+     *
+     * [targetPath] must be a plain file path that does not exist yet (SQLite refuses to overwrite).
+     */
+    suspend fun exportDatabaseCopy(targetPath: String) {
+        database.useReaderConnection { connection ->
+            connection.usePrepared("VACUUM INTO ?") {
+                it.bindText(1, targetPath)
+                it.step()
+            }
         }
     }
 

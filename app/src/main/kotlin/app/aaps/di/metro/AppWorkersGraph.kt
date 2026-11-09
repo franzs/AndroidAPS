@@ -62,6 +62,11 @@ interface AppWorkersGraph {
 
     @Provides
     @IntoMap
+    @WorkerKey(ImportExportPrefsImpl.DatabaseExportWorker::class)
+    fun bindDatabaseExportWorker(f: ImportExportPrefsImpl.DatabaseExportWorker.Factory): MetroWorkerCreator = f
+
+    @Provides
+    @IntoMap
     @WorkerKey(ImportExportPrefsImpl.ApsResultExportWorker::class)
     fun bindApsResultExportWorker(
         f: ImportExportPrefsImpl.ApsResultExportWorker.Factory

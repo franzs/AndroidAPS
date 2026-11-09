@@ -60,6 +60,8 @@ fun MaintenanceBottomSheet(
     onResetApsResultsClick: () -> Unit,
     onCleanupDbClick: () -> Unit,
     onResetDbClick: () -> Unit,
+    canExportDatabase: Boolean = false,
+    onExportDatabaseClick: () -> Unit = {},
     exportConfig: ExportConfig? = null,
     onToggleSettingsLocal: (Boolean) -> Unit = {},
     onToggleSettingsCloud: (Boolean) -> Unit = {},
@@ -91,6 +93,8 @@ fun MaintenanceBottomSheet(
             onResetApsResultsClick = onResetApsResultsClick,
             onCleanupDbClick = onCleanupDbClick,
             onResetDbClick = onResetDbClick,
+            canExportDatabase = canExportDatabase,
+            onExportDatabaseClick = onExportDatabaseClick,
             exportConfig = exportConfig,
             onToggleSettingsLocal = onToggleSettingsLocal,
             onToggleSettingsCloud = onToggleSettingsCloud,
@@ -122,6 +126,8 @@ internal fun MaintenanceBottomSheetContent(
     onResetApsResultsClick: () -> Unit = {},
     onCleanupDbClick: () -> Unit = {},
     onResetDbClick: () -> Unit = {},
+    canExportDatabase: Boolean = false,
+    onExportDatabaseClick: () -> Unit = {},
     exportConfig: ExportConfig? = null,
     onToggleSettingsLocal: (Boolean) -> Unit = {},
     onToggleSettingsCloud: (Boolean) -> Unit = {},
@@ -303,6 +309,16 @@ internal fun MaintenanceBottomSheetContent(
         HorizontalDivider(modifier = Modifier.padding(start = 56.dp))
         SectionHeader(stringResource(CoreUiStrings.database_management))
 
+        if (canExportDatabase) {
+            MaintenanceItem(
+                text = stringResource(CoreUiStrings.export_database),
+                description = stringResource(CoreUiStrings.maintenance_export_database_desc),
+                icon = Icons.Default.FileUpload,
+                color = primaryColor,
+                onDismiss = onDismiss,
+                onClick = onExportDatabaseClick
+            )
+        }
         MaintenanceItem(
             text = stringResource(CoreUiStrings.database_cleanup),
             description = stringResource(CoreUiStrings.maintenance_cleanup_db_desc),

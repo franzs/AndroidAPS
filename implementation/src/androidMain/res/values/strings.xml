@@ -62,6 +62,10 @@
     <string name="exported_failed">Preferences export failed!</string>
     <string name="filenotfound">File not found</string>
     <string name="ue_exported">User Entries exported</string>
+    <string name="database_export_started">Exporting the database. This can take some minutes.</string>
+    <string name="database_exported" comment="%1$s=file name. Example: 2026-11-09_143000_androidaps.db.zip">Database exported to %1$s</string>
+    <string name="database_export_failed">Database export failed</string>
+    <string name="database_export_no_space">Not enough free space on the phone to export the database</string>
     <string name="exported_ago" comment="at placeholder we add pluralized number of hours/minutes">exported %1$s ago</string>
     <string name="exported_at" comment="at placeholder we add export date">exported at %1$s</string>
     <string name="exported_less_than_hour_ago">exported less than hour ago</string>
