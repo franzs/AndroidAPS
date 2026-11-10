@@ -55,6 +55,10 @@
     <string name="exported_failed">Export instellingen mislukt!</string>
     <string name="filenotfound">Bestand niet gevonden</string>
     <string name="ue_exported">Gebruikers invoer geëxporteerd</string>
+    <string name="database_export_started">Database wordt geëxporteerd. Dit kan enkele minuten duren.</string>
+    <string name="database_exported">Database geëxporteerd naar %1$s</string>
+    <string name="database_export_failed">Exporteren van de database mislukt</string>
+    <string name="database_export_no_space">Onvoldoende vrije ruimte op de telefoon om de database te exporteren</string>
     <string name="exported_ago" comment="at placeholder we add pluralized number of hours/minutes">%1$s geleden geëxporteerd</string>
     <string name="exported_at" comment="at placeholder we add export date">geëxporteerd op %1$s</string>
     <string name="exported_less_than_hour_ago">minder dan uur geleden geëxporteerd</string>

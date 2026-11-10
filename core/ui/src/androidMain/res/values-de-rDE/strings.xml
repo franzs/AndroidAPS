@@ -920,6 +920,8 @@
     <string name="maintenance_export_desc">Verschlüsselte Sicherung der Einstellungen speichern</string>
     <string name="maintenance_import_desc">Einstellungen aus Sicherung wiederherstellen</string>
     <string name="maintenance_export_csv_desc">Behandlungsverlauf als Tabelle exportieren</string>
+    <string name="export_database">Datenbank exportieren</string>
+    <string name="maintenance_export_database_desc">Kopie der gesamten Datenbank als ZIP-Datei im Ordner exports speichern. Das kann einige Minuten dauern.</string>
     <string name="maintenance_cleanup_db_desc">Alte Datenbankeinträge löschen</string>
     <string name="maintenance_reset_aps_results_desc">Gespeicherte Algorithmus-Ergebnisse löschen</string>
     <string name="maintenance_reset_db_desc">Alle Datenbanken löschen und neu laden</string>

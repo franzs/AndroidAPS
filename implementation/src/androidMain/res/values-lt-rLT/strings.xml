@@ -55,6 +55,10 @@
     <string name="exported_failed">Nustatymų eksportavimas nepavyko!</string>
     <string name="filenotfound">Failas nerastas</string>
     <string name="ue_exported">Naudotojo įrašai eksportuoti</string>
+    <string name="database_export_started">Eksportuojama duomenų bazė. Tai gali užtrukti kelias minutes.</string>
+    <string name="database_exported">Duomenų bazė eksportuota į %1$s</string>
+    <string name="database_export_failed">Duomenų bazės eksportas nepavyko</string>
+    <string name="database_export_no_space">Telefone nepakanka laisvos vietos duomenų bazei eksportuoti</string>
     <string name="exported_ago" comment="at placeholder we add pluralized number of hours/minutes">eksportuota prieš %1$s</string>
     <string name="exported_at" comment="at placeholder we add export date">eksportuota %1$s</string>
     <string name="exported_less_than_hour_ago">eksportuota mažiau nei prieš valandą</string>

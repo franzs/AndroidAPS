@@ -920,6 +920,8 @@
     <string name="maintenance_export_desc">שמירת גיבוי מוצפן של ההגדרות</string>
     <string name="maintenance_import_desc">שחזור הגדרות מגיבוי</string>
     <string name="maintenance_export_csv_desc">ייצוא היסטוריית טיפולים כגיליון נתונים</string>
+    <string name="export_database">ייצוא מסד הנתונים</string>
+    <string name="maintenance_export_database_desc">שמירת עותק של מסד הנתונים כולו כקובץ zip בתיקייה exports. הפעולה עשויה להימשך מספר דקות.</string>
     <string name="maintenance_cleanup_db_desc">הסרת רשומות ישנות ממסד הנתונים</string>
     <string name="maintenance_reset_aps_results_desc">מחיקת תוצאות האלגוריתם השמורות</string>
     <string name="maintenance_reset_db_desc">מחיקת כל מסדי הנתונים וטעינה מחדש</string>

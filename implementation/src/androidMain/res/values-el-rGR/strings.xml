@@ -55,6 +55,10 @@
     <string name="exported_failed">Αποτυχία εξαγωγής προτιμήσεων!</string>
     <string name="filenotfound">Μη εύρεση φακέλου</string>
     <string name="ue_exported">Καταχωρήσεις χρηστών που εξάγονται</string>
+    <string name="database_export_started">Γίνεται εξαγωγή της βάσης δεδομένων. Αυτό μπορεί να διαρκέσει μερικά λεπτά.</string>
+    <string name="database_exported">Η βάση δεδομένων εξήχθη στο %1$s</string>
+    <string name="database_export_failed">Η εξαγωγή της βάσης δεδομένων απέτυχε</string>
+    <string name="database_export_no_space">Δεν υπάρχει αρκετός ελεύθερος χώρος στο τηλέφωνο για την εξαγωγή της βάσης δεδομένων</string>
     <string name="exported_ago" comment="at placeholder we add pluralized number of hours/minutes">εξήχθη πριν από %1$s</string>
     <string name="exported_at" comment="at placeholder we add export date">εξαγωγή στις %1$s</string>
     <string name="exported_less_than_hour_ago">η εξαγωγή έγινε από λιγότερο από μία ώρα πριν</string>

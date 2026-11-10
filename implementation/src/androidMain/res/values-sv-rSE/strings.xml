@@ -55,6 +55,10 @@
     <string name="exported_failed">Export av inställningar misslyckades!</string>
     <string name="filenotfound">Filen hittas ej</string>
     <string name="ue_exported">Användarposter exporterade</string>
+    <string name="database_export_started">Exporterar databasen. Det kan ta några minuter.</string>
+    <string name="database_exported">Databasen exporterad till %1$s</string>
+    <string name="database_export_failed">Export av databasen misslyckades</string>
+    <string name="database_export_no_space">Inte tillräckligt med ledigt utrymme på telefonen för att exportera databasen</string>
     <string name="exported_ago" comment="at placeholder we add pluralized number of hours/minutes">exporterades för %1$s sedan</string>
     <string name="exported_at" comment="at placeholder we add export date">exporterades vid %1$s</string>
     <string name="exported_less_than_hour_ago">exporterades för mindre än en timme sedan</string>

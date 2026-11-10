@@ -55,6 +55,10 @@
     <string name="exported_failed">יצוא ההעדפות נכשל!</string>
     <string name="filenotfound">הקובץ לא נמצא</string>
     <string name="ue_exported">רשומות המשתמש יוצאו</string>
+    <string name="database_export_started">מייצא את מסד הנתונים. הפעולה עשויה להימשך מספר דקות.</string>
+    <string name="database_exported">מסד הנתונים יוצא אל %1$s</string>
+    <string name="database_export_failed">ייצוא מסד הנתונים נכשל</string>
+    <string name="database_export_no_space">אין מספיק מקום פנוי בטלפון לייצוא מסד הנתונים</string>
     <string name="exported_ago" comment="at placeholder we add pluralized number of hours/minutes">יוצא לפני %1$s</string>
     <string name="exported_at" comment="at placeholder we add export date">יוצא ב-%1$s</string>
     <string name="exported_less_than_hour_ago">יוצא לפני פחות משעה</string>

@@ -15,4 +15,8 @@
     <string name="metadata_label_encryption">Fájltitkosítás</string>
     <string name="metadata_format_new">Új titkosított formátom</string>
     <string name="metadata_format_other">Ismeretlen export formátum</string>
+    <string name="database_export_started">Adatbázis exportálása folyamatban. Ez néhány percig is eltarthat.</string>
+    <string name="database_exported">Az adatbázis exportálva ide: %1$s</string>
+    <string name="database_export_failed">Az adatbázis exportálása sikertelen</string>
+    <string name="database_export_no_space">Nincs elég szabad hely a telefonon az adatbázis exportálásához</string>
 </resources>

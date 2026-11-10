@@ -12,6 +12,10 @@
     <string name="exported">Einstellungen exportiert</string>
     <string name="filenotfound">Datei nicht gefunden</string>
     <string name="ue_exported">Benutzereinträge exportiert</string>
+    <string name="database_export_started">Datenbank wird exportiert. Das kann einige Minuten dauern.</string>
+    <string name="database_exported">Datenbank exportiert nach %1$s</string>
+    <string name="database_export_failed">Datenbank-Export fehlgeschlagen</string>
+    <string name="database_export_no_space">Nicht genug freier Speicher auf dem Telefon für den Datenbank-Export</string>
     <string name="exported_at" comment="at placeholder we add export date">am %1$s exportiert</string>
     <string name="exported_less_than_hour_ago">vor weniger als einer Stunde exportiert</string>
     <string name="metadata_warning_different_flavour">Einstellungen wurden mit einer anderen Variante von AAPS erstellt (%1$s). Du nutzt: %2$s.\n\nEinige Einstellungen können fehlen oder ungültig sein - überprüfe und aktualisiere Deine Einstellungen nach dem Import .</string>

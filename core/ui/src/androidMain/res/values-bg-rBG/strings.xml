@@ -920,6 +920,8 @@
     <string name="maintenance_export_desc">Съхранявай криптирани настройки</string>
     <string name="maintenance_import_desc">Възстановяване на настройки от бекъп</string>
     <string name="maintenance_export_csv_desc">Експортирай лечения като таблица</string>
+    <string name="export_database">Експорт на базата данни</string>
+    <string name="maintenance_export_database_desc">Запазва копие на цялата база данни като zip файл в папка exports. Това може да отнеме няколко минути.</string>
     <string name="maintenance_cleanup_db_desc">Премахни стари записи от базата</string>
     <string name="maintenance_reset_aps_results_desc">Изчисти записаните резултати на алгоритъма</string>
     <string name="maintenance_reset_db_desc">Изтрий цялата база и презареди</string>

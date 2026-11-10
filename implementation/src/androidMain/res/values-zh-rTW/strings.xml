@@ -55,6 +55,10 @@
     <string name="exported_failed">偏好設定匯出失敗！</string>
     <string name="filenotfound">找不到檔案</string>
     <string name="ue_exported">使用者輸入已匯出</string>
+    <string name="database_export_started">正在匯出資料庫。這可能需要幾分鐘。</string>
+    <string name="database_exported">資料庫已匯出到 %1$s</string>
+    <string name="database_export_failed">資料庫匯出失敗</string>
+    <string name="database_export_no_space">手機可用空間不足，無法匯出資料庫</string>
     <string name="exported_ago" comment="at placeholder we add pluralized number of hours/minutes">於 %1$s 前匯出</string>
     <string name="exported_at" comment="at placeholder we add export date">於 %1$s 匯出</string>
     <string name="exported_less_than_hour_ago">於不到一小時前匯出</string>

@@ -920,6 +920,8 @@
     <string name="maintenance_export_desc">Enregistrer les paramètres dans un fichier chiffré</string>
     <string name="maintenance_import_desc">Restaurer les paramètres depuis la sauvegarde</string>
     <string name="maintenance_export_csv_desc">Exporter l\'historique des traitements en feuille de calcul</string>
+    <string name="export_database">Exporter la base de données</string>
+    <string name="maintenance_export_database_desc">Enregistrer une copie de toute la base de données en fichier zip dans le dossier exports. Cela peut prendre quelques minutes.</string>
     <string name="maintenance_cleanup_db_desc">Supprimer les anciennes entrées de la base de données</string>
     <string name="maintenance_reset_aps_results_desc">Effacer les résultats des algorithmes</string>
     <string name="maintenance_reset_db_desc">Effacer toutes les bases de données et les recharger</string>

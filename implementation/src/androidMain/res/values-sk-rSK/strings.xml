@@ -55,6 +55,10 @@
     <string name="exported_failed">Export nastavení zlyhal!</string>
     <string name="filenotfound">Súbor nenájdený</string>
     <string name="ue_exported">Používateľské záznamy exportované</string>
+    <string name="database_export_started">Prebieha export databázy. Môže to trvať niekoľko minút.</string>
+    <string name="database_exported">Databáza bola exportovaná do %1$s</string>
+    <string name="database_export_failed">Export databázy zlyhal</string>
+    <string name="database_export_no_space">V telefóne nie je dosť voľného miesta na export databázy</string>
     <string name="exported_ago" comment="at placeholder we add pluralized number of hours/minutes">exportované pred %1$s</string>
     <string name="exported_at" comment="at placeholder we add export date">exportované v %1$s</string>
     <string name="exported_less_than_hour_ago">exportované pred menej ako hodinou</string>

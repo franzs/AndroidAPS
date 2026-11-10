@@ -55,6 +55,10 @@
     <string name="exported_failed">Eksport av innstillinger mislyktes!</string>
     <string name="filenotfound">Filen ble ikke funnet</string>
     <string name="ue_exported">Brukeroppføringer eksportert</string>
+    <string name="database_export_started">Eksporterer databasen. Dette kan ta noen minutter.</string>
+    <string name="database_exported">Databasen er eksportert til %1$s</string>
+    <string name="database_export_failed">Eksport av databasen mislyktes</string>
+    <string name="database_export_no_space">Ikke nok ledig plass på telefonen til å eksportere databasen</string>
     <string name="exported_ago" comment="at placeholder we add pluralized number of hours/minutes">eksportert for %1$s siden</string>
     <string name="exported_at" comment="at placeholder we add export date">eksportert den %1$s</string>
     <string name="exported_less_than_hour_ago">eksportert for mindre enn en time siden</string>

@@ -55,6 +55,10 @@
     <string name="exported_failed">Falha ao exportar preferências!</string>
     <string name="filenotfound">Arquivo não encontrado</string>
     <string name="ue_exported">Entradas do usuário exportadas</string>
+    <string name="database_export_started">Exportando o banco de dados. Isso pode levar alguns minutos.</string>
+    <string name="database_exported">Banco de dados exportado para %1$s</string>
+    <string name="database_export_failed">Falha ao exportar o banco de dados</string>
+    <string name="database_export_no_space">Espaço livre insuficiente no telefone para exportar o banco de dados</string>
     <string name="exported_ago" comment="at placeholder we add pluralized number of hours/minutes">exportado há %1$s</string>
     <string name="exported_at" comment="at placeholder we add export date">exportado em %1$s</string>
     <string name="exported_less_than_hour_ago">exportado há menos de uma hora</string>

@@ -920,6 +920,8 @@
     <string name="maintenance_export_desc">Guardar copia de seguridad de ajustes cifrada</string>
     <string name="maintenance_import_desc">Restaurar ajustes desde copia de seguridad</string>
     <string name="maintenance_export_csv_desc">Exportar historial de tratamientos como hoja de cálculo</string>
+    <string name="export_database">Exportar base de datos</string>
+    <string name="maintenance_export_database_desc">Guardar una copia de toda la base de datos como archivo zip en la carpeta exports. Esto puede tardar unos minutos.</string>
     <string name="maintenance_cleanup_db_desc">Eliminar entradas antiguas de la base de datos</string>
     <string name="maintenance_reset_aps_results_desc">Borrar resultados de algoritmos almacenados</string>
     <string name="maintenance_reset_db_desc">Borrar todas las bases de datos y recargar</string>

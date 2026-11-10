@@ -920,6 +920,8 @@
     <string name="maintenance_export_desc">암호화된 설정 백업 저장</string>
     <string name="maintenance_import_desc">백업에서 설정 복원</string>
     <string name="maintenance_export_csv_desc">처치 이력을 스프레드시트로 내보내기</string>
+    <string name="export_database">데이터베이스 내보내기</string>
+    <string name="maintenance_export_database_desc">전체 데이터베이스의 사본을 exports 폴더에 zip 파일로 저장합니다. 몇 분 정도 걸릴 수 있습니다.</string>
     <string name="maintenance_cleanup_db_desc">데이터베이스에서 오래된 항목 삭제</string>
     <string name="maintenance_reset_aps_results_desc">저장된 알고리즘 결과 지우기</string>
     <string name="maintenance_reset_db_desc">모든 데이터베이스를 지우고 다시 불러오기</string>

@@ -28,4 +28,8 @@
     <string name="prefdecrypt_issue_wrong_pass">Pogreška dešifriranja, navedena lozinka je nevažeća ili je datoteka postavki izmijenjena! Može se dogoditi da je uvezena datoteka izvezena s drugom glavnom lozinkom.</string>
     <string name="prefdecrypt_issue_wrong_format">Nedostaje konfiguracija enkripcije, format postavki nije valjan!</string>
     <string name="prefdecrypt_issue_wrong_algorithm">Algoritam šifriranja nije podržan ili nije naveden!</string>
+    <string name="database_export_started">Izvoz baze podataka u tijeku. To može potrajati nekoliko minuta.</string>
+    <string name="database_exported">Baza podataka izvezena u %1$s</string>
+    <string name="database_export_failed">Izvoz baze podataka nije uspio</string>
+    <string name="database_export_no_space">Nema dovoljno slobodnog prostora na telefonu za izvoz baze podataka</string>
 </resources>

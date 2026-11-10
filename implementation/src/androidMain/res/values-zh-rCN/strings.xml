@@ -55,6 +55,10 @@
     <string name="exported_failed">首选项导出失败！</string>
     <string name="filenotfound">找不到文件</string>
     <string name="ue_exported">用户条目已导出</string>
+    <string name="database_export_started">正在导出数据库。这可能需要几分钟。</string>
+    <string name="database_exported">数据库已导出到 %1$s</string>
+    <string name="database_export_failed">数据库导出失败</string>
+    <string name="database_export_no_space">手机可用空间不足，无法导出数据库</string>
     <string name="exported_ago" comment="at placeholder we add pluralized number of hours/minutes">%1$s 前导出</string>
     <string name="exported_at" comment="at placeholder we add export date">导出 %1$s</string>
     <string name="exported_less_than_hour_ago">不到一小时前导出</string>

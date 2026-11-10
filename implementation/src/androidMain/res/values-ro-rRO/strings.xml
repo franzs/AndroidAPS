@@ -55,6 +55,10 @@
     <string name="exported_failed">Exportarea preferințelor a eșuat!</string>
     <string name="filenotfound">Fișierul nu a fost găsit</string>
     <string name="ue_exported">Intrările utilizatorului exportate</string>
+    <string name="database_export_started">Se exportă baza de date. Acest lucru poate dura câteva minute.</string>
+    <string name="database_exported">Baza de date a fost exportată în %1$s</string>
+    <string name="database_export_failed">Exportul bazei de date a eșuat</string>
+    <string name="database_export_no_space">Spațiu liber insuficient pe telefon pentru exportul bazei de date</string>
     <string name="exported_ago" comment="at placeholder we add pluralized number of hours/minutes">exportate %1$s în urmă</string>
     <string name="exported_at" comment="at placeholder we add export date">exportate la %1$s</string>
     <string name="exported_less_than_hour_ago">exportate acum mai puțin de o oră</string>

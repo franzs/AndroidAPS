@@ -539,4 +539,6 @@
     <!-- Graph series short names (used as graph labels, keep very short) -->
     <!-- Graph series full names (used in the graph settings, where there is room) -->
     <string name="prefs_range_title">Område for Visualisering</string>
+    <string name="export_database">Eksporter database</string>
+    <string name="maintenance_export_database_desc">Gem en kopi af hele databasen som en zip-fil i mappen exports. Det kan tage nogle minutter.</string>
 </resources>

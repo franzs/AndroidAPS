@@ -920,6 +920,8 @@
     <string name="maintenance_export_desc">Зберегти зашифровану резервну копію налаштувань</string>
     <string name="maintenance_import_desc">Відновити налаштування з резервної копії</string>
     <string name="maintenance_export_csv_desc">Експортувати історію терапії як таблицю</string>
+    <string name="export_database">Експорт бази даних</string>
+    <string name="maintenance_export_database_desc">Зберегти копію всієї бази даних як zip-файл у папці exports. Це може зайняти кілька хвилин.</string>
     <string name="maintenance_cleanup_db_desc">Видалити старі записи з бази даних</string>
     <string name="maintenance_reset_aps_results_desc">Очистити збережені результати алгоритму</string>
     <string name="maintenance_reset_db_desc">Стерти всі бази даних і завантажити заново</string>

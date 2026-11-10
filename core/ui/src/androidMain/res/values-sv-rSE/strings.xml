@@ -920,6 +920,8 @@
     <string name="maintenance_export_desc">Spara säkerhetskopia av krypterade inställningar</string>
     <string name="maintenance_import_desc">Återställ inställningar från säkerhetskopia</string>
     <string name="maintenance_export_csv_desc">Exportera behandlingshistorik som kalkylblad</string>
+    <string name="export_database">Exportera databas</string>
+    <string name="maintenance_export_database_desc">Spara en kopia av hela databasen som en zip-fil i mappen exports. Det kan ta några minuter.</string>
     <string name="maintenance_cleanup_db_desc">Ta bort gamla poster från databasen</string>
     <string name="maintenance_reset_aps_results_desc">Rensa lagrade algoritmresultat</string>
     <string name="maintenance_reset_db_desc">Ta bort alla databaser och ladda om dem</string>

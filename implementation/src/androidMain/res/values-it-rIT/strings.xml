@@ -55,6 +55,10 @@
     <string name="exported_failed">Esportazione delle preferenze fallita!</string>
     <string name="filenotfound">File non trovato</string>
     <string name="ue_exported">Voci utente esportate</string>
+    <string name="database_export_started">Esportazione del database in corso. L\'operazione può richiedere alcuni minuti.</string>
+    <string name="database_exported">Database esportato in %1$s</string>
+    <string name="database_export_failed">Esportazione del database non riuscita</string>
+    <string name="database_export_no_space">Spazio libero sul telefono insufficiente per esportare il database</string>
     <string name="exported_ago" comment="at placeholder we add pluralized number of hours/minutes">esportato %1$s fa</string>
     <string name="exported_at" comment="at placeholder we add export date">esportato a %1$s</string>
     <string name="exported_less_than_hour_ago">esportato meno di un\'ora fa</string>

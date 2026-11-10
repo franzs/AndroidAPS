@@ -9,4 +9,8 @@
     <string name="exported">Postavke su izvezene</string>
     <string name="filenotfound">Datoteka nije pronađena</string>
     <string name="ue_exported">Korisnički unosi su izvezeni</string>
+    <string name="database_export_started">Izvoz baze podataka je u toku. Ovo može potrajati nekoliko minuta.</string>
+    <string name="database_exported">Baza podataka je izvezena u %1$s</string>
+    <string name="database_export_failed">Izvoz baze podataka nije uspeo</string>
+    <string name="database_export_no_space">Nema dovoljno slobodnog prostora na telefonu za izvoz baze podataka</string>
 </resources>

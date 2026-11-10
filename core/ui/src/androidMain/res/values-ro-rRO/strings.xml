@@ -920,6 +920,8 @@
     <string name="maintenance_export_desc">Salvați copia de rezervă criptată</string>
     <string name="maintenance_import_desc">Restaurați setările din copia de rezervă</string>
     <string name="maintenance_export_csv_desc">Exportați istoricul tratamentului ca foaie de calcul</string>
+    <string name="export_database">Exportați baza de date</string>
+    <string name="maintenance_export_database_desc">Salvați o copie a întregii baze de date ca fișier zip în dosarul exports. Acest lucru poate dura câteva minute.</string>
     <string name="maintenance_cleanup_db_desc">Eliminați intrările vechi din baza de date</string>
     <string name="maintenance_reset_aps_results_desc">Ștergeți rezultatele stocate ale algoritmului</string>
     <string name="maintenance_reset_db_desc">Ștergeți toate bazele de date și reîncărcați</string>

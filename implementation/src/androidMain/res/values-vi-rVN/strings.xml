@@ -55,6 +55,10 @@
     <string name="exported_failed">Xuất cài đặt tùy chọn thất bại!</string>
     <string name="filenotfound">Không tìm thấy tệp</string>
     <string name="ue_exported">Dữ liệu người dùng đã được xuất</string>
+    <string name="database_export_started">Đang xuất cơ sở dữ liệu. Việc này có thể mất vài phút.</string>
+    <string name="database_exported">Đã xuất cơ sở dữ liệu vào %1$s</string>
+    <string name="database_export_failed">Xuất cơ sở dữ liệu thất bại</string>
+    <string name="database_export_no_space">Không đủ dung lượng trống trên điện thoại để xuất cơ sở dữ liệu</string>
     <string name="exported_ago" comment="at placeholder we add pluralized number of hours/minutes">đã xuất dữ liệu cách đây %1$s</string>
     <string name="exported_at" comment="at placeholder we add export date">đã xuất dữ liệu vào lúc %1$s</string>
     <string name="exported_less_than_hour_ago">đã xuất dưới 1 giờ trước</string>

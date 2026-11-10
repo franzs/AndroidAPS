@@ -922,6 +922,8 @@
     <string name="maintenance_export_desc">儲存加密的設定備份</string>
     <string name="maintenance_import_desc">從備份還原設定</string>
     <string name="maintenance_export_csv_desc">將治療紀錄匯出為試算表</string>
+    <string name="export_database">匯出資料庫</string>
+    <string name="maintenance_export_database_desc">將整個資料庫的副本以 zip 檔案儲存到 exports 資料夾。這可能需要幾分鐘。</string>
     <string name="maintenance_cleanup_db_desc">從資料庫移除舊的項目</string>
     <string name="maintenance_reset_aps_results_desc">清除已儲存的演算法結果</string>
     <string name="maintenance_reset_db_desc">清除所有資料庫並重新載入</string>

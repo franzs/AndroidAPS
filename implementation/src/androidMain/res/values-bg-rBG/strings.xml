@@ -55,6 +55,10 @@
     <string name="exported_failed">Експортът на настройките СЕ ИЗДЪНИ!</string>
     <string name="filenotfound">Файлът не е намерен</string>
     <string name="ue_exported">Потребителските данни експортирани</string>
+    <string name="database_export_started">Базата данни се експортира. Това може да отнеме няколко минути.</string>
+    <string name="database_exported">Базата данни е експортирана в %1$s</string>
+    <string name="database_export_failed">Експортът на базата данни е неуспешен</string>
+    <string name="database_export_no_space">Няма достатъчно свободно място на телефона за експорт на базата данни</string>
     <string name="exported_ago" comment="at placeholder we add pluralized number of hours/minutes">от преди %1$s</string>
     <string name="exported_at" comment="at placeholder we add export date">от %1$s</string>
     <string name="exported_less_than_hour_ago">от преди по-малко от час</string>

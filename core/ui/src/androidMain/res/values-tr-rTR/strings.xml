@@ -920,6 +920,8 @@
     <string name="maintenance_export_desc">Şifreli ayar yedeğini kaydedin</string>
     <string name="maintenance_import_desc">Ayarları yedekten geri yükleyin</string>
     <string name="maintenance_export_csv_desc">Tedavi geçmişini elektronik tablo olarak dışa aktarın</string>
+    <string name="export_database">Veritabanını dışa aktar</string>
+    <string name="maintenance_export_database_desc">Tüm veritabanının bir kopyasını exports klasörüne zip dosyası olarak kaydedin. Bu işlem birkaç dakika sürebilir.</string>
     <string name="maintenance_cleanup_db_desc">Veritabanındaki eski kayıtları kaldırın</string>
     <string name="maintenance_reset_aps_results_desc">Depolanan algoritma sonuçlarını temizleyin</string>
     <string name="maintenance_reset_db_desc">Tüm veritabanlarını silin ve yeniden yükleyin</string>

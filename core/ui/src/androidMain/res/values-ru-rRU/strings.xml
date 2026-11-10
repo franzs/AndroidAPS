@@ -632,4 +632,6 @@
     <!-- Graph series short names (used as graph labels, keep very short) -->
     <!-- Graph series full names (used in the graph settings, where there is room) -->
     <string name="prefs_range_title">Диапазон для визуализации</string>
+    <string name="export_database">Экспорт базы данных</string>
+    <string name="maintenance_export_database_desc">Сохранить копию всей базы данных в виде zip-файла в папке exports. Это может занять несколько минут.</string>
 </resources>

@@ -119,4 +119,6 @@
     <!-- Graph configuration -->
     <!-- Graph series short names (used as graph labels, keep very short) -->
     <!-- Graph series full names (used in the graph settings, where there is room) -->
+    <string name="export_database">Izvezi bazu podataka</string>
+    <string name="maintenance_export_database_desc">Sačuvaj kopiju cele baze podataka kao zip datoteku u fascikli exports. Ovo može potrajati nekoliko minuta.</string>
 </resources>

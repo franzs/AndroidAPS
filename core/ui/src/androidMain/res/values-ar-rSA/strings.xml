@@ -69,4 +69,6 @@
     <!-- Graph configuration -->
     <!-- Graph series short names (used as graph labels, keep very short) -->
     <!-- Graph series full names (used in the graph settings, where there is room) -->
+    <string name="export_database">تصدير قاعدة البيانات</string>
+    <string name="maintenance_export_database_desc">حفظ نسخة من قاعدة البيانات كاملة كملف zip في مجلد exports. قد يستغرق ذلك بضع دقائق.</string>
 </resources>

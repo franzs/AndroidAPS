@@ -920,6 +920,8 @@
     <string name="maintenance_export_desc">Salva backup delle impostazioni crittografate</string>
     <string name="maintenance_import_desc">Ripristina le impostazioni dal salvataggio</string>
     <string name="maintenance_export_csv_desc">Esporta la cronologia del trattamento come foglio di calcolo</string>
+    <string name="export_database">Esporta database</string>
+    <string name="maintenance_export_database_desc">Salva una copia dell\'intero database come file zip nella cartella exports. L\'operazione può richiedere alcuni minuti.</string>
     <string name="maintenance_cleanup_db_desc">Rimuovi le vecchie voci dal database</string>
     <string name="maintenance_reset_aps_results_desc">Cancella i risultati dell\'algoritmo memorizzati</string>
     <string name="maintenance_reset_db_desc">Cancella tutti i database e ricarica</string>

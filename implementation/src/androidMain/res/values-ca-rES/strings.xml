@@ -11,6 +11,10 @@
     <string name="exported">Configuració exportada</string>
     <string name="filenotfound">Arxiu no trobat</string>
     <string name="ue_exported">Entrades d\'usuari exportades</string>
+    <string name="database_export_started">S\'està exportant la base de dades. Això pot trigar uns minuts.</string>
+    <string name="database_exported">Base de dades exportada a %1$s</string>
+    <string name="database_export_failed">Ha fallat l\'exportació de la base de dades</string>
+    <string name="database_export_no_space">No hi ha prou espai lliure al telèfon per exportar la base de dades</string>
     <string name="exported_at" comment="at placeholder we add export date">exportat a les %1$s</string>
     <string name="exported_less_than_hour_ago">exportat fa menys d\'una hora</string>
     <string name="metadata_warning_different_flavour">La configuració va ser creada amb una altra versió d\'AAPS (%1$s) i ara teniu la: %2$s.\n\nAlguns dels valors poden faltar o no ser vàlids - si us plau, comproveu la configuració després d\'importar.</string>

@@ -920,6 +920,8 @@
     <string name="maintenance_export_desc">Αποθήκευση κρυπτογραφημένου αντιγράφου ασφαλείας ρυθμίσεων</string>
     <string name="maintenance_import_desc">Επαναφορά ρυθμίσεων από αντίγραφο ασφαλείας</string>
     <string name="maintenance_export_csv_desc">Εξαγωγή ιστορικού θεραπειών ως υπολογιστικό φύλλο</string>
+    <string name="export_database">Εξαγωγή βάσης δεδομένων</string>
+    <string name="maintenance_export_database_desc">Αποθήκευση αντιγράφου ολόκληρης της βάσης δεδομένων ως αρχείο zip στον φάκελο exports. Αυτό μπορεί να διαρκέσει μερικά λεπτά.</string>
     <string name="maintenance_cleanup_db_desc">Αφαίρεση παλιών εγγραφών από τη βάση δεδομένων</string>
     <string name="maintenance_reset_aps_results_desc">Διαγραφή αποθηκευμένων αποτελεσμάτων αλγορίθμου</string>
     <string name="maintenance_reset_db_desc">Διαγραφή όλων των βάσεων δεδομένων και επαναφόρτωση</string>

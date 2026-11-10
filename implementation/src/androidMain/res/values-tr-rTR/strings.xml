@@ -55,6 +55,10 @@
     <string name="exported_failed">Tercihler dışa aktarılamadı!</string>
     <string name="filenotfound">Dosya bulunamadı</string>
     <string name="ue_exported">Kullanıcı Girişleri dışa aktarıldı</string>
+    <string name="database_export_started">Veritabanı dışa aktarılıyor. Bu işlem birkaç dakika sürebilir.</string>
+    <string name="database_exported">Veritabanı %1$s konumuna aktarıldı</string>
+    <string name="database_export_failed">Veritabanı dışa aktarılamadı</string>
+    <string name="database_export_no_space">Veritabanını dışa aktarmak için telefonda yeterli boş alan yok</string>
     <string name="exported_ago" comment="at placeholder we add pluralized number of hours/minutes">%1$s önce dışa aktarıldı</string>
     <string name="exported_at" comment="at placeholder we add export date">%1$s\'de dışa aktarıldı</string>
     <string name="exported_less_than_hour_ago">bir saatten kısa süre önce dışa aktarıldı</string>

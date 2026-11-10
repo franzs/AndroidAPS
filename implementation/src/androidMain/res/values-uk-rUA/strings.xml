@@ -55,6 +55,10 @@
     <string name="exported_failed">Помилка експорту налаштувань!</string>
     <string name="filenotfound">Файл не знайдено</string>
     <string name="ue_exported">Записи користувача експортовано</string>
+    <string name="database_export_started">Експорт бази даних. Це може зайняти кілька хвилин.</string>
+    <string name="database_exported">Базу даних експортовано до %1$s</string>
+    <string name="database_export_failed">Не вдалося експортувати базу даних</string>
+    <string name="database_export_no_space">Недостатньо вільного місця на телефоні для експорту бази даних</string>
     <string name="exported_ago" comment="at placeholder we add pluralized number of hours/minutes">експортовано %1$s тому</string>
     <string name="exported_at" comment="at placeholder we add export date">експортовано %1$s</string>
     <string name="exported_less_than_hour_ago">експортовано менш ніж годину тому</string>

@@ -920,6 +920,8 @@
     <string name="maintenance_export_desc">Salvar backup criptografado das configurações</string>
     <string name="maintenance_import_desc">Restaurar configurações do backup</string>
     <string name="maintenance_export_csv_desc">Exportar histórico de tratamentos como planilha</string>
+    <string name="export_database">Exportar banco de dados</string>
+    <string name="maintenance_export_database_desc">Salvar uma cópia de todo o banco de dados como arquivo zip na pasta exports. Isso pode levar alguns minutos.</string>
     <string name="maintenance_cleanup_db_desc">Remover entradas antigas do banco de dados</string>
     <string name="maintenance_reset_aps_results_desc">Limpar resultados armazenados do algoritmo</string>
     <string name="maintenance_reset_db_desc">Apagar todos os bancos de dados e recarregar</string>

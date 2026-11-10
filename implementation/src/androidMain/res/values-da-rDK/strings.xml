@@ -12,6 +12,10 @@
     <string name="exported">Præferencer eksporteret</string>
     <string name="filenotfound">Filen blev ikke fundet</string>
     <string name="ue_exported">Brugerindtastninger exporteret</string>
+    <string name="database_export_started">Eksporterer databasen. Det kan tage nogle minutter.</string>
+    <string name="database_exported">Databasen er eksporteret til %1$s</string>
+    <string name="database_export_failed">Eksport af databasen mislykkedes</string>
+    <string name="database_export_no_space">Der er ikke nok ledig plads på telefonen til at eksportere databasen</string>
     <string name="exported_at" comment="at placeholder we add export date">eksporteret ved %1$s</string>
     <string name="exported_less_than_hour_ago">eksporteret for mindre end time siden</string>
     <string name="metadata_warning_different_flavour">Præferencer er oprettet med forskellig variant af AAPS (%1$s) Mens du har: %2$s.\n\nNogle indstillinger mangler eller er ugyldige-efter import, tjek og opdatér dine præferencer.</string>

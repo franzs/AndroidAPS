@@ -918,6 +918,8 @@
     <string name="maintenance_export_desc">保存加密设置备份</string>
     <string name="maintenance_import_desc">从备份恢复设置</string>
     <string name="maintenance_export_csv_desc">导出处理历史为电子表格</string>
+    <string name="export_database">导出数据库</string>
+    <string name="maintenance_export_database_desc">将整个数据库的副本以 zip 文件保存到 exports 文件夹。这可能需要几分钟。</string>
     <string name="maintenance_cleanup_db_desc">从数据库中删除旧条目</string>
     <string name="maintenance_reset_aps_results_desc">清除已存储的算法结果</string>
     <string name="maintenance_reset_db_desc">删除所有数据库并重新加载</string>

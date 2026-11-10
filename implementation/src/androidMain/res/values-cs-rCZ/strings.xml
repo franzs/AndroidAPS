@@ -55,6 +55,10 @@
     <string name="exported_failed">Export předvoleb selhal!</string>
     <string name="filenotfound">Soubor nenalezen</string>
     <string name="ue_exported">Uživatelské záznamy exportovány</string>
+    <string name="database_export_started">Probíhá export databáze. Může to trvat několik minut.</string>
+    <string name="database_exported">Databáze byla exportována do %1$s</string>
+    <string name="database_export_failed">Export databáze selhal</string>
+    <string name="database_export_no_space">V telefonu není dost volného místa pro export databáze</string>
     <string name="exported_ago" comment="at placeholder we add pluralized number of hours/minutes">exportováno před %1$s</string>
     <string name="exported_at" comment="at placeholder we add export date">exportováno v %1$s</string>
     <string name="exported_less_than_hour_ago">exportováno před méně než hodinou</string>

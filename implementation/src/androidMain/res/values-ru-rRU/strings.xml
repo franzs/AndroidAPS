@@ -20,6 +20,10 @@
     <string name="exported_failed">Не удалось экспортировать настройки!</string>
     <string name="filenotfound">Файл не найден</string>
     <string name="ue_exported">Записи пользователя экспортированы</string>
+    <string name="database_export_started">Экспорт базы данных. Это может занять несколько минут.</string>
+    <string name="database_exported">База данных экспортирована в %1$s</string>
+    <string name="database_export_failed">Не удалось экспортировать базу данных</string>
+    <string name="database_export_no_space">Недостаточно свободного места на телефоне для экспорта базы данных</string>
     <string name="exported_ago" comment="at placeholder we add pluralized number of hours/minutes">экспортировано %1$s назад</string>
     <string name="exported_at" comment="at placeholder we add export date">экспортировано в %1$s</string>
     <string name="exported_less_than_hour_ago">экспортировано менее часа назад</string>

@@ -920,6 +920,8 @@
     <string name="maintenance_export_desc">Guardar uma cópia de segurança encriptada das definições</string>
     <string name="maintenance_import_desc">Restaurar as definições a partir de uma cópia de segurança</string>
     <string name="maintenance_export_csv_desc">Exportar o histórico de tratamentos como folha de cálculo</string>
+    <string name="export_database">Exportar base de dados</string>
+    <string name="maintenance_export_database_desc">Guardar uma cópia de toda a base de dados como ficheiro zip na pasta exports. Isto pode demorar alguns minutos.</string>
     <string name="maintenance_cleanup_db_desc">Remover registos antigos da base de dados</string>
     <string name="maintenance_reset_aps_results_desc">Limpar os resultados guardados do algoritmo</string>
     <string name="maintenance_reset_db_desc">Apagar todas as bases de dados e recarregar</string>

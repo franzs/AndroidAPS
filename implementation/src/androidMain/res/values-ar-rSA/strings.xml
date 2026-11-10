@@ -6,4 +6,8 @@
     <!--    Notification channels, shown in the Android settings-->
     <!--       ConcentrationHelper / DecimalFormatter-->
     <!-- Maintenance strings (moved from plugins/configuration) -->
+    <string name="database_export_started">جارٍ تصدير قاعدة البيانات. قد يستغرق ذلك بضع دقائق.</string>
+    <string name="database_exported">تم تصدير قاعدة البيانات إلى %1$s</string>
+    <string name="database_export_failed">فشل تصدير قاعدة البيانات</string>
+    <string name="database_export_no_space">لا توجد مساحة كافية على الهاتف لتصدير قاعدة البيانات</string>
 </resources>
