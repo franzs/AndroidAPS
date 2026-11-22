@@ -280,6 +280,33 @@ class MaintenanceViewModel(
     /** Starts the database export in the background. The worker shows the result as a snackbar. */
     fun exportDatabase() = importExportPrefs.exportDatabase()
 
+    /** True when this platform can import a database export. The menu entry is hidden otherwise. */
+    val canImportDatabase: Boolean get() = importExportPrefs.canImportDatabase
+
+    /** The database export that waits for the user to confirm the import, or null. */
+    private val _databaseImportCandidate = MutableStateFlow<String?>(null)
+    val databaseImportCandidate: StateFlow<String?> = _databaseImportCandidate.asStateFlow()
+
+    /** Looks for the newest database export. When there is one, the confirm dialog shows it. */
+    fun findDatabaseImport() {
+        maintenanceAction("looking for a database export") {
+            val newest = importExportPrefs.newestDatabaseExport()
+            if (newest == null) _events.emit(MaintenanceEvent.Error(rh.gs(CoreUiStrings.database_import_none_found)))
+            else _databaseImportCandidate.value = newest
+        }
+    }
+
+    /** Starts the import of the confirmed export. The app restarts when it is done, or shows why it failed. */
+    fun importDatabase() {
+        val fileName = _databaseImportCandidate.value ?: return
+        _databaseImportCandidate.value = null
+        importExportPrefs.importDatabase(fileName)
+    }
+
+    fun cancelDatabaseImport() {
+        _databaseImportCandidate.value = null
+    }
+
     fun exportCsv() {
         uel.log(Action.EXPORT_CSV, Sources.Maintenance)
         maintenanceAction("exporting csv") {

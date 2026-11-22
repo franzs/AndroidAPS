@@ -194,7 +194,7 @@ class FileListProviderImpl(
     override fun newExportDatabaseFile(): DocumentFile? {
         val timeLocal = LocalDateTime.now().toString(DateTimeFormat.forPattern("yyyy-MM-dd'_'HHmmss"))
         val dir = ensureExportDirExists()
-        return dir?.createFile("application/zip", timeLocal + "_androidaps.db.zip")
+        return dir?.createFile("application/zip", timeLocal + DATABASE_EXPORT_SUFFIX)
     }
 
     override fun newCwfFile(filename: String, withDate: Boolean): DocumentFile? {

@@ -120,7 +120,8 @@ class ImportExportPrefsImpl(
     private val userEntryPresentationHelper: UserEntryPresentationHelper,
     private val storage: Storage,
     private val cryptoUtil: CryptoUtil,
-    private val applier: PreferenceImportApplier
+    private val applier: PreferenceImportApplier,
+    private val databaseImporter: DatabaseImporter
 ) : ImportExportPrefs {
 
     private var pendingExportFile: DocumentFile? = null
@@ -877,6 +878,14 @@ class ImportExportPrefsImpl(
         )
     }
 
+    override val canImportDatabase: Boolean get() = true
+
+    override suspend fun newestDatabaseExport(): String? = databaseImporter.databaseExports().firstOrNull()?.name
+
+    override fun importDatabase(fileName: String) {
+        appScope.launch { databaseImporter.import(fileName) }
+    }
+
     /**
      * Copies the whole database into the exports folder as a zip file.
      *
@@ -960,8 +969,6 @@ class ImportExportPrefsImpl(
 
             const val WORK_NAME = "database-export"
 
-            /** The name the app opens its database with (`DatabaseConfig.PRODUCTION`), kept here to avoid a module dependency. */
-            private const val DATABASE_FILE_NAME = "androidaps.db"
             private const val FREE_SPACE_MARGIN = 100L * 1024 * 1024
             private const val BUFFER_SIZE = 1024 * 1024
         }

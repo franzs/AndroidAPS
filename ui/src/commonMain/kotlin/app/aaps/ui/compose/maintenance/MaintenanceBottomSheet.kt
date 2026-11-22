@@ -62,6 +62,8 @@ fun MaintenanceBottomSheet(
     onResetDbClick: () -> Unit,
     canExportDatabase: Boolean = false,
     onExportDatabaseClick: () -> Unit = {},
+    canImportDatabase: Boolean = false,
+    onImportDatabaseClick: () -> Unit = {},
     exportConfig: ExportConfig? = null,
     onToggleSettingsLocal: (Boolean) -> Unit = {},
     onToggleSettingsCloud: (Boolean) -> Unit = {},
@@ -95,6 +97,8 @@ fun MaintenanceBottomSheet(
             onResetDbClick = onResetDbClick,
             canExportDatabase = canExportDatabase,
             onExportDatabaseClick = onExportDatabaseClick,
+            canImportDatabase = canImportDatabase,
+            onImportDatabaseClick = onImportDatabaseClick,
             exportConfig = exportConfig,
             onToggleSettingsLocal = onToggleSettingsLocal,
             onToggleSettingsCloud = onToggleSettingsCloud,
@@ -128,6 +132,8 @@ internal fun MaintenanceBottomSheetContent(
     onResetDbClick: () -> Unit = {},
     canExportDatabase: Boolean = false,
     onExportDatabaseClick: () -> Unit = {},
+    canImportDatabase: Boolean = false,
+    onImportDatabaseClick: () -> Unit = {},
     exportConfig: ExportConfig? = null,
     onToggleSettingsLocal: (Boolean) -> Unit = {},
     onToggleSettingsCloud: (Boolean) -> Unit = {},
@@ -317,6 +323,17 @@ internal fun MaintenanceBottomSheetContent(
                 color = primaryColor,
                 onDismiss = onDismiss,
                 onClick = onExportDatabaseClick
+            )
+        }
+        if (canImportDatabase) {
+            MaintenanceItem(
+                text = stringResource(CoreUiStrings.import_database),
+                description = stringResource(CoreUiStrings.maintenance_import_database_desc),
+                icon = Icons.Default.FileDownload,
+                color = primaryColor,
+                onDismiss = onDismiss,
+                onClick = onImportDatabaseClick,
+                danger = true
             )
         }
         MaintenanceItem(

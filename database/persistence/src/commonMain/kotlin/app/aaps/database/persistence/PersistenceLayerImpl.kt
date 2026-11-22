@@ -28,6 +28,7 @@ import app.aaps.core.data.ue.ValueWithUnit
 import app.aaps.core.interfaces.aps.APSResult
 import app.aaps.core.interfaces.concurrent.aapsIoDispatcher
 import app.aaps.core.interfaces.configuration.Config
+import app.aaps.core.interfaces.db.DatabaseImportCheck
 import app.aaps.core.interfaces.db.DatabaseMaintenanceInfo
 import app.aaps.core.interfaces.db.PersistenceLayer
 import app.aaps.core.interfaces.db.VacuumResult
@@ -36,6 +37,7 @@ import app.aaps.core.interfaces.logging.LTag
 import app.aaps.core.interfaces.utils.DateUtil
 import app.aaps.core.interfaces.utils.fabric.FabricPrivacy
 import app.aaps.database.AppRepository
+import app.aaps.database.ImportCheckOutcome
 import app.aaps.database.VacuumOutcome
 import app.aaps.database.entities.Bolus
 import app.aaps.database.entities.BolusCalculatorResult
@@ -183,6 +185,14 @@ class PersistenceLayerImpl(
 
     override suspend fun exportDatabaseCopy(databasePath: String, targetPath: String) = withContext(aapsIoDispatcher) {
         repository.exportDatabaseCopy(databasePath, targetPath)
+    }
+
+    override suspend fun checkDatabaseImport(candidatePath: String): DatabaseImportCheck = withContext(aapsIoDispatcher) {
+        when (repository.checkDatabaseImport(candidatePath)) {
+            ImportCheckOutcome.VALID         -> DatabaseImportCheck.VALID
+            ImportCheckOutcome.DAMAGED       -> DatabaseImportCheck.DAMAGED
+            ImportCheckOutcome.OTHER_VERSION -> DatabaseImportCheck.OTHER_VERSION
+        }
     }
 
     override suspend fun databaseMaintenanceInfo(retentionDays: Long): DatabaseMaintenanceInfo = withContext(aapsIoDispatcher) {

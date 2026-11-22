@@ -963,6 +963,10 @@
     <string name="maintenance_export_csv_desc">Export treatment history as spreadsheet</string>
     <string name="export_database">Export database</string>
     <string name="maintenance_export_database_desc">Save a copy of the whole database as a zip file in the exports folder. This can take some minutes.</string>
+    <string name="import_database">Import database</string>
+    <string name="maintenance_import_database_desc">Replace all data on this phone with the newest database export from the exports folder. AAPS restarts afterwards.</string>
+    <string name="database_import_none_found">No database export found in the exports folder</string>
+    <string name="database_import_confirm" comment="%1$s=file name. Example: 2026-11-09_222557_androidaps.db.zip">Replace all data on this phone with %1$s?\n\nEverything that happened after the export is missing, also insulin and carbs. AAPS restarts afterwards.</string>
     <string name="maintenance_cleanup_db_desc">Remove old entries from database</string>
     <string name="maintenance_reset_aps_results_desc">Clear stored algorithm results</string>
     <string name="maintenance_reset_db_desc">Erase all databases and reload</string>

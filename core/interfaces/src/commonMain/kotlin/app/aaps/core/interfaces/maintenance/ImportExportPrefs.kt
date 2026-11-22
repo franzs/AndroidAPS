@@ -64,6 +64,22 @@ interface ImportExportPrefs {
     fun exportDatabase(): Unit = error("Database export is not supported on this platform")
 
     /**
+     * True when this platform can import a database export. Only Android can for now.
+     * The maintenance menu hides the entry when this is false, so the feature is not shown as dead.
+     */
+    val canImportDatabase: Boolean get() = false
+
+    /** The file name of the newest database export in the exports folder, or null when there is none. */
+    suspend fun newestDatabaseExport(): String? = null
+
+    /**
+     * Replace the whole database with the database export [fileName] from the exports folder, in the
+     * background, and restart the app. A failure is shown as a snackbar, and then the app keeps its
+     * database. Call it only when [canImportDatabase] is true.
+     */
+    fun importDatabase(fileName: String): Unit = error("Database import is not supported on this platform")
+
+    /**
      * Write one APS run to a debug file (engineering mode only).
      *
      * [input] and [output] are whole JSON documents, already serialised. Nothing here reads them -

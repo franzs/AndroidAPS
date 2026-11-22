@@ -62,6 +62,19 @@ enum class VacuumResult {
     OUT_OF_MEMORY
 }
 
+/** What [PersistenceLayer.checkDatabaseImport] found in a database file that is to be imported. */
+enum class DatabaseImportCheck {
+
+    /** A complete database of the same version as this app. It can replace the database of the app. */
+    VALID,
+
+    /** Not a database, or a damaged one. */
+    DAMAGED,
+
+    /** A database of another AAPS version. Both phones have to run the same AAPS version. */
+    OTHER_VERSION
+}
+
 interface PersistenceLayer {
 
     /**
@@ -99,6 +112,16 @@ interface PersistenceLayer {
      * memory like [vacuumDatabase].
      */
     suspend fun exportDatabaseCopy(databasePath: String, targetPath: String)
+
+    /**
+     * Check whether the database file at [candidatePath] can replace the database of the app: it must be
+     * a whole database with the same schema as the open one. The file is only read.
+     *
+     * Only the same schema is accepted. Room would migrate an older file on the next start, but it drops
+     * all data of a file it has no migration for, and it does not start at all on a file of the same
+     * version with another schema.
+     */
+    suspend fun checkDatabaseImport(candidatePath: String): DatabaseImportCheck
 
     /**
      * Collect DB size, free space and per-table row counts (total, older-than-retention, tracked

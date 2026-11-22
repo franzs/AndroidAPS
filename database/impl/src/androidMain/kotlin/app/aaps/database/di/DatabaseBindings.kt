@@ -2,6 +2,7 @@ package app.aaps.database.di
 
 import android.content.Context
 import app.aaps.database.AppRepository
+import app.aaps.database.applyStagedDatabaseImport
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.BindingContainer
 import dev.zacsweers.metro.ContributesTo
@@ -25,7 +26,11 @@ object DatabaseBindings {
         val builder = AppDatabaseBuilder()
         return AppRepository {
             if (config.inMemory) builder.provideInMemoryAppDatabase(context)
-            else builder.provideAppDatabase(context, config.fileName)
+            else {
+                // A database import waits for this moment, when the file is not open yet.
+                applyStagedDatabaseImport(context.getDatabasePath(config.fileName))
+                builder.provideAppDatabase(context, config.fileName)
+            }
         }
     }
 }

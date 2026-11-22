@@ -1,8 +1,11 @@
 package app.aaps.database
 
 import androidx.room.Transactor.SQLiteTransactionType
+import androidx.room.useReaderConnection
 import androidx.room.useWriterConnection
+import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
+import androidx.sqlite.driver.bundled.SQLITE_OPEN_READONLY
 import androidx.sqlite.driver.bundled.SQLITE_OPEN_READWRITE
 import app.aaps.database.daos.ApsResultVariableSens
 import app.aaps.database.entities.APSResult
@@ -43,6 +46,12 @@ import kotlinx.coroutines.withContext
 import kotlin.math.roundToInt
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.days
+
+/** Room keeps the identity hash of the schema in this table, always in the row with id 42. */
+private const val IDENTITY_HASH_QUERY = "SELECT identity_hash FROM room_master_table WHERE id = 42"
+
+/** Module-local result of [AppRepository.checkDatabaseImport]; mapped to `DatabaseImportCheck`, which explains each value. */
+enum class ImportCheckOutcome { VALID, DAMAGED, OTHER_VERSION }
 
 /** Module-local result of [AppRepository.vacuumDatabase]; mapped to `VacuumResult`, which explains each value. */
 enum class VacuumOutcome { DONE, DONE_AFTER_TRIM, OUT_OF_MEMORY }
@@ -322,6 +331,36 @@ class AppRepository internal constructor(
             }
         }
     }
+
+    /**
+     * Checks whether the database file at [candidatePath] can replace the open database: it must not be
+     * damaged, and it must have the same version and the same schema (Room's identity hash) as the open
+     * one. The candidate is opened read-only on its own connection, so it is not changed.
+     *
+     * `PRAGMA quick_check` reads the whole file, so this takes a while on a big database. Blocking: call it
+     * on an IO dispatcher.
+     */
+    suspend fun checkDatabaseImport(candidatePath: String): ImportCheckOutcome {
+        val expectedHash = database.useReaderConnection { connection ->
+            connection.usePrepared(IDENTITY_HASH_QUERY) { if (it.step()) it.getText(0) else null }
+        }
+        return try {
+            BundledSQLiteDriver().open(candidatePath, SQLITE_OPEN_READONLY).use { connection ->
+                when {
+                    connection.text("PRAGMA quick_check") != "ok"                         -> ImportCheckOutcome.DAMAGED
+                    connection.text("PRAGMA user_version") != DATABASE_VERSION.toString() -> ImportCheckOutcome.OTHER_VERSION
+                    connection.text(IDENTITY_HASH_QUERY) != expectedHash                  -> ImportCheckOutcome.OTHER_VERSION
+                    else                                                                   -> ImportCheckOutcome.VALID
+                }
+            }
+        } catch (_: Exception) {
+            // Not a database at all, or the file cannot be read: SQLite fails on the first statement.
+            ImportCheckOutcome.DAMAGED
+        }
+    }
+
+    private fun SQLiteConnection.text(sql: String): String? =
+        prepare(sql).use { if (it.step()) it.getText(0) else null }
 
     /** What [vacuumDatabase] deletes to make the database fit: the old part of its two biggest tables. */
     internal suspend fun trimForVacuum() {

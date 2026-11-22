@@ -24,7 +24,7 @@ import app.aaps.ui.compose.maintenance.MaintenanceViewModel.ExportState
  * - Maintenance bottom sheet with export/import/cleanup actions
  * - Log settings bottom sheet
  * - Cloud directory sheet
- * - 6 confirmation dialogs (reset APS, reset DB, cleanup DB, send logs, export CSV, export database)
+ * - 7 confirmation dialogs (reset APS, reset DB, cleanup DB, send logs, export CSV, export database, import database)
  * - Export state machine dialogs (missing password, confirm, ask password)
  * - Cleanup result dialog
  *
@@ -58,6 +58,7 @@ fun MaintenanceDialogs(
     val exportConfig by maintenanceViewModel.exportConfig.collectAsStateWithLifecycle()
     val isDirectoryAccessGranted by maintenanceViewModel.isDirectoryAccessGranted.collectAsStateWithLifecycle()
     val directoryPath by maintenanceViewModel.directoryPath.collectAsStateWithLifecycle()
+    val databaseImportCandidate by maintenanceViewModel.databaseImportCandidate.collectAsStateWithLifecycle()
 
     // Collect maintenance events
     LaunchedEffect(Unit) {
@@ -101,6 +102,8 @@ fun MaintenanceDialogs(
             onResetDbClick = { showConfirmResetDb = true },
             canExportDatabase = maintenanceViewModel.canExportDatabase,
             onExportDatabaseClick = { showConfirmExportDatabase = true },
+            canImportDatabase = maintenanceViewModel.canImportDatabase,
+            onImportDatabaseClick = { maintenanceViewModel.findDatabaseImport() },
             exportConfig = exportConfig,
             isDirectoryAccessGranted = isDirectoryAccessGranted,
             directoryPath = directoryPath,
@@ -203,6 +206,15 @@ fun MaintenanceDialogs(
                 maintenanceViewModel.exportDatabase()
             },
             onDismiss = { showConfirmExportDatabase = false }
+        )
+    }
+
+    databaseImportCandidate?.let { fileName ->
+        OkCancelDialog(
+            title = stringResource(CoreUiStrings.confirmation),
+            message = stringResource(CoreUiStrings.database_import_confirm, fileName),
+            onConfirm = { maintenanceViewModel.importDatabase() },
+            onDismiss = { maintenanceViewModel.cancelDatabaseImport() }
         )
     }
 
