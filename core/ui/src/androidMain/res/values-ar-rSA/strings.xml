@@ -71,4 +71,8 @@
     <!-- Graph series full names (used in the graph settings, where there is room) -->
     <string name="export_database">تصدير قاعدة البيانات</string>
     <string name="maintenance_export_database_desc">حفظ نسخة من قاعدة البيانات كاملة كملف zip في مجلد exports. قد يستغرق ذلك بضع دقائق.</string>
+    <string name="import_database">استيراد قاعدة البيانات</string>
+    <string name="maintenance_import_database_desc">استبدال جميع البيانات على هذا الهاتف بأحدث تصدير لقاعدة البيانات من مجلد exports. تتم إعادة تشغيل AAPS بعد ذلك.</string>
+    <string name="database_import_none_found">لم يتم العثور على تصدير لقاعدة البيانات في مجلد exports</string>
+    <string name="database_import_confirm">استبدال جميع البيانات على هذا الهاتف بـ %1$s؟\n\nكل ما حدث بعد التصدير سيكون مفقودًا، بما في ذلك الأنسولين والكربوهيدرات. تتم إعادة تشغيل AAPS بعد ذلك.</string>
 </resources>

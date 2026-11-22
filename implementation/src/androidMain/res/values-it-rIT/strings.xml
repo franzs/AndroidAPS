@@ -59,6 +59,13 @@
     <string name="database_exported">Database esportato in %1$s</string>
     <string name="database_export_failed">Esportazione del database non riuscita</string>
     <string name="database_export_no_space">Spazio libero sul telefono insufficiente per esportare il database</string>
+    <string name="database_import_started">Importazione del database in corso. L\'operazione può richiedere alcuni minuti. AAPS si riavvia al termine.</string>
+    <string name="database_import_not_found">%1$s non trovato nella cartella exports</string>
+    <string name="database_import_not_an_export">Il file non è un\'esportazione del database</string>
+    <string name="database_import_damaged">Il database nel file è danneggiato</string>
+    <string name="database_import_other_version">L\'esportazione del database è stata creata con un\'altra versione di AAPS. Su entrambi i telefoni deve essere installata la stessa versione di AAPS.</string>
+    <string name="database_import_no_space">Spazio libero sul telefono insufficiente per importare il database</string>
+    <string name="database_import_failed">Importazione del database non riuscita</string>
     <string name="exported_ago" comment="at placeholder we add pluralized number of hours/minutes">esportato %1$s fa</string>
     <string name="exported_at" comment="at placeholder we add export date">esportato a %1$s</string>
     <string name="exported_less_than_hour_ago">esportato meno di un\'ora fa</string>

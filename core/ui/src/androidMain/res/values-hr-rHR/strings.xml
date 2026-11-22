@@ -288,4 +288,8 @@
     <!-- Graph series full names (used in the graph settings, where there is room) -->
     <string name="export_database">Izvezi bazu podataka</string>
     <string name="maintenance_export_database_desc">Spremi kopiju cijele baze podataka kao zip datoteku u mapu exports. To može potrajati nekoliko minuta.</string>
+    <string name="import_database">Uvezi bazu podataka</string>
+    <string name="maintenance_import_database_desc">Zamijeni sve podatke na ovom telefonu najnovijim izvozom baze podataka iz mape exports. AAPS se nakon toga ponovno pokreće.</string>
+    <string name="database_import_none_found">U mapi exports nije pronađen izvoz baze podataka</string>
+    <string name="database_import_confirm">Zamijeniti sve podatke na ovom telefonu s %1$s?\n\nSve što se dogodilo nakon izvoza nedostajat će, također inzulin i ugljikohidrati. AAPS se nakon toga ponovno pokreće.</string>
 </resources>

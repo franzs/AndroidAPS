@@ -59,6 +59,13 @@
     <string name="database_exported">数据库已导出到 %1$s</string>
     <string name="database_export_failed">数据库导出失败</string>
     <string name="database_export_no_space">手机可用空间不足，无法导出数据库</string>
+    <string name="database_import_started">正在导入数据库。这可能需要几分钟。之后 AAPS 会重新启动。</string>
+    <string name="database_import_not_found">在 exports 文件夹中未找到 %1$s</string>
+    <string name="database_import_not_an_export">该文件不是数据库导出</string>
+    <string name="database_import_damaged">文件中的数据库已损坏</string>
+    <string name="database_import_other_version">该数据库导出是由其他版本的 AAPS 创建的。两部手机必须运行相同版本的 AAPS。</string>
+    <string name="database_import_no_space">手机可用空间不足，无法导入数据库</string>
+    <string name="database_import_failed">数据库导入失败</string>
     <string name="exported_ago" comment="at placeholder we add pluralized number of hours/minutes">%1$s 前导出</string>
     <string name="exported_at" comment="at placeholder we add export date">导出 %1$s</string>
     <string name="exported_less_than_hour_ago">不到一小时前导出</string>

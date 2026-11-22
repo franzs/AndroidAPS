@@ -59,6 +59,13 @@
     <string name="database_exported">Baza de date a fost exportată în %1$s</string>
     <string name="database_export_failed">Exportul bazei de date a eșuat</string>
     <string name="database_export_no_space">Spațiu liber insuficient pe telefon pentru exportul bazei de date</string>
+    <string name="database_import_started">Se importă baza de date. Acest lucru poate dura câteva minute. AAPS repornește după aceea.</string>
+    <string name="database_import_not_found">%1$s nu a fost găsit în dosarul exports</string>
+    <string name="database_import_not_an_export">Fișierul nu este un export al bazei de date</string>
+    <string name="database_import_damaged">Baza de date din fișier este deteriorată</string>
+    <string name="database_import_other_version">Exportul bazei de date a fost făcut cu o altă versiune AAPS. Pe ambele telefoane trebuie să ruleze aceeași versiune AAPS.</string>
+    <string name="database_import_no_space">Spațiu liber insuficient pe telefon pentru importul bazei de date</string>
+    <string name="database_import_failed">Importul bazei de date a eșuat</string>
     <string name="exported_ago" comment="at placeholder we add pluralized number of hours/minutes">exportate %1$s în urmă</string>
     <string name="exported_at" comment="at placeholder we add export date">exportate la %1$s</string>
     <string name="exported_less_than_hour_ago">exportate acum mai puțin de o oră</string>

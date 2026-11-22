@@ -59,6 +59,13 @@
     <string name="database_exported">מסד הנתונים יוצא אל %1$s</string>
     <string name="database_export_failed">ייצוא מסד הנתונים נכשל</string>
     <string name="database_export_no_space">אין מספיק מקום פנוי בטלפון לייצוא מסד הנתונים</string>
+    <string name="database_import_started">מייבא את מסד הנתונים. הפעולה עשויה להימשך מספר דקות. לאחר מכן AAPS יופעל מחדש.</string>
+    <string name="database_import_not_found">%1$s לא נמצא בתיקייה exports</string>
+    <string name="database_import_not_an_export">הקובץ אינו ייצוא של מסד הנתונים</string>
+    <string name="database_import_damaged">מסד הנתונים בקובץ פגום</string>
+    <string name="database_import_other_version">ייצוא מסד הנתונים נוצר בגרסה אחרת של AAPS. בשני הטלפונים חייבת לפעול אותה גרסה של AAPS.</string>
+    <string name="database_import_no_space">אין מספיק מקום פנוי בטלפון לייבוא מסד הנתונים</string>
+    <string name="database_import_failed">ייבוא מסד הנתונים נכשל</string>
     <string name="exported_ago" comment="at placeholder we add pluralized number of hours/minutes">יוצא לפני %1$s</string>
     <string name="exported_at" comment="at placeholder we add export date">יוצא ב-%1$s</string>
     <string name="exported_less_than_hour_ago">יוצא לפני פחות משעה</string>

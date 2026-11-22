@@ -59,6 +59,13 @@
     <string name="database_exported">Đã xuất cơ sở dữ liệu vào %1$s</string>
     <string name="database_export_failed">Xuất cơ sở dữ liệu thất bại</string>
     <string name="database_export_no_space">Không đủ dung lượng trống trên điện thoại để xuất cơ sở dữ liệu</string>
+    <string name="database_import_started">Đang nhập cơ sở dữ liệu. Việc này có thể mất vài phút. Sau đó AAPS sẽ khởi động lại.</string>
+    <string name="database_import_not_found">Không tìm thấy %1$s trong thư mục exports</string>
+    <string name="database_import_not_an_export">Tệp này không phải là bản xuất cơ sở dữ liệu</string>
+    <string name="database_import_damaged">Cơ sở dữ liệu trong tệp bị hỏng</string>
+    <string name="database_import_other_version">Bản xuất cơ sở dữ liệu được tạo bởi một phiên bản AAPS khác. Cả hai điện thoại phải chạy cùng một phiên bản AAPS.</string>
+    <string name="database_import_no_space">Không đủ dung lượng trống trên điện thoại để nhập cơ sở dữ liệu</string>
+    <string name="database_import_failed">Nhập cơ sở dữ liệu thất bại</string>
     <string name="exported_ago" comment="at placeholder we add pluralized number of hours/minutes">đã xuất dữ liệu cách đây %1$s</string>
     <string name="exported_at" comment="at placeholder we add export date">đã xuất dữ liệu vào lúc %1$s</string>
     <string name="exported_less_than_hour_ago">đã xuất dưới 1 giờ trước</string>

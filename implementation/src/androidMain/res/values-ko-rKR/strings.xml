@@ -59,6 +59,13 @@
     <string name="database_exported">데이터베이스를 %1$s(으)로 내보냈습니다</string>
     <string name="database_export_failed">데이터베이스 내보내기 실패</string>
     <string name="database_export_no_space">데이터베이스를 내보내기 위한 휴대폰 저장 공간이 부족합니다</string>
+    <string name="database_import_started">데이터베이스를 가져오는 중입니다. 몇 분 정도 걸릴 수 있습니다. 그 후 AAPS가 다시 시작됩니다.</string>
+    <string name="database_import_not_found">exports 폴더에서 %1$s을(를) 찾을 수 없습니다</string>
+    <string name="database_import_not_an_export">이 파일은 데이터베이스 내보내기 파일이 아닙니다</string>
+    <string name="database_import_damaged">파일의 데이터베이스가 손상되었습니다</string>
+    <string name="database_import_other_version">데이터베이스 내보내기가 다른 AAPS 버전으로 만들어졌습니다. 두 휴대폰 모두 같은 AAPS 버전을 사용해야 합니다.</string>
+    <string name="database_import_no_space">데이터베이스를 가져오기 위한 휴대폰 저장 공간이 부족합니다</string>
+    <string name="database_import_failed">데이터베이스 가져오기 실패</string>
     <string name="exported_ago" comment="at placeholder we add pluralized number of hours/minutes">%1$s 전에 내보내기 함</string>
     <string name="exported_at" comment="at placeholder we add export date">%1$s에 내보내기 함</string>
     <string name="exported_less_than_hour_ago">내보내기 한지 1시간이 지나지 않았습니다.</string>

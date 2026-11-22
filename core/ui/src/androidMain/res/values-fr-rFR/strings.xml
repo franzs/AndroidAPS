@@ -922,6 +922,10 @@
     <string name="maintenance_export_csv_desc">Exporter l\'historique des traitements en feuille de calcul</string>
     <string name="export_database">Exporter la base de données</string>
     <string name="maintenance_export_database_desc">Enregistrer une copie de toute la base de données en fichier zip dans le dossier exports. Cela peut prendre quelques minutes.</string>
+    <string name="import_database">Importer la base de données</string>
+    <string name="maintenance_import_database_desc">Remplacer toutes les données de ce téléphone par l\'export de base de données le plus récent du dossier exports. AAPS redémarre ensuite.</string>
+    <string name="database_import_none_found">Aucun export de base de données trouvé dans le dossier exports</string>
+    <string name="database_import_confirm">Remplacer toutes les données de ce téléphone par %1$s ?\n\nTout ce qui s\'est passé après l\'export manquera, y compris l\'insuline et les glucides. AAPS redémarre ensuite.</string>
     <string name="maintenance_cleanup_db_desc">Supprimer les anciennes entrées de la base de données</string>
     <string name="maintenance_reset_aps_results_desc">Effacer les résultats des algorithmes</string>
     <string name="maintenance_reset_db_desc">Effacer toutes les bases de données et les recharger</string>

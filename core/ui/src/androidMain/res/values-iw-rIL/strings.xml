@@ -922,6 +922,10 @@
     <string name="maintenance_export_csv_desc">ייצוא היסטוריית טיפולים כגיליון נתונים</string>
     <string name="export_database">ייצוא מסד הנתונים</string>
     <string name="maintenance_export_database_desc">שמירת עותק של מסד הנתונים כולו כקובץ zip בתיקייה exports. הפעולה עשויה להימשך מספר דקות.</string>
+    <string name="import_database">ייבוא מסד הנתונים</string>
+    <string name="maintenance_import_database_desc">החלפת כל הנתונים בטלפון זה בייצוא מסד הנתונים העדכני ביותר מהתיקייה exports. לאחר מכן AAPS יופעל מחדש.</string>
+    <string name="database_import_none_found">לא נמצא ייצוא של מסד הנתונים בתיקייה exports</string>
+    <string name="database_import_confirm">להחליף את כל הנתונים בטלפון זה ב-%1$s?\n\nכל מה שקרה אחרי הייצוא יחסר, גם אינסולין ופחמימות. לאחר מכן AAPS יופעל מחדש.</string>
     <string name="maintenance_cleanup_db_desc">הסרת רשומות ישנות ממסד הנתונים</string>
     <string name="maintenance_reset_aps_results_desc">מחיקת תוצאות האלגוריתם השמורות</string>
     <string name="maintenance_reset_db_desc">מחיקת כל מסדי הנתונים וטעינה מחדש</string>

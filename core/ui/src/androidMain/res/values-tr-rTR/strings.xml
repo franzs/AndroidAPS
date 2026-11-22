@@ -922,6 +922,10 @@
     <string name="maintenance_export_csv_desc">Tedavi geçmişini elektronik tablo olarak dışa aktarın</string>
     <string name="export_database">Veritabanını dışa aktar</string>
     <string name="maintenance_export_database_desc">Tüm veritabanının bir kopyasını exports klasörüne zip dosyası olarak kaydedin. Bu işlem birkaç dakika sürebilir.</string>
+    <string name="import_database">Veritabanını içe aktar</string>
+    <string name="maintenance_import_database_desc">Bu telefondaki tüm verileri exports klasöründeki en yeni veritabanı dışa aktarımıyla değiştirin. AAPS ardından yeniden başlar.</string>
+    <string name="database_import_none_found">exports klasöründe veritabanı dışa aktarımı bulunamadı</string>
+    <string name="database_import_confirm">Bu telefondaki tüm veriler %1$s ile değiştirilsin mi?\n\nDışa aktarımdan sonra olan her şey eksik olacak, insülin ve karbonhidratlar da. AAPS ardından yeniden başlar.</string>
     <string name="maintenance_cleanup_db_desc">Veritabanındaki eski kayıtları kaldırın</string>
     <string name="maintenance_reset_aps_results_desc">Depolanan algoritma sonuçlarını temizleyin</string>
     <string name="maintenance_reset_db_desc">Tüm veritabanlarını silin ve yeniden yükleyin</string>

@@ -920,6 +920,10 @@
     <string name="maintenance_export_csv_desc">导出处理历史为电子表格</string>
     <string name="export_database">导出数据库</string>
     <string name="maintenance_export_database_desc">将整个数据库的副本以 zip 文件保存到 exports 文件夹。这可能需要几分钟。</string>
+    <string name="import_database">导入数据库</string>
+    <string name="maintenance_import_database_desc">用 exports 文件夹中最新的数据库导出替换此手机上的所有数据。之后 AAPS 会重新启动。</string>
+    <string name="database_import_none_found">在 exports 文件夹中未找到数据库导出</string>
+    <string name="database_import_confirm">用 %1$s 替换此手机上的所有数据？\n\n导出之后发生的所有内容都会缺失，包括胰岛素和碳水化合物。之后 AAPS 会重新启动。</string>
     <string name="maintenance_cleanup_db_desc">从数据库中删除旧条目</string>
     <string name="maintenance_reset_aps_results_desc">清除已存储的算法结果</string>
     <string name="maintenance_reset_db_desc">删除所有数据库并重新加载</string>

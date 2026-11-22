@@ -16,6 +16,13 @@
     <string name="database_exported">Datenbank exportiert nach %1$s</string>
     <string name="database_export_failed">Datenbank-Export fehlgeschlagen</string>
     <string name="database_export_no_space">Nicht genug freier Speicher auf dem Telefon für den Datenbank-Export</string>
+    <string name="database_import_started">Datenbank wird importiert. Das kann einige Minuten dauern. AAPS startet danach neu.</string>
+    <string name="database_import_not_found">%1$s nicht im Ordner exports gefunden</string>
+    <string name="database_import_not_an_export">Die Datei ist kein Datenbank-Export</string>
+    <string name="database_import_damaged">Die Datenbank in der Datei ist beschädigt</string>
+    <string name="database_import_other_version">Der Datenbank-Export stammt von einer anderen AAPS-Version. Auf beiden Telefonen muss dieselbe AAPS-Version laufen.</string>
+    <string name="database_import_no_space">Nicht genug freier Speicher auf dem Telefon für den Datenbank-Import</string>
+    <string name="database_import_failed">Datenbank-Import fehlgeschlagen</string>
     <string name="exported_at" comment="at placeholder we add export date">am %1$s exportiert</string>
     <string name="exported_less_than_hour_ago">vor weniger als einer Stunde exportiert</string>
     <string name="metadata_warning_different_flavour">Einstellungen wurden mit einer anderen Variante von AAPS erstellt (%1$s). Du nutzt: %2$s.\n\nEinige Einstellungen können fehlen oder ungültig sein - überprüfe und aktualisiere Deine Einstellungen nach dem Import .</string>

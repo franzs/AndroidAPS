@@ -15,6 +15,13 @@
     <string name="database_exported">Base de dades exportada a %1$s</string>
     <string name="database_export_failed">Ha fallat l\'exportació de la base de dades</string>
     <string name="database_export_no_space">No hi ha prou espai lliure al telèfon per exportar la base de dades</string>
+    <string name="database_import_started">S\'està important la base de dades. Això pot trigar uns minuts. Després AAPS es reinicia.</string>
+    <string name="database_import_not_found">No s\'ha trobat %1$s a la carpeta exports</string>
+    <string name="database_import_not_an_export">El fitxer no és una exportació de la base de dades</string>
+    <string name="database_import_damaged">La base de dades del fitxer està malmesa</string>
+    <string name="database_import_other_version">L\'exportació de la base de dades s\'ha fet amb una altra versió d\'AAPS. Tots dos telèfons han de tenir la mateixa versió d\'AAPS.</string>
+    <string name="database_import_no_space">No hi ha prou espai lliure al telèfon per importar la base de dades</string>
+    <string name="database_import_failed">Ha fallat la importació de la base de dades</string>
     <string name="exported_at" comment="at placeholder we add export date">exportat a les %1$s</string>
     <string name="exported_less_than_hour_ago">exportat fa menys d\'una hora</string>
     <string name="metadata_warning_different_flavour">La configuració va ser creada amb una altra versió d\'AAPS (%1$s) i ara teniu la: %2$s.\n\nAlguns dels valors poden faltar o no ser vàlids - si us plau, comproveu la configuració després d\'importar.</string>

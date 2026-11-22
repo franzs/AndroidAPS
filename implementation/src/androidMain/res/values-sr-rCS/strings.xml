@@ -13,4 +13,11 @@
     <string name="database_exported">Baza podataka je izvezena u %1$s</string>
     <string name="database_export_failed">Izvoz baze podataka nije uspeo</string>
     <string name="database_export_no_space">Nema dovoljno slobodnog prostora na telefonu za izvoz baze podataka</string>
+    <string name="database_import_started">Uvoz baze podataka je u toku. Ovo može potrajati nekoliko minuta. AAPS se nakon toga ponovo pokreće.</string>
+    <string name="database_import_not_found">%1$s nije pronađen u fascikli exports</string>
+    <string name="database_import_not_an_export">Datoteka nije izvoz baze podataka</string>
+    <string name="database_import_damaged">Baza podataka u datoteci je oštećena</string>
+    <string name="database_import_other_version">Izvoz baze podataka je napravljen drugom verzijom AAPS-a. Na oba telefona mora raditi ista verzija AAPS-a.</string>
+    <string name="database_import_no_space">Nema dovoljno slobodnog prostora na telefonu za uvoz baze podataka</string>
+    <string name="database_import_failed">Uvoz baze podataka nije uspeo</string>
 </resources>

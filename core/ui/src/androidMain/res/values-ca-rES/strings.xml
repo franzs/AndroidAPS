@@ -446,4 +446,8 @@
     <string name="prefs_range_title">Rang de visualització</string>
     <string name="export_database">Exporta la base de dades</string>
     <string name="maintenance_export_database_desc">Desa una còpia de tota la base de dades com a fitxer zip a la carpeta exports. Això pot trigar uns minuts.</string>
+    <string name="import_database">Importa la base de dades</string>
+    <string name="maintenance_import_database_desc">Substitueix totes les dades d\'aquest telèfon per l\'exportació de la base de dades més recent de la carpeta exports. Després AAPS es reinicia.</string>
+    <string name="database_import_none_found">No s\'ha trobat cap exportació de la base de dades a la carpeta exports</string>
+    <string name="database_import_confirm">Voleu substituir totes les dades d\'aquest telèfon per %1$s?\n\nFaltarà tot el que hagi passat després de l\'exportació, també la insulina i els carbohidrats. Després AAPS es reinicia.</string>
 </resources>

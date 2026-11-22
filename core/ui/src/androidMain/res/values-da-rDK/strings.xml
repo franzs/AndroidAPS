@@ -541,4 +541,8 @@
     <string name="prefs_range_title">Område for Visualisering</string>
     <string name="export_database">Eksporter database</string>
     <string name="maintenance_export_database_desc">Gem en kopi af hele databasen som en zip-fil i mappen exports. Det kan tage nogle minutter.</string>
+    <string name="import_database">Importer database</string>
+    <string name="maintenance_import_database_desc">Erstat alle data på denne telefon med den nyeste databaseeksport fra mappen exports. AAPS genstarter bagefter.</string>
+    <string name="database_import_none_found">Der blev ikke fundet nogen databaseeksport i mappen exports</string>
+    <string name="database_import_confirm">Erstat alle data på denne telefon med %1$s?\n\nAlt, hvad der er sket efter eksporten, mangler, også insulin og kulhydrater. AAPS genstarter bagefter.</string>
 </resources>

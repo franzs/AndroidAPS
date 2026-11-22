@@ -59,6 +59,13 @@
     <string name="database_exported">Base de dados exportada para %1$s</string>
     <string name="database_export_failed">Falha ao exportar a base de dados</string>
     <string name="database_export_no_space">Espaço livre insuficiente no telemóvel para exportar a base de dados</string>
+    <string name="database_import_started">A importar a base de dados. Isto pode demorar alguns minutos. O AAPS reinicia a seguir.</string>
+    <string name="database_import_not_found">%1$s não encontrado na pasta exports</string>
+    <string name="database_import_not_an_export">O ficheiro não é uma exportação da base de dados</string>
+    <string name="database_import_damaged">A base de dados no ficheiro está danificada</string>
+    <string name="database_import_other_version">A exportação da base de dados foi feita com outra versão do AAPS. Os dois telemóveis têm de usar a mesma versão do AAPS.</string>
+    <string name="database_import_no_space">Espaço livre insuficiente no telemóvel para importar a base de dados</string>
+    <string name="database_import_failed">Falha ao importar a base de dados</string>
     <string name="exported_ago" comment="at placeholder we add pluralized number of hours/minutes">exportado há %1$s</string>
     <string name="exported_at" comment="at placeholder we add export date">exportado às %1$s</string>
     <string name="exported_less_than_hour_ago">exportado há menos de uma hora</string>

@@ -59,6 +59,13 @@
     <string name="database_exported">Database geëxporteerd naar %1$s</string>
     <string name="database_export_failed">Exporteren van de database mislukt</string>
     <string name="database_export_no_space">Onvoldoende vrije ruimte op de telefoon om de database te exporteren</string>
+    <string name="database_import_started">Database wordt geïmporteerd. Dit kan enkele minuten duren. AAPS start daarna opnieuw.</string>
+    <string name="database_import_not_found">%1$s niet gevonden in de map exports</string>
+    <string name="database_import_not_an_export">Het bestand is geen database-export</string>
+    <string name="database_import_damaged">De database in het bestand is beschadigd</string>
+    <string name="database_import_other_version">De database-export is gemaakt met een andere versie van AAPS. Op beide telefoons moet dezelfde versie van AAPS draaien.</string>
+    <string name="database_import_no_space">Onvoldoende vrije ruimte op de telefoon om de database te importeren</string>
+    <string name="database_import_failed">Importeren van de database mislukt</string>
     <string name="exported_ago" comment="at placeholder we add pluralized number of hours/minutes">%1$s geleden geëxporteerd</string>
     <string name="exported_at" comment="at placeholder we add export date">geëxporteerd op %1$s</string>
     <string name="exported_less_than_hour_ago">minder dan uur geleden geëxporteerd</string>

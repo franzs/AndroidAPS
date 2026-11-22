@@ -186,4 +186,8 @@
     <!-- Graph series full names (used in the graph settings, where there is room) -->
     <string name="export_database">Adatbázis exportálása</string>
     <string name="maintenance_export_database_desc">A teljes adatbázis másolatának mentése zip fájlként az exports mappába. Ez néhány percig is eltarthat.</string>
+    <string name="import_database">Adatbázis importálása</string>
+    <string name="maintenance_import_database_desc">A telefonon lévő összes adat cseréje az exports mappában lévő legújabb adatbázis-exportra. Az AAPS ezután újraindul.</string>
+    <string name="database_import_none_found">Az exports mappában nem található adatbázis-export</string>
+    <string name="database_import_confirm">Lecseréli a telefonon lévő összes adatot erre: %1$s?\n\nMinden, ami az exportálás után történt, hiányozni fog, az inzulin és a szénhidrát is. Az AAPS ezután újraindul.</string>
 </resources>

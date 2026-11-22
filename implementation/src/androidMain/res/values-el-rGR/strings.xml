@@ -59,6 +59,13 @@
     <string name="database_exported">Η βάση δεδομένων εξήχθη στο %1$s</string>
     <string name="database_export_failed">Η εξαγωγή της βάσης δεδομένων απέτυχε</string>
     <string name="database_export_no_space">Δεν υπάρχει αρκετός ελεύθερος χώρος στο τηλέφωνο για την εξαγωγή της βάσης δεδομένων</string>
+    <string name="database_import_started">Γίνεται εισαγωγή της βάσης δεδομένων. Αυτό μπορεί να διαρκέσει μερικά λεπτά. Το AAPS επανεκκινείται μετά.</string>
+    <string name="database_import_not_found">Το %1$s δεν βρέθηκε στον φάκελο exports</string>
+    <string name="database_import_not_an_export">Το αρχείο δεν είναι εξαγωγή βάσης δεδομένων</string>
+    <string name="database_import_damaged">Η βάση δεδομένων στο αρχείο είναι κατεστραμμένη</string>
+    <string name="database_import_other_version">Η εξαγωγή της βάσης δεδομένων έγινε με άλλη έκδοση του AAPS. Και τα δύο τηλέφωνα πρέπει να έχουν την ίδια έκδοση του AAPS.</string>
+    <string name="database_import_no_space">Δεν υπάρχει αρκετός ελεύθερος χώρος στο τηλέφωνο για την εισαγωγή της βάσης δεδομένων</string>
+    <string name="database_import_failed">Η εισαγωγή της βάσης δεδομένων απέτυχε</string>
     <string name="exported_ago" comment="at placeholder we add pluralized number of hours/minutes">εξήχθη πριν από %1$s</string>
     <string name="exported_at" comment="at placeholder we add export date">εξαγωγή στις %1$s</string>
     <string name="exported_less_than_hour_ago">η εξαγωγή έγινε από λιγότερο από μία ώρα πριν</string>

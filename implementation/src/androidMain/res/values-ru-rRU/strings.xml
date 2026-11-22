@@ -24,6 +24,13 @@
     <string name="database_exported">База данных экспортирована в %1$s</string>
     <string name="database_export_failed">Не удалось экспортировать базу данных</string>
     <string name="database_export_no_space">Недостаточно свободного места на телефоне для экспорта базы данных</string>
+    <string name="database_import_started">Импорт базы данных. Это может занять несколько минут. После этого AAPS перезапустится.</string>
+    <string name="database_import_not_found">%1$s не найден в папке exports</string>
+    <string name="database_import_not_an_export">Файл не является экспортом базы данных</string>
+    <string name="database_import_damaged">База данных в файле повреждена</string>
+    <string name="database_import_other_version">Экспорт базы данных создан другой версией AAPS. На обоих телефонах должна быть одна и та же версия AAPS.</string>
+    <string name="database_import_no_space">Недостаточно свободного места на телефоне для импорта базы данных</string>
+    <string name="database_import_failed">Не удалось импортировать базу данных</string>
     <string name="exported_ago" comment="at placeholder we add pluralized number of hours/minutes">экспортировано %1$s назад</string>
     <string name="exported_at" comment="at placeholder we add export date">экспортировано в %1$s</string>
     <string name="exported_less_than_hour_ago">экспортировано менее часа назад</string>

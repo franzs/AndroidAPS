@@ -922,6 +922,10 @@
     <string name="maintenance_export_csv_desc">Behandelgeschiedenis exporteren als spreadsheet</string>
     <string name="export_database">Database exporteren</string>
     <string name="maintenance_export_database_desc">Een kopie van de hele database als zip-bestand opslaan in de map exports. Dit kan enkele minuten duren.</string>
+    <string name="import_database">Database importeren</string>
+    <string name="maintenance_import_database_desc">Alle gegevens op deze telefoon vervangen door de nieuwste database-export uit de map exports. AAPS start daarna opnieuw.</string>
+    <string name="database_import_none_found">Geen database-export gevonden in de map exports</string>
+    <string name="database_import_confirm">Alle gegevens op deze telefoon vervangen door %1$s?\n\nAlles wat na de export is gebeurd ontbreekt, ook insuline en koolhydraten. AAPS start daarna opnieuw.</string>
     <string name="maintenance_cleanup_db_desc">Oude gegevens uit de database verwijderen</string>
     <string name="maintenance_reset_aps_results_desc">Opgeslagen algoritmeresultaten wissen</string>
     <string name="maintenance_reset_db_desc">Alle databases wissen en opnieuw laden</string>

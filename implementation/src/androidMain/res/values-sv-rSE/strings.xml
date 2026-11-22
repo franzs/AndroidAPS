@@ -59,6 +59,13 @@
     <string name="database_exported">Databasen exporterad till %1$s</string>
     <string name="database_export_failed">Export av databasen misslyckades</string>
     <string name="database_export_no_space">Inte tillräckligt med ledigt utrymme på telefonen för att exportera databasen</string>
+    <string name="database_import_started">Importerar databasen. Det kan ta några minuter. AAPS startar om efteråt.</string>
+    <string name="database_import_not_found">%1$s hittades inte i mappen exports</string>
+    <string name="database_import_not_an_export">Filen är inte en databasexport</string>
+    <string name="database_import_damaged">Databasen i filen är skadad</string>
+    <string name="database_import_other_version">Databasexporten gjordes med en annan version av AAPS. Båda telefonerna måste köra samma version av AAPS.</string>
+    <string name="database_import_no_space">Inte tillräckligt med ledigt utrymme på telefonen för att importera databasen</string>
+    <string name="database_import_failed">Import av databasen misslyckades</string>
     <string name="exported_ago" comment="at placeholder we add pluralized number of hours/minutes">exporterades för %1$s sedan</string>
     <string name="exported_at" comment="at placeholder we add export date">exporterades vid %1$s</string>
     <string name="exported_less_than_hour_ago">exporterades för mindre än en timme sedan</string>

@@ -924,6 +924,10 @@
     <string name="maintenance_export_csv_desc">將治療紀錄匯出為試算表</string>
     <string name="export_database">匯出資料庫</string>
     <string name="maintenance_export_database_desc">將整個資料庫的副本以 zip 檔案儲存到 exports 資料夾。這可能需要幾分鐘。</string>
+    <string name="import_database">匯入資料庫</string>
+    <string name="maintenance_import_database_desc">以 exports 資料夾中最新的資料庫匯出取代此手機上的所有資料。之後 AAPS 會重新啟動。</string>
+    <string name="database_import_none_found">在 exports 資料夾中找不到資料庫匯出</string>
+    <string name="database_import_confirm">以 %1$s 取代此手機上的所有資料？\n\n匯出之後發生的所有內容都會遺失，包括胰島素和碳水化合物。之後 AAPS 會重新啟動。</string>
     <string name="maintenance_cleanup_db_desc">從資料庫移除舊的項目</string>
     <string name="maintenance_reset_aps_results_desc">清除已儲存的演算法結果</string>
     <string name="maintenance_reset_db_desc">清除所有資料庫並重新載入</string>

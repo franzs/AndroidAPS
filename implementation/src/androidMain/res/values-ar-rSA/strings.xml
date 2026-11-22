@@ -10,4 +10,11 @@
     <string name="database_exported">تم تصدير قاعدة البيانات إلى %1$s</string>
     <string name="database_export_failed">فشل تصدير قاعدة البيانات</string>
     <string name="database_export_no_space">لا توجد مساحة كافية على الهاتف لتصدير قاعدة البيانات</string>
+    <string name="database_import_started">جارٍ استيراد قاعدة البيانات. قد يستغرق ذلك بضع دقائق. تتم إعادة تشغيل AAPS بعد ذلك.</string>
+    <string name="database_import_not_found">لم يتم العثور على %1$s في مجلد exports</string>
+    <string name="database_import_not_an_export">الملف ليس تصديرًا لقاعدة البيانات</string>
+    <string name="database_import_damaged">قاعدة البيانات في الملف تالفة</string>
+    <string name="database_import_other_version">تم إنشاء تصدير قاعدة البيانات بإصدار آخر من AAPS. يجب أن يعمل الهاتفان بنفس إصدار AAPS.</string>
+    <string name="database_import_no_space">لا توجد مساحة كافية على الهاتف لاستيراد قاعدة البيانات</string>
+    <string name="database_import_failed">فشل استيراد قاعدة البيانات</string>
 </resources>

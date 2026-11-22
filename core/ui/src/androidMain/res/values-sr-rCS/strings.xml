@@ -121,4 +121,8 @@
     <!-- Graph series full names (used in the graph settings, where there is room) -->
     <string name="export_database">Izvezi bazu podataka</string>
     <string name="maintenance_export_database_desc">Sačuvaj kopiju cele baze podataka kao zip datoteku u fascikli exports. Ovo može potrajati nekoliko minuta.</string>
+    <string name="import_database">Uvezi bazu podataka</string>
+    <string name="maintenance_import_database_desc">Zameni sve podatke na ovom telefonu najnovijim izvozom baze podataka iz fascikle exports. AAPS se nakon toga ponovo pokreće.</string>
+    <string name="database_import_none_found">U fascikli exports nije pronađen izvoz baze podataka</string>
+    <string name="database_import_confirm">Zameniti sve podatke na ovom telefonu sa %1$s?\n\nSve što se desilo posle izvoza će nedostajati, takođe insulin i ugljeni hidrati. AAPS se nakon toga ponovo pokreće.</string>
 </resources>

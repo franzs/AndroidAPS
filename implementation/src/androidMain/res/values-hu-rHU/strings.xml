@@ -19,4 +19,11 @@
     <string name="database_exported">Az adatbázis exportálva ide: %1$s</string>
     <string name="database_export_failed">Az adatbázis exportálása sikertelen</string>
     <string name="database_export_no_space">Nincs elég szabad hely a telefonon az adatbázis exportálásához</string>
+    <string name="database_import_started">Adatbázis importálása folyamatban. Ez néhány percig is eltarthat. Az AAPS ezután újraindul.</string>
+    <string name="database_import_not_found">%1$s nem található az exports mappában</string>
+    <string name="database_import_not_an_export">A fájl nem adatbázis-export</string>
+    <string name="database_import_damaged">A fájlban lévő adatbázis sérült</string>
+    <string name="database_import_other_version">Az adatbázis-export egy másik AAPS-verzióval készült. Mindkét telefonon ugyanannak az AAPS-verziónak kell futnia.</string>
+    <string name="database_import_no_space">Nincs elég szabad hely a telefonon az adatbázis importálásához</string>
+    <string name="database_import_failed">Az adatbázis importálása sikertelen</string>
 </resources>

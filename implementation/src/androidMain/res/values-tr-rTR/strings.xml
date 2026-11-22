@@ -59,6 +59,13 @@
     <string name="database_exported">Veritabanı %1$s konumuna aktarıldı</string>
     <string name="database_export_failed">Veritabanı dışa aktarılamadı</string>
     <string name="database_export_no_space">Veritabanını dışa aktarmak için telefonda yeterli boş alan yok</string>
+    <string name="database_import_started">Veritabanı içe aktarılıyor. Bu işlem birkaç dakika sürebilir. AAPS ardından yeniden başlar.</string>
+    <string name="database_import_not_found">%1$s exports klasöründe bulunamadı</string>
+    <string name="database_import_not_an_export">Dosya bir veritabanı dışa aktarımı değil</string>
+    <string name="database_import_damaged">Dosyadaki veritabanı hasarlı</string>
+    <string name="database_import_other_version">Veritabanı dışa aktarımı başka bir AAPS sürümüyle yapılmış. Her iki telefonda da aynı AAPS sürümü çalışmalıdır.</string>
+    <string name="database_import_no_space">Veritabanını içe aktarmak için telefonda yeterli boş alan yok</string>
+    <string name="database_import_failed">Veritabanı içe aktarılamadı</string>
     <string name="exported_ago" comment="at placeholder we add pluralized number of hours/minutes">%1$s önce dışa aktarıldı</string>
     <string name="exported_at" comment="at placeholder we add export date">%1$s\'de dışa aktarıldı</string>
     <string name="exported_less_than_hour_ago">bir saatten kısa süre önce dışa aktarıldı</string>

@@ -922,6 +922,10 @@
     <string name="maintenance_export_csv_desc">Exportați istoricul tratamentului ca foaie de calcul</string>
     <string name="export_database">Exportați baza de date</string>
     <string name="maintenance_export_database_desc">Salvați o copie a întregii baze de date ca fișier zip în dosarul exports. Acest lucru poate dura câteva minute.</string>
+    <string name="import_database">Importați baza de date</string>
+    <string name="maintenance_import_database_desc">Înlocuiți toate datele de pe acest telefon cu cel mai recent export al bazei de date din dosarul exports. AAPS repornește după aceea.</string>
+    <string name="database_import_none_found">Nu s-a găsit niciun export al bazei de date în dosarul exports</string>
+    <string name="database_import_confirm">Înlocuiți toate datele de pe acest telefon cu %1$s?\n\nTot ce s-a întâmplat după export va lipsi, inclusiv insulina și carbohidrații. AAPS repornește după aceea.</string>
     <string name="maintenance_cleanup_db_desc">Eliminați intrările vechi din baza de date</string>
     <string name="maintenance_reset_aps_results_desc">Ștergeți rezultatele stocate ale algoritmului</string>
     <string name="maintenance_reset_db_desc">Ștergeți toate bazele de date și reîncărcați</string>

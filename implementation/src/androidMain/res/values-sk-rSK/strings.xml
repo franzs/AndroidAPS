@@ -59,6 +59,13 @@
     <string name="database_exported">Databáza bola exportovaná do %1$s</string>
     <string name="database_export_failed">Export databázy zlyhal</string>
     <string name="database_export_no_space">V telefóne nie je dosť voľného miesta na export databázy</string>
+    <string name="database_import_started">Prebieha import databázy. Môže to trvať niekoľko minút. Potom sa AAPS reštartuje.</string>
+    <string name="database_import_not_found">%1$s sa nenašiel v priečinku exports</string>
+    <string name="database_import_not_an_export">Súbor nie je exportom databázy</string>
+    <string name="database_import_damaged">Databáza v súbore je poškodená</string>
+    <string name="database_import_other_version">Export databázy bol vytvorený inou verziou AAPS. Na oboch telefónoch musí bežať rovnaká verzia AAPS.</string>
+    <string name="database_import_no_space">V telefóne nie je dosť voľného miesta na import databázy</string>
+    <string name="database_import_failed">Import databázy zlyhal</string>
     <string name="exported_ago" comment="at placeholder we add pluralized number of hours/minutes">exportované pred %1$s</string>
     <string name="exported_at" comment="at placeholder we add export date">exportované v %1$s</string>
     <string name="exported_less_than_hour_ago">exportované pred menej ako hodinou</string>

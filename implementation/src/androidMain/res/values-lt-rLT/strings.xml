@@ -59,6 +59,13 @@
     <string name="database_exported">Duomenų bazė eksportuota į %1$s</string>
     <string name="database_export_failed">Duomenų bazės eksportas nepavyko</string>
     <string name="database_export_no_space">Telefone nepakanka laisvos vietos duomenų bazei eksportuoti</string>
+    <string name="database_import_started">Importuojama duomenų bazė. Tai gali užtrukti kelias minutes. Po to AAPS pasileidžia iš naujo.</string>
+    <string name="database_import_not_found">%1$s nerastas aplanke exports</string>
+    <string name="database_import_not_an_export">Failas nėra duomenų bazės eksportas</string>
+    <string name="database_import_damaged">Faile esanti duomenų bazė sugadinta</string>
+    <string name="database_import_other_version">Duomenų bazės eksportas sukurtas kita AAPS versija. Abiejuose telefonuose turi veikti ta pati AAPS versija.</string>
+    <string name="database_import_no_space">Telefone nepakanka laisvos vietos duomenų bazei importuoti</string>
+    <string name="database_import_failed">Duomenų bazės importas nepavyko</string>
     <string name="exported_ago" comment="at placeholder we add pluralized number of hours/minutes">eksportuota prieš %1$s</string>
     <string name="exported_at" comment="at placeholder we add export date">eksportuota %1$s</string>
     <string name="exported_less_than_hour_ago">eksportuota mažiau nei prieš valandą</string>
